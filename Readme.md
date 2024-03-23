@@ -2,9 +2,9 @@
 ## Judah Goldfeder, Gabe Guo, Gabriel Trigo, Patrick Puma, Hod Lipson
 
 ### Requirments
-pip install torch
-pip install timm
-pip install wandb
+conda env create -f environment.yaml --prefix=/data/puma_envs/diffusion_augment
+
+conda activate diffusion_augment
 
 
 ### Example script

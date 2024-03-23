@@ -655,7 +655,8 @@ def main():
         num_samples=args.train_num_samples,
     )
     if args.diffaug:   
-        dataset_train = diffusion_augment.augment(dataset_train)
+        dataset_train = diffusion_augment.augment(dataset_train) 
+        return
     if args.val_split:
         dataset_eval = create_dataset(
             args.dataset,
