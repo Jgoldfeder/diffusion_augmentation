@@ -35,7 +35,7 @@ model.load_state_dict(load_state_dict(f'./models/{model_name}.pth', location='cu
 model = model.cuda()
 ddim_sampler = DDIMSampler(model)
 
-num_samples = 2
+variations = 2
 a_prompt = "clear image, photorealistic"
 n_prompt = "multiple, mushed, low quality, cropped, worst quality"
 image_resolution = 224  # Assuming square images for simplicity
@@ -45,7 +45,7 @@ strength = 1.0
 scale = 7.5
 seed = -1  # Use -1 for random seeds
 eta = 0.0
-detect_resolution = 256
+detect_resolution = 224
 low_threshold = 50
 high_threshold = 200
 
@@ -84,30 +84,16 @@ def ensure_dir(directory):
 
 def check_variations(base_dir, image_name):
     """
-    Check if there are already num_samples and the original image saved variations of the given image.
+    Check if there are already three variations of the given image.
     Returns True if three variations exist, False otherwise.
     """
     
     no_ext_name = image_name
     variations = []
-    ensure_dir(base_dir)
     for f in os.listdir(base_dir):
         if f.startswith(no_ext_name):
             variations.append(f)
-    return len(variations) == num_samples + 1
-
-# Function to add the original image if it doesn't exist after checking variations
-def add_original_image(base_dir, image_name):
-    no_ext_name = image_name
-    variations = []
-    # original_filename = image_name + "_original.png"
-    ensure_dir(base_dir)
-    for f in os.listdir(base_dir):
-        if f.startswith(no_ext_name):
-            variations.append(f)
-    if len(variations) == num_samples:
-        return True
-    return False
+    return len(variations) >= 3
 
 
 control_dir = "./control_augmented_images"
@@ -138,9 +124,6 @@ def augment(dataset):
     original_dataset = dataset.dataset
     print(original_dataset)
     classes = original_dataset.classes
-    #get the original filename of each from the dataset
-    # print(dataset.dataset.samples)
-
 
     
     transform = transforms.Compose([
@@ -154,26 +137,17 @@ def augment(dataset):
         # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
     count = 0
-    batch_size = 10  # Define your batch size based on your hardware capabilities
+    batch_size = 8  # Define your batch size based on your hardware capabilities
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
     for batch in data_loader:
         images, labels = batch
-        # check the directory if it has 3 variations then did this batch already
-        label_path = os.path.join(control_dir, str(int(labels[0])))
-        if check_variations(label_path, f"file{count}"):
-            print("SKIPPING BATCH at filename ", label_path, f"file{count}")
-            count+=batch_size
-            # print("SKIPPING BATCH")
-            continue
-
-
-        raw_images = [to_pil_image(img) for img in images]
+        images = [to_pil_image(img) for img in images]
         prompts = [
-            "USER: <image>\nYou are creating a prompt for a diffusion model in order to recreate this scene of a " + classes[label] + ". Describe the image in detail in as many words as possible, focusing on what colors and where objects are. Note the colors of each object when describing the scene.\nASSISTANT:"
-        for label in labels] 
-        inputs = processor(prompts, images=raw_images, padding=True, return_tensors="pt").to("cuda")
-        # print(prompts)
+            "USER: <image>\nYou are creating a prompt for a diffusion model in order to recreate this image. Describe the image in detail in as many words as possible, focusing on what colors and where objects are. Note the colors of each object when describing the scene.\nASSISTANT:",
+        ] * len(images)  # Repeat the prompt for each image in the batch
+        inputs = processor(prompts, images=images, padding=True, return_tensors="pt").to("cuda")
+
         with torch.no_grad():
             generated_ids = caption_model.generate(**inputs, max_length=200)
         captions = processor.batch_decode(generated_ids, skip_special_tokens=True)
@@ -184,7 +158,7 @@ def augment(dataset):
             # Apply the transformations
             # aug_img = transform(img)
             # Display the image in the dataset with matplotlb
-            
+            count+=1
             # print(type(img))
             # print(type(label))
             # # print(type(k))
@@ -193,13 +167,14 @@ def augment(dataset):
             # print(k)
             # Create the directory for the labl
             label_path = os.path.join(control_dir, str(int(label)))
-            
-            #Create the path if it doesn't exist
-            ensure_dir(label_path)
+            # ensure_dir(label_path)
+
+            # # check the directory if it has 3 variations
+            # check_variations(label_path, f"file{count}")
 
             #convert to uint8
             img = (np.array(img) * 255).astype(np.uint8)
-            # H, W, C = img.shape``
+            # H, W, C = img.shape
             # Check if the image is in (Channels, Height, Width) format and transpose it
             if img.shape[2] not in (1, 3, 4):
                 # Assuming the input is in (Channels, Height, Width) format
@@ -208,47 +183,35 @@ def augment(dataset):
                 else:
                     raise AssertionError("Image channels must be 1, 3, or 4.")
             
-
-            
-            # if add_original_image(label_path, f"file{count}"):
-            #     # save the original image
-                
-            #     original_filename = f"file{count}_original.png"
-            #     print("Saving original image for ", str(int(label)), " at ", label_path, " with filename ", original_filename)
-            #     original_path = os.path.join(label_path, original_filename)
-            #     cv2.imwrite(original_path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-            #     count+=1
-            #     continue
-
-            # create variations
-            print("Creating variations for ", str(int(label)), " at ", label_path, " with filename ", f"file{count}")
+        
             print(caption)
-            results = process("Canny", img, caption, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold)
-            
+            # create variations
+            results = process("Canny", img, caption, a_prompt, n_prompt, variations, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold)
+            # save the original image
             original_filename = f"file{count}_original.png"
             original_path = os.path.join(label_path, original_filename)
+            print(original_path)
+            # print("Original:",img.shape)
+            print(img)
             cv2.imwrite(original_path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-
             # save the 3 variations
             for i, result in enumerate(results):
                 # print(result_path)
-                # print(result)
+                print(result)
                 result_filename = f"file{count}_{i}.png"
                 result_path = os.path.join(label_path, result_filename)
-                # print(result_path)
-                # print("Result:",result.shape)
+                print(result_path)
+                print("Result:",result.shape)
                 cv2.imwrite(result_path, cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
-            
-            count+=1
 
         
     additional_dataset = AugmentControlDataset(control_dir, transform=transform)
     print("Control Augmented Dataset: ", len(additional_dataset))
     # Combine datasets
-    # combined_dataset = ConcatDataset([dataset, additional_dataset])
-    # print("Combined Dataset: ", len(combined_dataset))
+    combined_dataset = ConcatDataset([dataset, additional_dataset])
+    print("Combined Dataset: ", len(combined_dataset))
     # Here, you'd return or process the augmented images further as needed
-    return additional_dataset
+    return combined_dataset
 
 
 
@@ -262,12 +225,12 @@ def process(det, input_image, prompt, a_prompt, n_prompt, num_samples, image_res
 
     with torch.no_grad():
         input_image = HWC3(input_image)
-        # print("Input image shape: ", input_image.shape)
+        print("Input image shape: ", input_image.shape)
         if det == 'None':
             detected_map = input_image.copy()
         else:
             detected_map = preprocessor(resize_image(input_image, detect_resolution), low_threshold, high_threshold)
-            # print("Detected map shape: ", detected_map.shape)
+            print("Detected map shape: ", detected_map.shape)
             detected_map = HWC3(detected_map)
 
         img = resize_image(input_image, image_resolution)
@@ -308,4 +271,4 @@ def process(det, input_image, prompt, a_prompt, n_prompt, num_samples, image_res
         x_samples = (einops.rearrange(x_samples, 'b c h w -> b h w c') * 127.5 + 127.5).cpu().numpy().clip(0, 255).astype(np.uint8)
 
         results = [x_samples[i] for i in range(num_samples)]
-    return results
+    return [detected_map] + results

@@ -1,4 +1,4 @@
-name: /data/puma_envs
+name: diff_aug
 channels:
   - pytorch
   - defaults
@@ -235,5 +235,4 @@ dependencies:
       - yacs==0.1.8
       - yapf==0.32.0
       - yarl==1.9.4
-      - zipp==3.18.1
-prefix: /data/puma_envs
+      - zipp==3.18.

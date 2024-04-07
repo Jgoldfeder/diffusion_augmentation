@@ -1,1 +1,9 @@
 torch/
+__pycache__/*
+annotator/__pycache__/*
+*.pyc
+ldm/models/diffusion/__pycache__/*
+ldm/modules/diffusionmodules/__pycache__/*
+ldm/modules/distributions/__pycache__/*
+ldm/modules/encoders/__pycache__/*
+control_augmented_images/
