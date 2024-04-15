@@ -7,6 +7,8 @@ import numpy as np
 from pytorch_lightning import seed_everything
 from annotator.util import resize_image, HWC3
 from annotator.canny import CannyDetector
+from annotator.depth_anything import DepthAnythingDetector
+
 from cldm.model import create_model, load_state_dict
 from cldm.ddim_hacked import DDIMSampler
 import cv2
@@ -28,12 +30,8 @@ import tqdm
 preprocessor = None
 
 
-model_name = 'control_v11p_sd15_canny'
-model = create_model(f'./models/{model_name}.yaml').cpu()
-model.load_state_dict(load_state_dict('./models/v1-5-pruned.ckpt', location='cuda:0'), strict=False)
-model.load_state_dict(load_state_dict(f'./models/{model_name}.pth', location='cuda:0'), strict=False)
-model = model.cuda()
-ddim_sampler = DDIMSampler(model)
+
+
 
 num_samples = 2
 a_prompt = "clear image, photorealistic"
@@ -110,21 +108,26 @@ def add_original_image(base_dir, image_name):
     return False
 
 
-control_dir = "./control_augmented_images"
-def augment(dataset):
+# control_dir = "./control_augmented_images"
+def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images"):
+    if preprocessor == "Canny":
+        model_name = 'control_v11p_sd15_canny'
+    elif preprocessor == "Depth-Anything":
+        model_name = 'control_v11p_sd15_depth_anything'
 
+    control_model = create_model(f'./models/{model_name}.yaml').cpu()
+    control_model.load_state_dict(load_state_dict('./models/v1-5-pruned.ckpt', location='cuda:0'), strict=False)
+    control_model.load_state_dict(load_state_dict(f'./models/{model_name}.pth', location='cuda:0'), strict=False)
+    control_model = control_model.cuda()
+    ddim_sampler = DDIMSampler(control_model)
+    
     # Instantiate the captioning model
-    # processor = AutoProcessor.from_pretrained("Salesforce/blip2-opt-2.7b")
-    # caption_model = Blip2ForConditionalGeneration.from_pretrained(
-    #     "Salesforce/blip2-opt-2.7b", torch_dtype=torch.float16
-    # )
     quantization_config = BitsAndBytesConfig(
         load_in_4bit=False,
         bnb_4bit_compute_dtype=torch.float16
     )
     
     model_id = "llava-hf/llava-1.5-7b-hf"
-
     processor = AutoProcessor.from_pretrained(model_id)
     caption_model = LlavaForConditionalGeneration.from_pretrained(model_id, quantization_config=quantization_config, device_map="auto")
     # device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -223,7 +226,7 @@ def augment(dataset):
             # create variations
             print("Creating variations for ", str(int(label)), " at ", label_path, " with filename ", f"file{count}")
             print(caption)
-            results = process("Canny", img, caption, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold)
+            results = process(control_model, ddim_sampler, preprocessor, img, caption, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold)
             
             original_filename = f"file{count}_original.png"
             original_path = os.path.join(label_path, original_filename)
@@ -248,17 +251,26 @@ def augment(dataset):
     # combined_dataset = ConcatDataset([dataset, additional_dataset])
     # print("Combined Dataset: ", len(combined_dataset))
     # Here, you'd return or process the augmented images further as needed
+
+    #clean up the models from teh gpu
+    del control_model
+    del ddim_sampler
+    del caption_model
+    torch.cuda.empty_cache()
     return additional_dataset
 
 
-
-def process(det, input_image, prompt, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold):
+def process(model, ddim_sampler, det, input_image, prompt, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold):
     global preprocessor
-    ddim_sampler = DDIMSampler(model)
+
     # Check which preprocessor to use
     if det == 'Canny':
         if not isinstance(preprocessor, CannyDetector):
             preprocessor = CannyDetector()
+    
+    elif det == 'DepthAnything':
+        if not isinstance(preprocessor, DepthAnythingDetector):
+            preprocessor = DepthAnythingDetector()
 
     with torch.no_grad():
         input_image = HWC3(input_image)
@@ -309,3 +321,40 @@ def process(det, input_image, prompt, a_prompt, n_prompt, num_samples, image_res
 
         results = [x_samples[i] for i in range(num_samples)]
     return results
+
+# If using depth anything to get the depth maps
+def depth_anything(img, res:int = 512, colored:bool = True, **kwargs):
+    img, remove_pad = resize_image_with_pad(img, res)
+    global model_depth_anything
+    if model_depth_anything is None:
+        model_depth_anything = DepthAnythingDetector(device)
+    return remove_pad(model_depth_anything(img, colored=colored)), True
+
+def unload_depth_anything():
+    if model_depth_anything is not None:
+        model_depth_anything.unload_model()
+
+def resize_image_with_pad(input_image, resolution, skip_hwc3=False):
+    if skip_hwc3:
+        img = input_image
+    else:
+        img = HWC3(input_image)
+    H_raw, W_raw, _ = img.shape
+    k = float(resolution) / float(min(H_raw, W_raw))
+    interpolation = cv2.INTER_CUBIC if k > 1 else cv2.INTER_AREA
+    H_target = int(np.round(float(H_raw) * k))
+    W_target = int(np.round(float(W_raw) * k))
+    img = cv2.resize(img, (W_target, H_target), interpolation=interpolation)
+    H_pad, W_pad = pad64(H_target), pad64(W_target)
+    img_padded = np.pad(img, [[0, H_pad], [0, W_pad], [0, 0]], mode='edge')
+
+    def remove_pad(x):
+        return safer_memory(x[:H_target, :W_target])
+
+    return safer_memory(img_padded), remove_pad
+
+def safer_memory(x):
+    # Fix many MAC/AMD problems
+    return np.ascontiguousarray(x.copy()).copy()
+def pad64(x):
+    return int(np.ceil(float(x) / 64.0) * 64 - x)

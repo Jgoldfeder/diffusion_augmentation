@@ -8,3 +8,6 @@ ldm/modules/distributions/__pycache__/*
 ldm/modules/encoders/__pycache__/*
 control_augmented_images/
 models/
+models
+wandb/
+output/

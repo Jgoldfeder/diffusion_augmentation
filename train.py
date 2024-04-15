@@ -42,6 +42,7 @@ from timm.utils import ApexScaler, NativeScaler
 import diffusion_augment
 
 from dataset_factory import create_dataset
+from fewshot_dataset import FewShotDataset
 try:
     from apex import amp
     from apex.parallel import DistributedDataParallel as ApexDDP
@@ -395,6 +396,17 @@ group.add_argument('--log-wandb', action='store_true', default=False,
 group.add_argument('--diffaug', action='store_true', default=False,
                    help='Diffuson augmentation.')
 
+group.add_argument('--diffaug-dir', default='', type=str,
+                   help='path to folder with diffusion augmentation files')
+
+group.add_argument('--diffaug-fewshot', default=0, type=int,
+                   help='Number of fewshot images if you want to use (default is off).')
+
+group.add_argument('--variations', action='store_true', default=False,
+                   help='Use variations in fewshot dataset.')
+
+group.add_argument('--preprocessor', default='Canny', type=str, 
+                   help='Preprocessor to use for ControlNet either Canny or Depth-Anything. Default is Canny')
 def _parse_args():
     # Do we have a config file to parse?
     args_config, remaining = config_parser.parse_known_args()
@@ -657,8 +669,19 @@ def main():
         num_samples=args.train_num_samples,
     )
     if args.diffaug:   
-        dataset_train = diffusion_augment.augment(dataset_train) 
-        return
+        dataset_train = diffusion_augment.augment(dataset_train, preprocessor=args.preprocessor,control_dir=args.diffaug_dir)
+        print("Augemented dataset created at ", args.diffaug_dir)
+        print("Rerun the script with the new dataset without the --diffaug flag.")
+        return 
+    
+    if args.diffaug_dir != '':
+        if args.diffaug_fewshot > 0:
+            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, include_variations=args.variations)
+            print(len(dataset_train))
+        else:
+            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, include_variations=args.variations)
+            print(len(dataset_train))
+
     if args.val_split:
         dataset_eval = create_dataset(
             args.dataset,
