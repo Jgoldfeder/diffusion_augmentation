@@ -10,6 +10,7 @@ import torch
 from torchvision.datasets import CIFAR100, CIFAR10, MNIST, KMNIST, FashionMNIST,ImageFolder,FGVCAircraft,Caltech101,Food101,Flowers102,OxfordIIITPet,Country211,Caltech256,DTD,FER2013,STL10,SUN397,SVHN,USPS,Cityscapes,CelebA
 import dogs
 import cub
+import torchvision
 
 datasets ={    
     'inaturalist': 10000,
@@ -208,6 +209,8 @@ def create_dataset(
 
             generator = torch.Generator().manual_seed(42)
             full_dataset = SUN397(**torch_kwargs,transform=transform)
+            full_dataset = torchvision.datasets.ImageFolder(root=root,transform=transform)
+
             train_size = int(0.8 * len(full_dataset))
             test_size = len(full_dataset) - train_size
             train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
