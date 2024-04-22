@@ -36,14 +36,14 @@ preprocessor = None
 num_samples = 2
 a_prompt = "clear image, photorealistic"
 n_prompt = "multiple, mushed, low quality, cropped, worst quality"
-image_resolution = 224  # Assuming square images for simplicity
+image_resolution = 1024  # Assuming square images for simplicity
 ddim_steps = 20
 guess_mode = False
 strength = 1.0
 scale = 7.5
-seed = -1  # Use -1 for random seeds
+seed = -1  # Use -1 for random seedss
 eta = 0.0
-detect_resolution = 256
+detect_resolution = 1024
 low_threshold = 50
 high_threshold = 200
 
@@ -90,8 +90,10 @@ def check_variations(base_dir, image_name):
     variations = []
     ensure_dir(base_dir)
     for f in os.listdir(base_dir):
-        if f.startswith(no_ext_name):
+        if f.startswith(no_ext_name +"_"):
             variations.append(f)
+    
+    # print("Variations: ", len(variations))
     return len(variations) == num_samples + 1
 
 # Function to add the original image if it doesn't exist after checking variations
@@ -109,11 +111,14 @@ def add_original_image(base_dir, image_name):
 
 
 # control_dir = "./control_augmented_images"
-def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images"):
+def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images_test"):
     if preprocessor == "Canny":
         model_name = 'control_v11p_sd15_canny'
     elif preprocessor == "Depth-Anything":
-        model_name = 'control_v11p_sd15_depth_anything'
+        model_name = 'control_v11f1p_sd15_depth'
+    else:
+        print("Invalid preprocessor")
+        return None
 
     control_model = create_model(f'./models/{model_name}.yaml').cpu()
     control_model.load_state_dict(load_state_dict('./models/v1-5-pruned.ckpt', location='cuda:0'), strict=False)
@@ -138,9 +143,9 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
     # model.to(device)
     print(type(dataset))
     #print the classes in the dataset
-    original_dataset = dataset.dataset
-    print(original_dataset)
-    classes = original_dataset.classes
+    # original_dataset = dataset.dataset
+    # print(original_dataset)
+    # classes = original_dataset.classes
     #get the original filename of each from the dataset
     # print(dataset.dataset.samples)
 
@@ -161,9 +166,18 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
     for batch in data_loader:
-        images, labels = batch
+        # print(batch)
+        images, labels, paths = batch
+        bla = 0
+        file_path = './augmented_files.txt'
+        with open(file_path, 'a') as f:  # Use 'a' for append mode
+            for path in paths:
+                line = f"{path} file{count + bla}\n"
+                bla += 1
+                f.write(line)
         # check the directory if it has 3 variations then did this batch already
         label_path = os.path.join(control_dir, str(int(labels[0])))
+        
         if check_variations(label_path, f"file{count}"):
             print("SKIPPING BATCH at filename ", label_path, f"file{count}")
             count+=batch_size
@@ -173,7 +187,7 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
 
         raw_images = [to_pil_image(img) for img in images]
         prompts = [
-            "USER: <image>\nYou are creating a prompt for a diffusion model in order to recreate this scene of a " + classes[label] + ". Describe the image in detail in as many words as possible, focusing on what colors and where objects are. Note the colors of each object when describing the scene.\nASSISTANT:"
+            "USER: <image>\nYou are creating a prompt for a diffusion model in order to recreate this scene from a drone's front camera. Describe the image in detail in as many words as possible, focusing on what colors and where objects are. Note the colors of each object when describing the scene.\nASSISTANT:"
         for label in labels] 
         inputs = processor(prompts, images=raw_images, padding=True, return_tensors="pt").to("cuda")
         # print(prompts)
@@ -222,7 +236,7 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
             #     cv2.imwrite(original_path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
             #     count+=1
             #     continue
-
+            caption = "An image from a drone's front facing camera flying at a low-mid altitude either in the spring, winter, or fall. " + caption
             # create variations
             print("Creating variations for ", str(int(label)), " at ", label_path, " with filename ", f"file{count}")
             print(caption)
@@ -268,17 +282,23 @@ def process(model, ddim_sampler, det, input_image, prompt, a_prompt, n_prompt, n
         if not isinstance(preprocessor, CannyDetector):
             preprocessor = CannyDetector()
     
-    elif det == 'DepthAnything':
+    elif det == 'Depth-Anything':
         if not isinstance(preprocessor, DepthAnythingDetector):
-            preprocessor = DepthAnythingDetector()
+            preprocessor = DepthAnythingDetector(device='cuda:0')
 
     with torch.no_grad():
         input_image = HWC3(input_image)
         # print("Input image shape: ", input_image.shape)
         if det == 'None':
             detected_map = input_image.copy()
-        else:
+        # elif
+        elif det == 'Canny':
             detected_map = preprocessor(resize_image(input_image, detect_resolution), low_threshold, high_threshold)
+            # print("Detected map shape: ", detected_map.shape)
+            detected_map = HWC3(detected_map)
+        
+        elif det == 'Depth-Anything':
+            detected_map = preprocessor(input_image, colored=False)
             # print("Detected map shape: ", detected_map.shape)
             detected_map = HWC3(detected_map)
 
@@ -320,7 +340,7 @@ def process(model, ddim_sampler, det, input_image, prompt, a_prompt, n_prompt, n
         x_samples = (einops.rearrange(x_samples, 'b c h w -> b h w c') * 127.5 + 127.5).cpu().numpy().clip(0, 255).astype(np.uint8)
 
         results = [x_samples[i] for i in range(num_samples)]
-    return results
+    return results #+ [detected_map]
 
 # If using depth anything to get the depth maps
 def depth_anything(img, res:int = 512, colored:bool = True, **kwargs):
@@ -358,3 +378,46 @@ def safer_memory(x):
     return np.ascontiguousarray(x.copy()).copy()
 def pad64(x):
     return int(np.ceil(float(x) / 64.0) * 64 - x)
+
+
+
+class ImagePathsDataset(Dataset):
+    def __init__(self, paths_file, transform=None):
+        self.transform = transform
+        self.image_paths = self._load_image_paths(paths_file)
+
+    def _load_image_paths(self, paths_file):
+        image_paths = []
+        with open(paths_file, 'r') as f:
+            for line in f:
+                original_image_path = line.split()[0]
+                image_paths.append(original_image_path)
+        return image_paths
+
+    def __len__(self):
+        return len(self.image_paths)
+
+    def __getitem__(self, idx):
+        img_path = self.image_paths[idx]
+        image = Image.open(img_path).convert('RGB')
+        if self.transform:
+            image = self.transform(image)
+        return image, 0, img_path  # 0 is a dummy label
+
+
+
+if __name__ == '__main__':
+    print("Running diffusion augmentation")
+    paths_file = './test_data.txt'
+
+    # Create the dataset
+    transform = transforms.Compose([
+        # Add any required transforms here
+        # transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+    ])
+    dataset = ImagePathsDataset(paths_file, transform=transform)
+
+    # Assuming `augment` is a function that takes a dataset of image paths and an output directory
+    output_directory = './control_depth_variations'
+    augment(dataset, "Depth-Anything", output_directory)

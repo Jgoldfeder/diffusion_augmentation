@@ -11,3 +11,6 @@ models/
 models
 wandb/
 output/
+MidAir/
+control_depth_variations/
+
