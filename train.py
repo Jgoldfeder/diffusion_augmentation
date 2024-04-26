@@ -378,7 +378,7 @@ group.add_argument('--save-images', action='store_true', default=False,
                    help='save images of input bathes every log interval for debugging')
 group.add_argument('--pin-mem', action='store_true', default=False,
                    help='Pin CPU memory in DataLoader for more efficient (sometimes) transfer to GPU.')
-group.add_argument('--no-prefetcher', action='store_true', default=False,
+group.add_argument('--no-prefetcher', action='store_true', default=True,
                    help='disable fast prefetcher')
 group.add_argument('--output', default='', type=str, metavar='PATH',
                    help='path to output folder (default: none, current dir)')
