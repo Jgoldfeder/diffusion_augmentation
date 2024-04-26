@@ -42,6 +42,7 @@ from timm.utils import ApexScaler, NativeScaler
 import diffusion_augment
 
 from dataset_factory import create_dataset
+import dataset_factory
 from fewshot_dataset import FewShotDataset
 try:
     from apex import amp
@@ -393,6 +394,9 @@ group.add_argument('--use-multi-epochs-loader', action='store_true', default=Fal
 group.add_argument('--log-wandb', action='store_true', default=False,
                    help='log training and validation metrics to wandb')
 
+
+
+# augmentation
 group.add_argument('--diffaug', action='store_true', default=False,
                    help='Diffuson augmentation.')
 
@@ -407,6 +411,13 @@ group.add_argument('--variations', action='store_true', default=False,
 
 group.add_argument('--preprocessor', default='Canny', type=str, 
                    help='Preprocessor to use for ControlNet either Canny or Depth-Anything. Default is Canny')
+
+
+group.add_argument('--repeats', type=int, default=1, metavar='N',
+                   help='epoch repeat multiplier (number of times to repeat dataset epoch per train epoch).')
+
+group.add_argument('--classes', default=None, type=int, nargs='+', metavar="MILESTONES",
+                    help='list of decay epoch indices for multistep lr. must be increasing')
 def _parse_args():
     # Do we have a config file to parse?
     args_config, remaining = config_parser.parse_known_args()
@@ -669,7 +680,8 @@ def main():
         num_samples=args.train_num_samples,
     )
     if args.diffaug:   
-        dataset_train = diffusion_augment.augment(dataset_train, preprocessor=args.preprocessor,control_dir=args.diffaug_dir)
+        dataset_train = diffusion_augment.augment(dataset_train, preprocessor=args.preprocessor,
+                                                  control_dir=args.diffaug_dir,num_repeats=args.repeats,classes = args.classes)
         print("Augemented dataset created at ", args.diffaug_dir)
         print("Rerun the script with the new dataset without the --diffaug flag.")
         return 
@@ -697,6 +709,8 @@ def main():
             num_samples=args.val_num_samples,
         )
 
+    if args.classes is not None:
+        dataset_eval = dataset_factory.SubClassDataSet(dataset_eval,args.classes)
     # setup mixup / cutmix
     collate_fn = None
     mixup_fn = None
