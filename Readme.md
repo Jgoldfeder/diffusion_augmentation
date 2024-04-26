@@ -16,7 +16,7 @@ CUDA_VISIBLE_DEVICES=2 python train.py torch/sun397 --dataset torch/sun397 -b=12
 ## First Create the dataset
 CUDA_VISIBLE_DEVICES=1 python train.py torch/sun397 --dataset torch/sun397 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=397 --opt=sgd --weight-decay=1e-4 --log-wandb --dataset-download --experiment "test" --diffaug --diffaug-dir=./control_augmented_images_depth
 
---diffaug is a flag that tells the model to use diffusion augmentation. This will create the augmented images and store them in the directory specified by --diffaug-dir. Once the dataset is created, the images will be loaded in from this directory and the program will end.
+--diffaug is a flag that tells the model to generate diffusion augmentations. This will create the augmented images and store them in the directory specified by --diffaug-dir. Once the dataset is created, the images will be loaded in from this directory and the program will end. Do not set this if we want to train a model
 
 --diffaug-dir=./control_augmented_images_depth is the directory where the augmented images are stored. This is the directory that is created when the dataset is created.
 
@@ -29,6 +29,9 @@ CUDA_VISIBLE_DEVICES=2 python train.py torch/sun397 --dataset torch/sun397 -b=12
 
 --variations is a flag that tells the model to use the variations from the augmented dataset. If this flag is not set, the model will train only on the original images from the original dataset.
 
+--repeats number of times to repeat the data in an epoch. useful for few shot, and to make baseline comparable in terms of compute
+
+--classes
 
 #### Cifar100
 CUDA_VISIBLE_DEVICES=6 python train.py torch/cifar100 --dataset torch/cifar100 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=100 --opt=sgd --weight-decay=1e-4 --log-wandb --dataset-download --experiment "test" 
