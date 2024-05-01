@@ -342,18 +342,23 @@ def create_dataset(
 
 
 
+from torch.utils.data import Dataset
+import torchvision.transforms.functional as F
 
 class SubClassDataSet(Dataset):
     def __init__(self, ds, classes):
+        
         print(classes, " way classification")
         self.ds = ds
         self.classes = classes
         self.indices = []
         for x in range(len(ds)):
-            img, target = ds.__getitem__(x)
+            _, target = ds.__getitem__(x)
+            #print(len(ds),x)
+
             if int(target) in classes:
                 self.indices.append(x)
-        self.transform = nn.Identity()
+
 
     def __len__(self):
         return len(self.indices)
@@ -361,4 +366,6 @@ class SubClassDataSet(Dataset):
     def __getitem__(self, idx):
         idx = self.indices[idx]
         x,y = self.ds[idx]
+        x = F.to_pil_image(x)
+
         return self.transform(x),y

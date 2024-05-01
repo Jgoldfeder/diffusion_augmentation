@@ -5,7 +5,7 @@ from PIL import Image
 
 
 class FewShotDataset(Dataset):
-    def __init__(self, root_dir, num_unique_files=0, include_variations=False, transform=None):
+    def __init__(self, root_dir, num_unique_files=0, include_variations=False, transform=None,classes = None, num_repeats = 1):
         """
         Args:
             root_dir (string): Directory with all the images.
@@ -19,6 +19,9 @@ class FewShotDataset(Dataset):
         self.labels = []
 
         for class_id in sorted(os.listdir(root_dir)):  # Ensure class order is consistent
+            if not classes is None:
+                if int(class_id) not in classes:
+                    continue
             class_path = os.path.join(root_dir, class_id)
             originals = [fname for fname in os.listdir(class_path) if fname.endswith("_original.png")]
             # Sort to ensure consistency in selection
@@ -32,16 +35,18 @@ class FewShotDataset(Dataset):
             for base_name in base_names:
                 # Always include the original image
                 original_path = os.path.join(class_path, f"{base_name}_original.png")
-                self.image_paths.append(original_path)
-                self.labels.append(class_id)
+                for _ in range(num_repeats):
+                    self.image_paths.append(original_path)
+                    self.labels.append(class_id)
 
                 if include_variations:
                     # Include any variations of the selected originals
                     for variation in ['0', '1']:
                         variation_fname = f"{base_name}_{variation}.png"
                         if variation_fname in os.listdir(class_path):
-                            self.image_paths.append(os.path.join(class_path, variation_fname))
-                            self.labels.append(class_id)
+                            for _ in range(num_repeats):
+                                self.image_paths.append(os.path.join(class_path, variation_fname))
+                                self.labels.append(class_id)
 
     def __len__(self):
         return len(self.image_paths)
