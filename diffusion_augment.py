@@ -7,7 +7,7 @@ import numpy as np
 from pytorch_lightning import seed_everything
 from annotator.util import resize_image, HWC3
 from annotator.canny import CannyDetector
-from annotator.depth_anything import DepthAnythingDetector
+# from annotator.depth_anything import DepthAnythingDetector
 
 from cldm.model import create_model, load_state_dict
 from cldm.ddim_hacked import DDIMSampler
@@ -27,54 +27,58 @@ from torch.utils.data import DataLoader
 
 import tqdm
 
+#Libraries for upscaling
+import requests
+from PIL import Image
+from io import BytesIO
+from diffusers import StableDiffusionUpscalePipeline
+UPSCALING = False
+
+
 preprocessor = None
 
-
-
-
-
 num_samples = 2
-a_prompt = "clear image, photorealistic"
+a_prompt = "clear image, photorealistic, real world"
 n_prompt = "multiple, mushed, low quality, cropped, worst quality"
-image_resolution = 224  # Assuming square images for simplicity
+image_resolution = 512  # Assuming square images for simplicity
 ddim_steps = 20
 guess_mode = False
 strength = 1.0
 scale = 7.5
 seed = -1  # Use -1 for random seeds
 eta = 0.0
-detect_resolution = 256
+detect_resolution = 512
 low_threshold = 50
 high_threshold = 200
 
-class AugmentControlDataset(Dataset):
-    def __init__(self, img_dir, transform=None):
-        self.img_dir = img_dir
-        self.transform = transform
-        # Store tuples of (image_path, label)
-        self.samples = []
+# class AugmentControlDataset(Dataset):
+#     def __init__(self, img_dir, transform=None):
+#         self.img_dir = img_dir
+#         self.transform = transform
+#         # Store tuples of (image_path, label)
+#         self.samples = []
         
-        for label in os.listdir(img_dir):
-            label_path = os.path.join(img_dir, label)
-            if os.path.isdir(label_path):
-                for img_name in os.listdir(label_path):
-                    self.samples.append((os.path.join(label_path, img_name), label))
+#         for label in os.listdir(img_dir):
+#             label_path = os.path.join(img_dir, label)
+#             if os.path.isdir(label_path):
+#                 for img_name in os.listdir(label_path):
+#                     self.samples.append((os.path.join(label_path, img_name), label))
 
-    def __len__(self):
-        return len(self.samples)
+#     def __len__(self):
+#         return len(self.samples)
 
-    def __getitem__(self, idx):
-        img_path, label = self.samples[idx]
-        image = Image.open(img_path).convert('RGB')
+#     def __getitem__(self, idx):
+#         img_path, label = self.samples[idx]
+#         image = Image.open(img_path).convert('RGB')
         
-        if self.transform:
-            image = self.transform(image)
+#         if self.transform:
+#             image = self.transform(image)
         
-        return image, label
+#         return image, label
 
-    def get_image_path(self, idx):
-        # Returns the full path of the image at the given index
-        return self.samples[idx][0]
+#     def get_image_path(self, idx):
+#         # Returns the full path of the image at the given index
+#         return self.samples[idx][0]
 
 def ensure_dir(directory):
     if not os.path.exists(directory):
@@ -108,17 +112,35 @@ def add_original_image(base_dir, image_name):
     return False
 
 
+def my_collate_fn(batch):
+    transform = transforms.Compose([
+        transforms.Resize(size=(image_resolution, image_resolution), interpolation=InterpolationMode.BICUBIC),
+        transforms.ToTensor(),
+    ])
+    
+    original_images = []
+    transformed_images = []
+    labels = []
+
+    for img, label in batch:
+        original_images.append(img)  # Store original PIL image
+        transformed_images.append(transform(to_pil_image(img)))  # Apply transformation
+        labels.append(label)
+
+    return torch.stack(transformed_images), labels, original_images
+
 # control_dir = "./control_augmented_images"
-def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images"):
+def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images_test"):
     if preprocessor == "Canny":
         model_name = 'control_v11p_sd15_canny'
-    elif preprocessor == "Depth-Anything":
-        model_name = 'control_v11p_sd15_depth_anything'
+    else:
+        print("Invalid preprocessor")
+        return None
 
     control_model = create_model(f'./models/{model_name}.yaml').cpu()
     control_model.load_state_dict(load_state_dict('./models/v1-5-pruned.ckpt', location='cuda:0'), strict=False)
     control_model.load_state_dict(load_state_dict(f'./models/{model_name}.pth', location='cuda:0'), strict=False)
-    control_model = control_model.cuda()
+    control_model = control_model.to('cuda:0')
     ddim_sampler = DDIMSampler(control_model)
     
     # Instantiate the captioning model
@@ -136,34 +158,35 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
     # caption_model.to(device)
     # print(device)
     # model.to(device)
+
+    #dataset labels
+    # print("labels", dataset.dataset.labels)
     print(type(dataset))
     #print the classes in the dataset
     original_dataset = dataset.dataset
-    print(original_dataset)
+    # print(original_dataset)
     classes = original_dataset.classes
+    # print(classes)
     #get the original filename of each from the dataset
     # print(dataset.dataset.samples)
 
-
+    #print the shape of an image in the dataset
+    print(dataset.dataset[0][0].shape)
     
-    transform = transforms.Compose([
-        # Resize the image
-        transforms.Resize(size=(224, 224), interpolation=InterpolationMode.BICUBIC),
-        # Apply center crop if needed (crop to 95% of the image, then resize)
-        # transforms.CenterCrop(size=int(224 * 0.95)),
-        # Convert image to PyTorch tensor
-        transforms.ToTensor(),
-        # Normalize the image with the specified mean and std deviation
-        # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    
     count = 0
     batch_size = 10  # Define your batch size based on your hardware capabilities
-    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, collate_fn=my_collate_fn)
 
     for batch in data_loader:
-        images, labels = batch
+        images, labels, original_images = batch
+        # print(labels)
+        #show the images shape
+        # print(images.shape)
         # check the directory if it has 3 variations then did this batch already
-        label_path = os.path.join(control_dir, str(int(labels[0])))
+        num_digits = 10  # Adjust based on the maximum label number you expect
+        formatted_label = f"{labels[0]:0{num_digits}d}"  # This formats the label with leading zeros
+        label_path = os.path.join(control_dir, formatted_label)
         if check_variations(label_path, f"file{count}"):
             print("SKIPPING BATCH at filename ", label_path, f"file{count}")
             count+=batch_size
@@ -172,10 +195,11 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
 
 
         raw_images = [to_pil_image(img) for img in images]
+        # print("Raw images shape: ", raw_images.shape)
         prompts = [
             "USER: <image>\nYou are creating a prompt for a diffusion model in order to recreate this scene of a " + classes[label] + ". Describe the image in detail in as many words as possible, focusing on what colors and where objects are. Note the colors of each object when describing the scene.\nASSISTANT:"
         for label in labels] 
-        inputs = processor(prompts, images=raw_images, padding=True, return_tensors="pt").to("cuda")
+        inputs = processor(prompts, images=raw_images, padding=True, return_tensors="pt").to("cuda:0")
         # print(prompts)
         with torch.no_grad():
             generated_ids = caption_model.generate(**inputs, max_length=200)
@@ -183,7 +207,9 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
         captions = [caption.split("ASSISTANT: ")[1] if "ASSISTANT: " in caption else caption for caption in captions]
         # print(captions)
         # Process each image-caption pair in the batch
-        for img, label, caption in zip(images, labels, captions):
+        for img, label, caption, og_img in zip(images, labels, captions, original_images):
+            #device for controlnet
+            device = "cuda:0"
             # Apply the transformations
             # aug_img = transform(img)
             # Display the image in the dataset with matplotlb
@@ -195,13 +221,20 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
             # print(label)
             # print(k)
             # Create the directory for the labl
-            label_path = os.path.join(control_dir, str(int(label)))
+            num_digits = 10  # Adjust based on the maximum label number you expect
+            formatted_label = f"{label:0{num_digits}d}"  # This formats the label with leading zeros
+            label_path = os.path.join(control_dir, formatted_label)
+            # label_path = os.path.join(control_dir, str(int(label)))
             
             #Create the path if it doesn't exist
             ensure_dir(label_path)
-
+            
+            #print the image shape
+            print(img.shape)
             #convert to uint8
             img = (np.array(img) * 255).astype(np.uint8)
+
+            print("Image shape: ", img.shape)
             # H, W, C = img.shape``
             # Check if the image is in (Channels, Height, Width) format and transpose it
             if img.shape[2] not in (1, 3, 4):
@@ -222,17 +255,31 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
             #     cv2.imwrite(original_path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
             #     count+=1
             #     continue
-
-            # create variations
-            print("Creating variations for ", str(int(label)), " at ", label_path, " with filename ", f"file{count}")
-            print(caption)
-            results = process(control_model, ddim_sampler, preprocessor, img, caption, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold)
             
+
+            print("Original shape: ", og_img.shape)
             original_filename = f"file{count}_original.png"
             original_path = os.path.join(label_path, original_filename)
-            cv2.imwrite(original_path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+            og_img = og_img.numpy()
 
-            # save the 3 variations
+            # Change from (C, H, W) to (H, W, C)
+            og_img = np.transpose(og_img, (1, 2, 0))
+
+            # Convert data type to uint8
+            og_img = (og_img * 255).astype(np.uint8)
+            # print(og_img.shape)
+            # print(og_img)
+            cv2.imwrite(original_path, cv2.cvtColor(og_img, cv2.COLOR_RGB2BGR))
+            
+            # create variations
+            print("Creating variations for ", str(int(label)), " at ", label_path, " with filename ", f"file{count}")
+            caption = "Extremely Realistic, Photorealistic, Clear Image, Real World, " + caption
+            print(caption)
+            results = process(control_model, ddim_sampler, preprocessor, img, caption, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold)
+            #print the size of the image about to be saved
+            
+            
+            # save the variations
             for i, result in enumerate(results):
                 # print(result_path)
                 # print(result)
@@ -242,11 +289,12 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
                 # print("Result:",result.shape)
                 cv2.imwrite(result_path, cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
             
+            
             count+=1
 
         
-    additional_dataset = AugmentControlDataset(control_dir, transform=transform)
-    print("Control Augmented Dataset: ", len(additional_dataset))
+    # additional_dataset = AugmentControlDataset(control_dir, transform=transform)
+    # print("Control Augmented Dataset: ", len(additional_dataset))
     # Combine datasets
     # combined_dataset = ConcatDataset([dataset, additional_dataset])
     # print("Combined Dataset: ", len(combined_dataset))
@@ -257,7 +305,8 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
     del ddim_sampler
     del caption_model
     torch.cuda.empty_cache()
-    return additional_dataset
+
+    return None
 
 
 def process(model, ddim_sampler, det, input_image, prompt, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold):
@@ -268,9 +317,6 @@ def process(model, ddim_sampler, det, input_image, prompt, a_prompt, n_prompt, n
         if not isinstance(preprocessor, CannyDetector):
             preprocessor = CannyDetector()
     
-    elif det == 'DepthAnything':
-        if not isinstance(preprocessor, DepthAnythingDetector):
-            preprocessor = DepthAnythingDetector()
 
     with torch.no_grad():
         input_image = HWC3(input_image)
@@ -278,16 +324,16 @@ def process(model, ddim_sampler, det, input_image, prompt, a_prompt, n_prompt, n
         if det == 'None':
             detected_map = input_image.copy()
         else:
-            detected_map = preprocessor(resize_image(input_image, detect_resolution), low_threshold, high_threshold)
+            detected_map = preprocessor(resize_image(input_image.copy(), detect_resolution), low_threshold, high_threshold)
             # print("Detected map shape: ", detected_map.shape)
             detected_map = HWC3(detected_map)
-
+        
         img = resize_image(input_image, image_resolution)
         H, W, C = img.shape
 
         detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
 
-        control = torch.from_numpy(detected_map.copy()).float().cuda() / 255.0
+        control = torch.from_numpy(detected_map.copy()).float().to('cuda:0') / 255.0
         control = torch.stack([control for _ in range(num_samples)], dim=0)
         control = einops.rearrange(control, 'b h w c -> b c h w').clone()
 
@@ -320,19 +366,9 @@ def process(model, ddim_sampler, det, input_image, prompt, a_prompt, n_prompt, n
         x_samples = (einops.rearrange(x_samples, 'b c h w -> b h w c') * 127.5 + 127.5).cpu().numpy().clip(0, 255).astype(np.uint8)
 
         results = [x_samples[i] for i in range(num_samples)]
-    return results
+    return results #+ [detected_map]
 
 # If using depth anything to get the depth maps
-def depth_anything(img, res:int = 512, colored:bool = True, **kwargs):
-    img, remove_pad = resize_image_with_pad(img, res)
-    global model_depth_anything
-    if model_depth_anything is None:
-        model_depth_anything = DepthAnythingDetector(device)
-    return remove_pad(model_depth_anything(img, colored=colored)), True
-
-def unload_depth_anything():
-    if model_depth_anything is not None:
-        model_depth_anything.unload_model()
 
 def resize_image_with_pad(input_image, resolution, skip_hwc3=False):
     if skip_hwc3:

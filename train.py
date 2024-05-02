@@ -40,7 +40,7 @@ from timm.optim import create_optimizer_v2, optimizer_kwargs
 from timm.scheduler import create_scheduler_v2, scheduler_kwargs
 from timm.utils import ApexScaler, NativeScaler
 import diffusion_augment
-
+import diffusion_upscale
 from dataset_factory import create_dataset
 from fewshot_dataset import FewShotDataset
 try:
@@ -407,6 +407,10 @@ group.add_argument('--variations', action='store_true', default=False,
 
 group.add_argument('--preprocessor', default='Canny', type=str, 
                    help='Preprocessor to use for ControlNet either Canny or Depth-Anything. Default is Canny')
+
+group.add_argument('--diffusion-upscale', action='store_true', default=False,
+                   help='Diffusion upscale.')
+
 def _parse_args():
     # Do we have a config file to parse?
     args_config, remaining = config_parser.parse_known_args()
@@ -668,8 +672,13 @@ def main():
         target_key=args.target_key,
         num_samples=args.train_num_samples,
     )
+    if args.diffusion_upscale:
+        dataset_train = diffusion_upscale.upscale(dataset_train, args.diffaug_dir)
+        print("Upscaled dataset created at ", args.data_dir)
+        print("Rerun the script with the new dataset without the --diffusion-upscale flag.")
+        return
     if args.diffaug:   
-        dataset_train = diffusion_augment.augment(dataset_train, preprocessor=args.preprocessor,control_dir=args.diffaug_dir)
+        dataset_train = diffusion_augment.augment(dataset_train, preprocessor=args.preprocessor, control_dir=args.diffaug_dir)
         print("Augemented dataset created at ", args.diffaug_dir)
         print("Rerun the script with the new dataset without the --diffaug flag.")
         return 

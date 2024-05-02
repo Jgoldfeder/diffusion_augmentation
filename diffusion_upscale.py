@@ -1,0 +1,48 @@
+import os
+import torch
+from torchvision import transforms
+from torch.utils.data import DataLoader
+from PIL import Image
+from diffusers import StableDiffusionUpscalePipeline
+
+def ensure_dir(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+def upscale_and_save_image(image, label, pipeline, output_dir, count, classes):
+    # Convert tensor image to PIL for processing if needed
+    if isinstance(image, torch.Tensor):
+        image = transforms.ToPILImage()(image)
+
+    num_digits = 10  # Adjust based on the maximum label number you expect
+    formatted_label = f"{label:0{num_digits}d}"  # This formats the label with leading zeros
+    label_dir = os.path.join(output_dir, formatted_label)
+    
+    # Upscale the image x1
+    prompt = f"{classes[label]}"
+    print(prompt)
+    upscaled_image = pipeline(prompt=prompt, image=image).images[0]
+    ensure_dir(label_dir)
+    output_path = os.path.join(label_dir, f'upscaled_x1_{count}.png')  # Consider generating unique names
+    upscaled_image.save(output_path)
+
+    # Upscale the image x2
+    upscaled_image = pipeline(prompt=prompt, image=upscaled_image).images[0]
+    output_path = os.path.join(label_dir, f'upscaled_x2_{count}.png')  # Consider generating unique names
+
+    upscaled_image.save(output_path)
+    print(f"Saved upscaled image to {output_path}")
+
+def upscale(dataset, output_dir = "./upscale_test"):
+    # Load model and scheduler
+    model_id = "stabilityai/stable-diffusion-x4-upscaler"
+    pipeline = StableDiffusionUpscalePipeline.from_pretrained(model_id, torch_dtype=torch.float16)
+    pipeline = pipeline.to("cuda")
+
+    # print(classes)
+    # Use DataLoader to handle batching
+    # dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    # count = 0
+    # Process each batch
+    for i, (image, label) in enumerate(dataset):
+        upscale_and_save_image(image, label, pipeline, output_dir, i, dataset.classes)

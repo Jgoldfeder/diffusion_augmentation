@@ -14,14 +14,14 @@ CUDA_VISIBLE_DEVICES=2 python train.py torch/sun397 --dataset torch/sun397 -b=12
 ### Sun397 with augmentation
 
 ## First Create the dataset
-CUDA_VISIBLE_DEVICES=1 python train.py torch/sun397 --dataset torch/sun397 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=397 --opt=sgd --weight-decay=1e-4 --log-wandb --dataset-download --experiment "test" --diffaug --diffaug-dir=./control_augmented_images_depth
+CUDA_VISIBLE_DEVICES=0 python train.py torch/caltech256 --dataset torch/caltech256 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=397 --opt=sgd --weight-decay=1e-4 --log-wandb --dataset-download --experiment "test" --diffaug --diffaug-dir=./control_augmented_images_caltech256
 
 --diffaug is a flag that tells the model to use diffusion augmentation. This will create the augmented images and store them in the directory specified by --diffaug-dir. Once the dataset is created, the images will be loaded in from this directory and the program will end.
 
 --diffaug-dir=./control_augmented_images_depth is the directory where the augmented images are stored. This is the directory that is created when the dataset is created.
 
 ## Then train with the dataset
-CUDA_VISIBLE_DEVICES=2 python train.py torch/sun397 --dataset torch/sun397 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=397 --opt=sgd --weight-decay=1e-4 --log-wandb --dataset-download --experiment "fewshot-no-variations" --diffaug-dir=./control_augmented_images_depth --diffaug-fewshot=20 --variations
+CUDA_VISIBLE_DEVICES=2 python train.py torch/sun397 --dataset torch/sun397 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=397 --opt=sgd --weight-decay=1e-4 --log-wandb --dataset-download --experiment "fewshot-variations" --diffaug-dir=./control_augmented_images_depth --diffaug-fewshot=20 --variations
 
 --diffaug-dir=./control_augmented_images_depth is the directory where the augmented images are stored. The images are loaded in from there.
 

@@ -205,11 +205,13 @@ def create_dataset(
 
         
         elif name == 'sun397':
-            transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224))])
+            transform = transforms.Compose([transforms.ToTensor()])
 
             generator = torch.Generator().manual_seed(42)
             full_dataset = SUN397(**torch_kwargs,transform=transform)
-            full_dataset = torchvision.datasets.ImageFolder(root=root,transform=transform)
+            # print(full_dataset.classes)
+            # full_dataset = torchvision.datasets.ImageFolder(root=root,transform=transform)
+            # print(full_dataset.classes)
 
             train_size = int(0.8 * len(full_dataset))
             test_size = len(full_dataset) - train_size
@@ -258,9 +260,12 @@ def create_dataset(
                 if x.shape[0] == 1:
                     return x.repeat(3,1,1)
                 return x
-            transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224)),transforms.Lambda(lambda x: f(x))])
+            transform = transforms.Compose([transforms.ToTensor(),transforms.Lambda(lambda x: f(x))])
             generator = torch.Generator().manual_seed(42)
-            full_dataset = Caltech256(**torch_kwargs,transform=transform)
+            # full_dataset = Caltech256(**torch_kwargs,transform=transform)
+            print(root)
+            full_dataset = torchvision.datasets.ImageFolder(root=root+"/256_ObjectCategories/",transform=transform)
+            print(full_dataset.classes)
             train_size = int(0.8 * len(full_dataset))
             test_size = len(full_dataset) - train_size
             train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
