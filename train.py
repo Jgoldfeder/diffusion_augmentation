@@ -24,6 +24,7 @@ from collections import OrderedDict
 from contextlib import suppress
 from datetime import datetime
 from functools import partial
+import uuid
 
 import torch
 import torch.nn as nn
@@ -42,6 +43,7 @@ from timm.utils import ApexScaler, NativeScaler
 import diffusion_augment
 import diffusion_upscale
 from dataset_factory import create_dataset
+import dataset_factory
 from fewshot_dataset import FewShotDataset
 try:
     from apex import amp
@@ -378,7 +380,7 @@ group.add_argument('--save-images', action='store_true', default=False,
                    help='save images of input bathes every log interval for debugging')
 group.add_argument('--pin-mem', action='store_true', default=False,
                    help='Pin CPU memory in DataLoader for more efficient (sometimes) transfer to GPU.')
-group.add_argument('--no-prefetcher', action='store_true', default=False,
+group.add_argument('--no-prefetcher', action='store_true', default=True,
                    help='disable fast prefetcher')
 group.add_argument('--output', default='', type=str, metavar='PATH',
                    help='path to output folder (default: none, current dir)')
@@ -393,6 +395,9 @@ group.add_argument('--use-multi-epochs-loader', action='store_true', default=Fal
 group.add_argument('--log-wandb', action='store_true', default=False,
                    help='log training and validation metrics to wandb')
 
+
+
+# augmentation
 group.add_argument('--diffaug', action='store_true', default=False,
                    help='Diffuson augmentation.')
 
@@ -411,6 +416,15 @@ group.add_argument('--preprocessor', default='Canny', type=str,
 group.add_argument('--diffusion-upscale', action='store_true', default=False,
                    help='Diffusion upscale.')
 
+
+group.add_argument('--repeats', type=int, default=1, metavar='N',
+                   help='epoch repeat multiplier (number of times to repeat dataset epoch per train epoch).')
+
+group.add_argument('--classes', default=None, type=int, nargs='+', metavar="MILESTONES",
+                    help='list of decay epoch indices for multistep lr. must be increasing')
+
+group.add_argument('--name', default='', type=str, 
+                    help='experiment name')
 def _parse_args():
     # Do we have a config file to parse?
     args_config, remaining = config_parser.parse_known_args()
@@ -685,10 +699,10 @@ def main():
     
     if args.diffaug_dir != '':
         if args.diffaug_fewshot > 0:
-            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, include_variations=args.variations)
+            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, include_variations=args.variations,num_repeats=args.repeats,classes = args.classes)
             print(len(dataset_train))
         else:
-            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, include_variations=args.variations)
+            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, include_variations=args.variations,num_repeats=args.repeats,classes = args.classes)
             print(len(dataset_train))
 
     if args.val_split:
@@ -706,6 +720,9 @@ def main():
             num_samples=args.val_num_samples,
         )
 
+    if args.classes is not None:
+        print("subclass eval set")
+        dataset_eval = dataset_factory.SubClassDataSet(dataset_eval,args.classes)
     # setup mixup / cutmix
     collate_fn = None
     mixup_fn = None
@@ -830,7 +847,7 @@ def main():
     output_dir = None
     if utils.is_primary(args):
         if args.experiment:
-            exp_name = args.experiment
+            exp_name = args.experiment + args.name +  str(uuid.uuid4())
         else:
             exp_name = '-'.join([
                 datetime.now().strftime("%Y%m%d-%H%M%S"),
@@ -854,7 +871,7 @@ def main():
 
     if utils.is_primary(args) and args.log_wandb:
         if has_wandb:
-            wandb.init(project=args.experiment, config=args)
+            wandb.init(project=args.experiment, config=args,name=args.name)
         else:
             _logger.warning(
                 "You've requested to log metrics to wandb but package not found. "
@@ -1108,7 +1125,7 @@ def train_one_epoch(
             if utils.is_primary(args):
                 _logger.info(
                     f'Train: {epoch} [{update_idx:>4d}/{updates_per_epoch} '
-                    f'({100. * update_idx / (updates_per_epoch - 1):>3.0f}%)]  '
+                    #f'({100. * update_idx / (updates_per_epoch - 1):>3.0f}%)]  '
                     f'Loss: {losses_m.val:#.3g} ({losses_m.avg:#.3g})  '
                     f'Time: {update_time_m.val:.3f}s, {update_sample_count / update_time_m.val:>7.2f}/s  '
                     f'({update_time_m.avg:.3f}s, {update_sample_count / update_time_m.avg:>7.2f}/s)  '

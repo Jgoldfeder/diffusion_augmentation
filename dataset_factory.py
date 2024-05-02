@@ -209,10 +209,6 @@ def create_dataset(
 
             generator = torch.Generator().manual_seed(42)
             full_dataset = SUN397(**torch_kwargs,transform=transform)
-            # print(full_dataset.classes)
-            # full_dataset = torchvision.datasets.ImageFolder(root=root,transform=transform)
-            # print(full_dataset.classes)
-
             train_size = int(0.8 * len(full_dataset))
             test_size = len(full_dataset) - train_size
             train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
@@ -348,3 +344,31 @@ def create_dataset(
     return ds
 
 
+
+from torch.utils.data import Dataset
+import torchvision.transforms.functional as F
+
+class SubClassDataSet(Dataset):
+    def __init__(self, ds, classes):
+        
+        print(classes, " way classification")
+        self.ds = ds
+        self.classes = classes
+        self.indices = []
+        for x in range(len(ds)):
+            _, target = ds.__getitem__(x)
+            #print(len(ds),x)
+
+            if int(target) in classes:
+                self.indices.append(x)
+
+
+    def __len__(self):
+        return len(self.indices)
+
+    def __getitem__(self, idx):
+        idx = self.indices[idx]
+        x,y = self.ds[idx]
+        x = F.to_pil_image(x)
+
+        return self.transform(x),y
