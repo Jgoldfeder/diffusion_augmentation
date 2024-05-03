@@ -37,48 +37,19 @@ UPSCALING = False
 
 preprocessor = None
 
-num_samples = 2
+
 a_prompt = "clear image, photorealistic, real world"
 n_prompt = "multiple, mushed, low quality, cropped, worst quality"
-image_resolution = 512  # Assuming square images for simplicity
+
 ddim_steps = 20
 guess_mode = False
 strength = 1.0
 scale = 7.5
 seed = -1  # Use -1 for random seeds
 eta = 0.0
-detect_resolution = 512
+
 low_threshold = 50
 high_threshold = 200
-
-# class AugmentControlDataset(Dataset):
-#     def __init__(self, img_dir, transform=None):
-#         self.img_dir = img_dir
-#         self.transform = transform
-#         # Store tuples of (image_path, label)
-#         self.samples = []
-        
-#         for label in os.listdir(img_dir):
-#             label_path = os.path.join(img_dir, label)
-#             if os.path.isdir(label_path):
-#                 for img_name in os.listdir(label_path):
-#                     self.samples.append((os.path.join(label_path, img_name), label))
-
-#     def __len__(self):
-#         return len(self.samples)
-
-#     def __getitem__(self, idx):
-#         img_path, label = self.samples[idx]
-#         image = Image.open(img_path).convert('RGB')
-        
-#         if self.transform:
-#             image = self.transform(image)
-        
-#         return image, label
-
-#     def get_image_path(self, idx):
-#         # Returns the full path of the image at the given index
-#         return self.samples[idx][0]
 
 def ensure_dir(directory):
     if not os.path.exists(directory):
@@ -130,7 +101,14 @@ def my_collate_fn(batch):
     return torch.stack(transformed_images), labels, original_images
 
 # control_dir = "./control_augmented_images"
-def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images_test"):
+def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images_test", variations = 50, res = 512, images_per_class = 0):
+    global image_resolution
+    global num_samples
+
+    image_resolution = res
+    
+    num_samples = variations
+
     if preprocessor == "Canny":
         model_name = 'control_v11p_sd15_canny'
     else:
@@ -152,24 +130,11 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
     model_id = "llava-hf/llava-1.5-7b-hf"
     processor = AutoProcessor.from_pretrained(model_id)
     caption_model = LlavaForConditionalGeneration.from_pretrained(model_id, quantization_config=quantization_config, device_map="auto")
-    # device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    #choose specific cuda device
-    # device = torch.device("cuda:1")
-    # caption_model.to(device)
-    # print(device)
-    # model.to(device)
 
-    #dataset labels
-    # print("labels", dataset.dataset.labels)
-    print(type(dataset))
-    #print the classes in the dataset
     original_dataset = dataset.dataset
-    # print(original_dataset)
     classes = original_dataset.classes
-    # print(classes)
-    #get the original filename of each from the dataset
-    # print(dataset.dataset.samples)
 
+    #get the original filename of each from the dataset
     #print the shape of an image in the dataset
     print(dataset.dataset[0][0].shape)
     
@@ -200,26 +165,15 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
             "USER: <image>\nYou are creating a prompt for a diffusion model in order to recreate this scene of a " + classes[label] + ". Describe the image in detail in as many words as possible, focusing on what colors and where objects are. Note the colors of each object when describing the scene.\nASSISTANT:"
         for label in labels] 
         inputs = processor(prompts, images=raw_images, padding=True, return_tensors="pt").to("cuda:0")
-        # print(prompts)
+
         with torch.no_grad():
             generated_ids = caption_model.generate(**inputs, max_length=200)
         captions = processor.batch_decode(generated_ids, skip_special_tokens=True)
         captions = [caption.split("ASSISTANT: ")[1] if "ASSISTANT: " in caption else caption for caption in captions]
-        # print(captions)
+
         # Process each image-caption pair in the batch
         for img, label, caption, og_img in zip(images, labels, captions, original_images):
-            #device for controlnet
-            device = "cuda:0"
-            # Apply the transformations
-            # aug_img = transform(img)
-            # Display the image in the dataset with matplotlb
             
-            # print(type(img))
-            # print(type(label))
-            # # print(type(k))
-            # print(img)
-            # print(label)
-            # print(k)
             # Create the directory for the labl
             num_digits = 10  # Adjust based on the maximum label number you expect
             formatted_label = f"{label:0{num_digits}d}"  # This formats the label with leading zeros
@@ -228,7 +182,14 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
             
             #Create the path if it doesn't exist
             ensure_dir(label_path)
-            
+
+            # Check if we want to only augment a certain number of images per class
+            if images_per_class > 0:
+                files_in_dir = os.listdir(label_path)
+                print("Files in dir: ", len(files_in_dir))
+                if len(files_in_dir)/(variations + 1) >= images_per_class:
+                    continue
+
             #print the image shape
             print(img.shape)
             #convert to uint8
@@ -243,18 +204,7 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
                     img = img.transpose(1, 2, 0)  # Convert to (Height, Width, Channels)
                 else:
                     raise AssertionError("Image channels must be 1, 3, or 4.")
-            
-
-            
-            # if add_original_image(label_path, f"file{count}"):
-            #     # save the original image
-                
-            #     original_filename = f"file{count}_original.png"
-            #     print("Saving original image for ", str(int(label)), " at ", label_path, " with filename ", original_filename)
-            #     original_path = os.path.join(label_path, original_filename)
-            #     cv2.imwrite(original_path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-            #     count+=1
-            #     continue
+        
             
 
             print("Original shape: ", og_img.shape)
@@ -275,7 +225,7 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
             print("Creating variations for ", str(int(label)), " at ", label_path, " with filename ", f"file{count}")
             caption = "Extremely Realistic, Photorealistic, Clear Image, Real World, " + caption
             print(caption)
-            results = process(control_model, ddim_sampler, preprocessor, img, caption, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold)
+            results = process(control_model, ddim_sampler, preprocessor, img, caption, a_prompt, n_prompt, num_samples, image_resolution, image_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold)
             #print the size of the image about to be saved
             
             

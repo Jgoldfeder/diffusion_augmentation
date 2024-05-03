@@ -18,3 +18,10 @@ models/
 models
 wandb/
 output/
+
+archive.zip
+cifar100-128/
+cifar100-32/
+cifar100-512/
+cifar100-64/
+control_augmented_images_sun397_512fewshot/

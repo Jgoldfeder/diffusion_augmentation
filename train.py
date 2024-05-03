@@ -405,7 +405,7 @@ group.add_argument('--diffaug-dir', default='', type=str,
                    help='path to folder with diffusion augmentation files')
 
 group.add_argument('--diffaug-fewshot', default=0, type=int,
-                   help='Number of fewshot images if you want to use (default is off).')
+                   help='Number of fewshot images if you want to augment/use depending on whether --diffaug flag is present (default is off).')
 
 group.add_argument('--variations', action='store_true', default=False,
                    help='Use variations in fewshot dataset.')
@@ -416,6 +416,10 @@ group.add_argument('--preprocessor', default='Canny', type=str,
 group.add_argument('--diffusion-upscale', action='store_true', default=False,
                    help='Diffusion upscale.')
 
+group.add_argument('--diffaug-resolutions', default=512, type=int,
+                   help='Resolutions for diffusion augmentation.')
+
+
 
 group.add_argument('--repeats', type=int, default=1, metavar='N',
                    help='epoch repeat multiplier (number of times to repeat dataset epoch per train epoch).')
@@ -425,6 +429,7 @@ group.add_argument('--classes', default=None, type=int, nargs='+', metavar="MILE
 
 group.add_argument('--name', default='', type=str, 
                     help='experiment name')
+
 def _parse_args():
     # Do we have a config file to parse?
     args_config, remaining = config_parser.parse_known_args()
@@ -692,7 +697,7 @@ def main():
         print("Rerun the script with the new dataset without the --diffusion-upscale flag.")
         return
     if args.diffaug:   
-        dataset_train = diffusion_augment.augment(dataset_train, preprocessor=args.preprocessor, control_dir=args.diffaug_dir)
+        dataset_train = diffusion_augment.augment(dataset_train, preprocessor=args.preprocessor, control_dir=args.diffaug_dir, images_per_class=args.diffaug_fewshot, res=args.diffaug_resolutions)
         print("Augemented dataset created at ", args.diffaug_dir)
         print("Rerun the script with the new dataset without the --diffaug flag.")
         return 
