@@ -19,25 +19,9 @@ def upscale_and_save_image(image, label, pipeline, output_dir, count, classes):
     label_dir = os.path.join(output_dir, formatted_label)
     
     #classes of cifar 100
-    cifar100_classes = [
-        "apple", "aquarium fish", "baby", "bear", "beaver", "bed", "bee", "beetle",
-        "bicycle", "bottle", "bowl", "boy", "bridge", "bus", "butterfly", "camel",
-        "can", "castle", "caterpillar", "cattle", "chair", "chimpanzee", "clock",
-        "cloud", "cockroach", "couch", "crab", "crocodile", "cup", "dinosaur",
-        "dolphin", "elephant", "flatfish", "forest", "fox", "girl", "hamster", "house",
-        "kangaroo", "keyboard", "lamp", "lawn-mower", "leopard", "lion", "lizard",
-        "lobster", "man", "maple tree", "motorcycle", "mountain", "mouse", "mushroom",
-        "oak tree", "orange", "orchid", "otter", "palm tree", "pear", "pickup truck",
-        "pine tree", "plain", "plate", "poppy", "porcupine", "possum", "rabbit",
-        "raccoon", "ray", "road", "rocket", "rose", "sea", "seal", "shark", "shrew",
-        "skunk", "skyscraper", "snail", "snake", "spider", "squirrel", "streetcar",
-        "sunflower", "sweet pepper", "table", "tank", "telephone", "television",
-        "tiger", "tractor", "train", "trout", "tulip", "turtle", "wardrobe", "whale",
-        "willow tree", "wolf", "woman", "worm"
-    ]
-    print(len(cifar100_classes))
+
     # Upscale the image x1
-    prompt = f"Extremely Realistic, Photorealistic, Clear Image, Real World, {cifar100_classes[label]}"
+    prompt = f"Extremely Realistic, Photorealistic, Clear Image, Real World, {classes[label]}"
     print(prompt)
     upscaled_image = pipeline(prompt=prompt, image=image).images[0]
     ensure_dir(label_dir)

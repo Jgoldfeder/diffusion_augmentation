@@ -4,8 +4,10 @@ from torch.utils.data import Dataset
 from PIL import Image
 
 
+# for one shot, specify whether we can use the nth image in the list
+# specify the number of variations include variations
 class FewShotDataset(Dataset):
-    def __init__(self, root_dir, num_unique_files=0, include_variations=False, transform=None,classes = None, num_repeats = 1):
+    def __init__(self, root_dir, num_unique_files=0, num_variations=0, transform=None, classes = None, num_repeats = 1, start_idx = 0):
         """
         Args:
             root_dir (string): Directory with all the images.
@@ -27,11 +29,15 @@ class FewShotDataset(Dataset):
             # Sort to ensure consistency in selection
             originals.sort()
 
+            # Start at nth image
+            originals = originals[start_idx:]
+
+            # Select the first n unique files
             selected_originals = originals[:num_unique_files] if num_unique_files > 0 else originals
 
             # Build a base name list from selected originals to ensure matching variations are found
             base_names = ["_".join(fname.split("_")[:-1]) for fname in selected_originals]
-
+            print(base_names)
             for base_name in base_names:
                 # Always include the original image
                 original_path = os.path.join(class_path, f"{base_name}_original.png")
@@ -39,9 +45,11 @@ class FewShotDataset(Dataset):
                     self.image_paths.append(original_path)
                     self.labels.append(class_id)
 
-                if include_variations:
+                if num_variations > 0:
                     # Include any variations of the selected originals
-                    for variation in ['0', '1']:
+                    # create a list of variation numbers to include
+                    variations = [str(i) for i in range(num_variations)]
+                    for variation in variations:
                         variation_fname = f"{base_name}_{variation}.png"
                         if variation_fname in os.listdir(class_path):
                             for _ in range(num_repeats):
@@ -65,16 +73,19 @@ class FewShotDataset(Dataset):
 
 # Check if the two datasets have the same original images
 if __name__ == "__main__":
-    no_variations = FewShotDataset(root_dir="./control_augmented_images", num_unique_files=5, include_variations=False)
+    no_variations = FewShotDataset(root_dir="./control_augmented_images_sun397_512", num_unique_files=5, num_variations=2, start_idx=1)
     #print the number of classes and images
     print(len(no_variations))
     #display the image
     print(no_variations[0])
 
-    variations = FewShotDataset(root_dir="./control_augmented_images", num_unique_files=5, include_variations=True)
+    variations = FewShotDataset(root_dir="./control_augmented_images_sun397_512", num_unique_files=5, num_variations=2)
     #print the number of classes and images
     print(len(variations))
     print(variations[0])
+
+    # check if the start index is working with our existing datasets
+    
 
     # Assuming you've already initialized `no_variations` and `variations` datasets
 

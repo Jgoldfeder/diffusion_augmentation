@@ -37,7 +37,6 @@ UPSCALING = False
 
 preprocessor = None
 
-
 a_prompt = "clear image, photorealistic, real world"
 n_prompt = "multiple, mushed, low quality, cropped, worst quality"
 
@@ -101,7 +100,7 @@ def my_collate_fn(batch):
     return torch.stack(transformed_images), labels, original_images
 
 # control_dir = "./control_augmented_images"
-def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images_test", variations = 50, res = 512, images_per_class = 0):
+def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images_test", variations = 50, res = 512, images_per_class = 10):
     global image_resolution
     global num_samples
 
@@ -130,7 +129,7 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
     model_id = "llava-hf/llava-1.5-7b-hf"
     processor = AutoProcessor.from_pretrained(model_id)
     caption_model = LlavaForConditionalGeneration.from_pretrained(model_id, quantization_config=quantization_config, device_map="auto")
-
+   
     original_dataset = dataset.dataset
     classes = original_dataset.classes
 
@@ -144,6 +143,9 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, collate_fn=my_collate_fn)
 
     for batch in data_loader:
+        
+        print("Variation count: ", variations)
+        print("Images per class: ", images_per_class)
         images, labels, original_images = batch
         # print(labels)
         #show the images shape
@@ -170,7 +172,9 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
             generated_ids = caption_model.generate(**inputs, max_length=200)
         captions = processor.batch_decode(generated_ids, skip_special_tokens=True)
         captions = [caption.split("ASSISTANT: ")[1] if "ASSISTANT: " in caption else caption for caption in captions]
-
+        # del caption_model
+        # del processor
+        # torch.cuda.empty_cache()
         # Process each image-caption pair in the batch
         for img, label, caption, og_img in zip(images, labels, captions, original_images):
             
@@ -196,7 +200,7 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
             img = (np.array(img) * 255).astype(np.uint8)
 
             print("Image shape: ", img.shape)
-            # H, W, C = img.shape``
+            # H, W, C = img.shape
             # Check if the image is in (Channels, Height, Width) format and transpose it
             if img.shape[2] not in (1, 3, 4):
                 # Assuming the input is in (Channels, Height, Width) format
@@ -253,7 +257,7 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
     #clean up the models from teh gpu
     del control_model
     del ddim_sampler
-    del caption_model
+    
     torch.cuda.empty_cache()
 
     return None

@@ -12,6 +12,7 @@ cifar10_upscaled/
 control_augmented_images_caltech256_512/
 control_augmented_images_sun397_224/
 control_augmented_images_sun397_512/
+control_augmented_images_caltech256_512fewshot/
 control_depth_variations.zip
 control_depth_variations/
 models/

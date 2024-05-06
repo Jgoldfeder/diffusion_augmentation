@@ -697,7 +697,7 @@ def main():
         print("Rerun the script with the new dataset without the --diffusion-upscale flag.")
         return
     if args.diffaug:   
-        dataset_train = diffusion_augment.augment(dataset_train, preprocessor=args.preprocessor, control_dir=args.diffaug_dir, images_per_class=args.diffaug_fewshot, res=args.diffaug_resolutions)
+        dataset_train = diffusion_augment.augment(dataset_train, preprocessor=args.preprocessor, control_dir=args.diffaug_dir, variations=args.diffaug_fewshot, res=args.diffaug_resolutions)
         print("Augemented dataset created at ", args.diffaug_dir)
         print("Rerun the script with the new dataset without the --diffaug flag.")
         return 

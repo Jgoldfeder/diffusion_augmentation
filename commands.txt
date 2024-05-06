@@ -1,0 +1,7 @@
+
+CUDA_VISIBLE_DEVICES=1 python3 train.py torch/caltech256 --dataset torch/caltech256 -b=64 --img-size=224 --epochs=50 --color-jitter=0  --lr=2e-4 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=257 --opt=adam --weight-decay=1e-4 --log-wandb --dataset-download --experiment caltech256_aug --diffaug-dir=/home/augmented_data/control_augmented_images_caltech256_512  --name "baseline new DS"
+
+
+
+CUDA_VISIBLE_DEVICES=1 python3 train.py torch/caltech256 --dataset torch/caltech256 -b=64 --img-size=224 --epochs=50 --color-jitter=0  --lr=2e-4 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=257 --opt=adam --weight-decay=1e-4 --log-wandb --dataset-download --experiment caltech256_aug --name "baseline original DS"
+

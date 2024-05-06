@@ -256,7 +256,7 @@ def create_dataset(
                 if x.shape[0] == 1:
                     return x.repeat(3,1,1)
                 return x
-            transform = transforms.Compose([transforms.ToTensor(),transforms.Lambda(lambda x: f(x))])
+            transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224)),transforms.Lambda(lambda x: f(x))])
             generator = torch.Generator().manual_seed(42)
             # full_dataset = Caltech256(**torch_kwargs,transform=transform)
             print(root)
