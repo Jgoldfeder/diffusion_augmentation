@@ -252,13 +252,17 @@ def create_dataset(
                 ds = Wrapper(test_dataset)
 
         elif name == 'caltech256':
+            import torchvision.transforms.functional as F
+
             def f(x):
+                if not torch.is_tensor(x)
+                    x=F.to_tensor(x)
                 if x.shape[0] == 1:
                     return x.repeat(3,1,1)
-                return x
+                return F.to_pil_image(x)
             transform = transforms.Compose([transforms.Lambda(lambda x: f(x))])
             generator = torch.Generator().manual_seed(42)
-            full_dataset = Caltech256(**torch_kwargs,transform=None)
+            full_dataset = Caltech256(**torch_kwargs,transform=transform)
             print(root)
             #full_dataset = torchvision.datasets.ImageFolder(root=root+"/256_ObjectCategories/",transform=transform)
             #print(full_dataset.classes)
