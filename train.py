@@ -113,7 +113,7 @@ def modify_args(args):
     if "pretrain" in args.recipe:
         args.epochs=50         
         args.warmup_epochs=3
-
+        args.pretrained = True
         if "sgd" in args.recipe:
             args.opt="SGD"
             args.min_lr=1e-7
@@ -129,7 +129,7 @@ def modify_args(args):
 
     if "noaug" in args.recipe:
         args.no_aug=True
-    
+    return args
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 
 # Dataset parameters
