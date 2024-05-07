@@ -478,6 +478,8 @@ group.add_argument('--name', default='', type=str,
                     help='experiment name')
 group.add_argument('--recipe', default='', type=str, 
                     help='recipe shorthand')
+group.add_argument('--attack', action='store_true', default=False,
+                   help='FGSM attack.')
 def _parse_args():
     # Do we have a config file to parse?
     args_config, remaining = config_parser.parse_known_args()
