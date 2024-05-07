@@ -391,4 +391,4 @@ class Wrapper(Dataset):
         if self.transform is None:
             return self.ds.__getitem__(idx)
         img,lbl = self.ds.__getitem__(idx)
-        return self.transform(img),lbl
+        return self.transform(F.to_pil_image(img)),lbl
