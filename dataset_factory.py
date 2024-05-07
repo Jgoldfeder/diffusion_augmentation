@@ -213,9 +213,9 @@ def create_dataset(
             test_size = len(full_dataset) - train_size
             train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
             if split in _TRAIN_SYNONYM:
-                ds = train_dataset
+                ds = Wrapper(train_dataset)
             elif split in _EVAL_SYNONYM:
-                ds = test_dataset       
+                ds = Wrapper(test_dataset)       
         elif name == 'svhn':
             transform = transforms.Compose([transforms.ToTensor()])
 
@@ -240,23 +240,23 @@ def create_dataset(
                 if x.shape[0] == 1:
                     return x.repeat(3,1,1)
                 return x
-            transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224)),transforms.Lambda(lambda x: f(x))])
+            transform = transforms.Compose([transforms.ToTensor(),transforms.Lambda(lambda x: f(x))])
             generator = torch.Generator().manual_seed(42)
             full_dataset = Caltech101(**torch_kwargs,transform=transform)
             train_size = int(0.8 * len(full_dataset))
             test_size = len(full_dataset) - train_size
             train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
             if split in _TRAIN_SYNONYM:
-                ds = train_dataset
+                ds = Wrapper(train_dataset)
             elif split in _EVAL_SYNONYM:
-                ds = test_dataset
+                ds = Wrapper(test_dataset)
 
         elif name == 'caltech256':
             def f(x):
                 if x.shape[0] == 1:
                     return x.repeat(3,1,1)
                 return x
-            transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224)),transforms.Lambda(lambda x: f(x))])
+            transform = transforms.Compose([transforms.ToTensor(),transforms.Lambda(lambda x: f(x))])
             generator = torch.Generator().manual_seed(42)
             # full_dataset = Caltech256(**torch_kwargs,transform=transform)
             print(root)
@@ -266,9 +266,9 @@ def create_dataset(
             test_size = len(full_dataset) - train_size
             train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
             if split in _TRAIN_SYNONYM:
-                ds = train_dataset
+                ds = Wrapper(train_dataset)
             elif split in _EVAL_SYNONYM:
-                ds = test_dataset
+                ds = Wrapper(test_dataset)
         elif name == 'dtd':
             transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224)),transforms.Lambda(lambda x: f(x))])
 
@@ -372,3 +372,19 @@ class SubClassDataSet(Dataset):
         x = F.to_pil_image(x)
 
         return self.transform(x),y
+
+
+from torch.utils.data import Dataset
+class Wrapper(Dataset):
+    def __init__(self, ds,transform=None):
+        self.ds = ds
+        self.transform=transform
+        
+    def __len__(self):
+        return len(self.ds)
+
+    def __getitem__(self, idx):
+        if self.transform is None:
+            return self.ds.__getitem__(idx)
+        img,lbl = self.ds.__getitem__(idx)
+        return self.transform(img),lbl
