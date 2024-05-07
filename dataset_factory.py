@@ -258,7 +258,7 @@ def create_dataset(
                 return x
             transform = transforms.Compose([transforms.Lambda(lambda x: f(x))])
             generator = torch.Generator().manual_seed(42)
-            full_dataset = Caltech256(**torch_kwargs,transform=transform)
+            full_dataset = Caltech256(**torch_kwargs,transform=None)
             print(root)
             #full_dataset = torchvision.datasets.ImageFolder(root=root+"/256_ObjectCategories/",transform=transform)
             #print(full_dataset.classes)
