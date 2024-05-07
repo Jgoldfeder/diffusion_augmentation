@@ -255,7 +255,7 @@ def create_dataset(
             import torchvision.transforms.functional as F
 
             def f(x):
-                if not torch.is_tensor(x)
+                if not torch.is_tensor(x):
                     x=F.to_tensor(x)
                 if x.shape[0] == 1:
                     return x.repeat(3,1,1)
