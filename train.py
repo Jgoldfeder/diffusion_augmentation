@@ -96,7 +96,7 @@ def modify_args(args):
     args.train_interpolation="bilinear"
     args.smoothing=0.1
     args.weight_decay=1e-4
-
+    args.checkpoint_hist=1
     if "scratch" in args.recipe:
         args.epochs=150         
         args.warmup_epochs=0
@@ -453,8 +453,8 @@ group.add_argument('--diffaug-dir', default='', type=str,
 group.add_argument('--diffaug-fewshot', default=0, type=int,
                    help='Number of fewshot images if you want to augment/use depending on whether --diffaug flag is present (default is off).')
 
-group.add_argument('--variations', action='store_true', default=False,
-                   help='Use variations in fewshot dataset.')
+group.add_argument('--variations', type=int, default=0, metavar='S',
+                   help='random seed (default: 42)')
 
 group.add_argument('--preprocessor', default='Canny', type=str, 
                    help='Preprocessor to use for ControlNet either Canny or Depth-Anything. Default is Canny')
@@ -751,10 +751,10 @@ def main():
     
     if args.diffaug_dir != '':
         if args.diffaug_fewshot > 0:
-            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, include_variations=args.variations,num_repeats=args.repeats,classes = args.classes)
+            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, num_variations=args.variations,num_repeats=args.repeats,classes = args.classes)
             print(len(dataset_train))
         else:
-            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, include_variations=args.variations,num_repeats=args.repeats,classes = args.classes)
+            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, num_variations=args.variations,num_repeats=args.repeats,classes = args.classes)
             print(len(dataset_train))
 
     if args.val_split:

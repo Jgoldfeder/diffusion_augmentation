@@ -179,3 +179,21 @@ then write -d "torch/<dataset_name>"
 
 To see all valid models we can use, run:
 timm.list_models()
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Caltech256 SCratch Shorthand
+CUDA_VISIBLE_DEVICES=0 python3 train.py torch/caltech256 --dataset torch/caltech256  --model=resnet50  --num-classes=257  --log-wandb --experiment "caltech256-recipe" --diffaug-dir=/home/augmented_data/control_augmented_images_caltech256_512  --variations 2 --repeats 1 --name "exp1x sgd-scratch-fullaug" --recipe "sgd-scratch-fullaug"
+
+CUDA_VISIBLE_DEVICES=1 python3 train.py torch/caltech256 --dataset torch/caltech256  --model=resnet50  --num-classes=257  --log-wandb --experiment "caltech256-recipe" --diffaug-dir=/home/augmented_data/control_augmented_images_caltech256_512  --repeats 3 --name "3x sgd-scratch-fullaug" --recipe "sgd-scratch-fullaug"
+
