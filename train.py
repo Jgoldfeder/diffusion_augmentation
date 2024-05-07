@@ -25,6 +25,7 @@ from contextlib import suppress
 from datetime import datetime
 from functools import partial
 import uuid
+import attack
 
 import torch
 import torch.nn as nn
@@ -860,6 +861,21 @@ def main():
             device=device,
             use_prefetcher=args.prefetcher,
         )
+        loader_attack = create_loader(
+            dataset_eval,
+            input_size=data_config['input_size'],
+            batch_size=1,
+            is_training=False,
+            interpolation=data_config['interpolation'],
+            mean=data_config['mean'],
+            std=data_config['std'],
+            num_workers=eval_workers,
+            distributed=args.distributed,
+            crop_pct=data_config['crop_pct'],
+            pin_memory=args.pin_mem,
+            device=device,
+            use_prefetcher=args.prefetcher,
+        )
 
     # setup loss function
     if args.jsd_loss:
@@ -1039,7 +1055,25 @@ def main():
                 'train': train_metrics,
                 'validation': eval_metrics,
             })
-
+            if epoch==num_epochs-1 and args.attack:
+                epsilons = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
+                num_steps = 5
+                device =torch.device('cuda')
+                def log_(name,val,eps):
+                    wandb.log({name: val, 'eps': eps,})
+                    
+                for epsilon in epsilons:
+                    alpha = epsilon / num_steps
+                    
+                    print("attack!")
+                    val, _ = attack.test_fgsm_untargeted(model, device, loader_attack, epsilon, mels=None)
+                    log_("test_fgsm_untargeted",val,epsilon)
+                    val, _ = attack.test_fgsm_targeted(model,args.num_classes, device, loader_attack, epsilon, mels=None)
+                    log_("test_fgsm_targeted",val,epsilon)
+                    val, _ = attack.test_iterative_untargeted(model, device, loader_attack, mels=None, epsilon=epsilon, alpha=alpha, num_steps=num_steps)
+                    log_("test_iterative_untargeted",val,epsilon)
+                    val, _ = attack.test_iterative_targeted(model, args.num_classes, device, loader_attack, mels=None, epsilon=epsilon, alpha=alpha, num_steps=num_steps)
+                    log_("test_iterative_targeted",val,epsilon)   
     except KeyboardInterrupt:
         pass
 
