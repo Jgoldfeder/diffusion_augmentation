@@ -83,7 +83,53 @@ config_parser = parser = argparse.ArgumentParser(description='Training Config', 
 parser.add_argument('-c', '--config', default='', type=str, metavar='FILE',
                     help='YAML config file specifying default arguments')
 
+def modify_args(args):
+    # give shorthand for different recipes
+    # axes are [scratch, pretrain], [SGD, ADAM], [noaug, fullaug]
+        
+    args.batch_size = 64
+    args.img_size=224    
+    args.sched="cosine"
+    args.model_ema=True
+    args.model_ema_decay=0.995  
+    args.amp=True
+    args.train_interpolation="bilinear"
+    args.smoothing=0.1
+    args.weight_decay=1e-4
 
+    if "scratch" in args.recipe:
+        args.epochs=150         
+        args.warmup_epochs=0
+
+        if "sgd" in args.recipe:
+            args.opt="SGD"
+            args.min_lr=1e-4
+            args.lr = 1e-2
+        if "adam" in args.recipe:
+            args.opt="Adam"
+            args.min_lr=1e-5
+            args.lr = 1e-3       
+
+    if "pretrain" in args.recipe:
+        args.epochs=50         
+        args.warmup_epochs=3
+
+        if "sgd" in args.recipe:
+            args.opt="SGD"
+            args.min_lr=1e-7
+            args.lr = 1e-2
+        if "adam" in args.recipe:
+            args.opt="Adam"
+            args.min_lr=1e-8
+            args.lr =2e-4   
+    
+    if "fullaug" in args.recipe:
+        args.reprob=0.5
+        args.aa="v0"
+
+    if "noaug" in args.recipe:
+        args.no_aug=True
+    
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 
 # Dataset parameters
@@ -429,7 +475,8 @@ group.add_argument('--classes', default=None, type=int, nargs='+', metavar="MILE
 
 group.add_argument('--name', default='', type=str, 
                     help='experiment name')
-
+group.add_argument('--recipe', default='', type=str, 
+                    help='recipe shorthand')
 def _parse_args():
     # Do we have a config file to parse?
     args_config, remaining = config_parser.parse_known_args()
@@ -450,7 +497,7 @@ def _parse_args():
 def main():
     utils.setup_default_logging()
     args, args_text = _parse_args()
-
+    args = modify_args(args)
     if args.device_modules:
         for module in args.device_modules:
             importlib.import_module(module)
