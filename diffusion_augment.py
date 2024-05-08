@@ -32,6 +32,11 @@ import requests
 from PIL import Image
 from io import BytesIO
 from diffusers import StableDiffusionUpscalePipeline
+
+
+from torch.utils.data import Sampler
+
+
 UPSCALING = False
 
 
@@ -68,19 +73,6 @@ def check_variations(base_dir, image_name):
             variations.append(f)
     return len(variations) == num_samples + 1
 
-# Function to add the original image if it doesn't exist after checking variations
-def add_original_image(base_dir, image_name):
-    no_ext_name = image_name
-    variations = []
-    # original_filename = image_name + "_original.png"
-    ensure_dir(base_dir)
-    for f in os.listdir(base_dir):
-        if f.startswith(no_ext_name):
-            variations.append(f)
-    if len(variations) == num_samples:
-        return True
-    return False
-
 
 def my_collate_fn(batch):
     transform = transforms.Compose([
@@ -91,16 +83,31 @@ def my_collate_fn(batch):
     original_images = []
     transformed_images = []
     labels = []
-
-    for img, label in batch:
+    image_names = []
+    for img, label, image_name in batch:
         original_images.append(img)  # Store original PIL image
         transformed_images.append(transform(to_pil_image(img)))  # Apply transformation
+        image_names.append(image_name)
         labels.append(label)
 
-    return torch.stack(transformed_images), labels, original_images
+    return torch.stack(transformed_images), labels, original_images, image_names
+
+class ReverseSampler(Sampler):
+    """Sampler that returns data indices in reverse order."""
+    
+    def __init__(self, data_source):
+        self.data_source = data_source
+
+    def __iter__(self):
+        # Return indices from last to first
+        return iter(range(len(self.data_source) - 1, -1, -1))
+
+    def __len__(self):
+        return len(self.data_source)
+    
 
 # control_dir = "./control_augmented_images"
-def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images_test", variations = 50, res = 512, images_per_class = 10):
+def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images_test", variations = 2, res = 512, images_per_class = 10, reverse = False):
     global image_resolution
     global num_samples
 
@@ -132,31 +139,51 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
    
     original_dataset = dataset.dataset
     classes = original_dataset.classes
-
+    # classes = [
+    #     "apples", "aquarium_fish", "baby", "bear", "beaver", "bed", "bee", "beetle", "bicycle", "bottles",
+    #     "bowls", "boy", "bridge", "bus", "butterfly", "camel", "cans", "castle", "caterpillar", "cattle",
+    #     "chair", "chimpanzee", "clock", "cloud", "cockroach",  "computer keyboard", "couch", "crab", "crocodile", "cups", "dinosaur",
+    #     "dolphin", "elephant", "flatfish", "forest", "fox", "girl", "hamster", "house", "kangaroo",
+    #     "lamp", "lawn_mower", "leopard", "lion", "lizard", "lobster", "man", "maple_tree", "motorcycle", "mountain",
+    #     "mouse", "mushrooms", "oak_tree", "oranges", "orchid", "otter", "palm_tree", "pears", "pickup_truck", "pine_tree",
+    #     "plain", "plates", "poppies", "porcupine", "possum", "rabbit", "raccoon", "ray", "road", "rocket",
+    #     "roses", "sea", "seal", "shark", "shrew", "skunk", "skyscraper", "snail", "snake", "spider",
+    #     "squirrel", "streetcar", "sunflowes", "sweet_peppers", "table", "tank", "telephone", "television", "tiger", "tractor",
+    #     "train", "trout", "tulips", "turtle", "wardrobe", "whale", "willow_tree", "wolf", "woman", "worm"
+    # ]
     #get the original filename of each from the dataset
     #print the shape of an image in the dataset
-    print(dataset.dataset[0][0].shape)
+    # print(dataset.dataset[0][0].shape)
     
+    # ['110_0079.jpg', '081_0018.jpg', '064_0062.jpg', '148_0113.jpg', '193_0060.jpg', '240_0162.jpg', '141_0048.jpg', '129_0098.jpg', '221_0043.jpg', '105_0251.jpg']
     
-    count = 0
     batch_size = 10  # Define your batch size based on your hardware capabilities
-    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, collate_fn=my_collate_fn)
+
+    # Start from the back or not
+    if reverse:
+        reverse_sampler = ReverseSampler(dataset)
+        data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, collate_fn=my_collate_fn, sampler=reverse_sampler)
+    else:
+        data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, collate_fn=my_collate_fn)
 
     for batch in data_loader:
         
         print("Variation count: ", variations)
         print("Images per class: ", images_per_class)
-        images, labels, original_images = batch
+        images, labels, original_images, image_names = batch
+        print(image_names)
         # print(labels)
         #show the images shape
         # print(images.shape)
         # check the directory if it has 3 variations then did this batch already
         num_digits = 10  # Adjust based on the maximum label number you expect
         formatted_label = f"{labels[0]:0{num_digits}d}"  # This formats the label with leading zeros
+        
         label_path = os.path.join(control_dir, formatted_label)
-        if check_variations(label_path, f"file{count}"):
-            print("SKIPPING BATCH at filename ", label_path, f"file{count}")
-            count+=batch_size
+        print("Checking variations for ", label_path, image_names[0].split(".")[0]+"_original.png")
+        if check_variations(label_path, image_names[0].split(".")[0]+"_original.png"):
+            print("SKIPPING BATCH at filename ", label_path, image_names[0].split(".")[0]+"_original.png")
+            # count+=batch_size
             # print("SKIPPING BATCH")
             continue
 
@@ -176,7 +203,7 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
         # del processor
         # torch.cuda.empty_cache()
         # Process each image-caption pair in the batch
-        for img, label, caption, og_img in zip(images, labels, captions, original_images):
+        for img, label, caption, og_img, image_name in zip(images, labels, captions, original_images, image_names):
             
             # Create the directory for the labl
             num_digits = 10  # Adjust based on the maximum label number you expect
@@ -190,8 +217,9 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
             # Check if we want to only augment a certain number of images per class
             if images_per_class > 0:
                 files_in_dir = os.listdir(label_path)
-                print("Files in dir: ", len(files_in_dir))
+                print("Files in dir: ", len(files_in_dir)/(variations + 1))
                 if len(files_in_dir)/(variations + 1) >= images_per_class:
+                    print("Max images per class reached in class ", label)
                     continue
 
             #print the image shape
@@ -211,8 +239,33 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
         
             
 
+            
+            
+            # create variations
+            print("Creating variations for ", str(int(label)), " at ", label_path, " with filename ", image_name.split(".")[0])
+            caption = "Extremely Realistic, Photorealistic, Clear Image, Real World, " + caption
+            print(caption)
+            results = process(control_model, ddim_sampler, preprocessor, img, caption, a_prompt, n_prompt, num_samples, image_resolution, image_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold)
+            #print the size of the image about to be saved
+            
+            
+            # save the variations
+            for i, result in enumerate(results):
+                # print(result_path)
+                # print(result)
+                result_filename = image_name.split(".")[0]+f"_{i}.png"
+                result_path = os.path.join(label_path, result_filename)
+                # print(result_path)
+                # print("Result:",result.shape)
+                cv2.imwrite(result_path, cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
+            
+            # Save the original image
             print("Original shape: ", og_img.shape)
-            original_filename = f"file{count}_original.png"
+            original_filename = image_name.split(".")[0]+"_original.png"
+            # check if original image already exists then skip
+            if os.path.exists(os.path.join(label_path, original_filename)):
+                print("Original image already exists, ", original_filename,  " - skipping...")
+                continue
             original_path = os.path.join(label_path, original_filename)
             og_img = og_img.numpy()
 
@@ -225,26 +278,6 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
             # print(og_img)
             cv2.imwrite(original_path, cv2.cvtColor(og_img, cv2.COLOR_RGB2BGR))
             
-            # create variations
-            print("Creating variations for ", str(int(label)), " at ", label_path, " with filename ", f"file{count}")
-            caption = "Extremely Realistic, Photorealistic, Clear Image, Real World, " + caption
-            print(caption)
-            results = process(control_model, ddim_sampler, preprocessor, img, caption, a_prompt, n_prompt, num_samples, image_resolution, image_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold)
-            #print the size of the image about to be saved
-            
-            
-            # save the variations
-            for i, result in enumerate(results):
-                # print(result_path)
-                # print(result)
-                result_filename = f"file{count}_{i}.png"
-                result_path = os.path.join(label_path, result_filename)
-                # print(result_path)
-                # print("Result:",result.shape)
-                cv2.imwrite(result_path, cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
-            
-            
-            count+=1
 
         
     # additional_dataset = AugmentControlDataset(control_dir, transform=transform)
@@ -287,7 +320,9 @@ def process(model, ddim_sampler, det, input_image, prompt, a_prompt, n_prompt, n
 
         detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
 
+        print("Detected map shape: ", detected_map.shape)
         control = torch.from_numpy(detected_map.copy()).float().to('cuda:0') / 255.0
+
         control = torch.stack([control for _ in range(num_samples)], dim=0)
         control = einops.rearrange(control, 'b h w c -> b c h w').clone()
 
@@ -348,3 +383,19 @@ def safer_memory(x):
     return np.ascontiguousarray(x.copy()).copy()
 def pad64(x):
     return int(np.ceil(float(x) / 64.0) * 64 - x)
+
+# if this sript is run check if how many images are in each class in a directory
+
+if __name__ == "__main__":
+    label_path="./control_augmented_images_caltech256_512fewshot2"
+    # files_in_dir = os.listdir(label_path)
+    for label in os.listdir(label_path):
+        files_in_dir = os.listdir(os.path.join(label_path, label))
+        print("Files in ", label,": ", len(files_in_dir)/16)
+        if len(files_in_dir)/16 >= 10:
+            print("Max images per class reached in class ", label)
+        else:
+            
+            print("NOT REACHEDDDD")
+            break
+        

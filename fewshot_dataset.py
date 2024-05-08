@@ -71,6 +71,49 @@ class FewShotDataset(Dataset):
         return image, label
     
 
+class ImageDatasetWithFilename(Dataset):
+    def __init__(self, root_dir, transform=None):
+        """
+        Args:
+            root_dir (string): Directory with all the subdirectories containing images.
+            transform (callable, optional): Optional transform to be applied on a sample.
+        """
+        self.root_dir = root_dir
+        self.transform = transform
+        self.classes = []
+        self.samples = self._load_samples()
+        
+
+    def _load_samples(self):
+        """
+        Load all the (image_path, label, image_name) tuples into a list.
+        """
+        samples = []
+        for label in sorted(os.listdir(self.root_dir)):
+            class_path = os.path.join(self.root_dir, label)
+            if not os.path.isdir(class_path):
+                continue
+            for img_name in os.listdir(class_path):
+                img_path = os.path.join(class_path, img_name)
+                # samples.append((img_path, int(label), img_name))
+                # self.classes.append(label)
+                # Need this for caltech256!!
+                samples.append((img_path, int(label.split(".")[0]), img_name))
+                self.classes.append(label.split(".")[1])
+        return samples
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        img_path, label, img_name = self.samples[idx]
+        image = Image.open(img_path).convert('RGB')
+
+        if self.transform:
+            image = self.transform(image)
+
+        return image, label, img_name
+
 # Check if the two datasets have the same original images
 if __name__ == "__main__":
     no_variations = FewShotDataset(root_dir="./control_augmented_images_sun397_512", num_unique_files=5, num_variations=2, start_idx=1)

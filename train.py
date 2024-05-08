@@ -404,7 +404,7 @@ group.add_argument('--diffaug', action='store_true', default=False,
 group.add_argument('--diffaug-dir', default='', type=str,
                    help='path to folder with diffusion augmentation files')
 
-group.add_argument('--diffaug-fewshot', default=0, type=int,
+group.add_argument('--diffaug-fewshot', default=2, type=int,
                    help='Number of fewshot images if you want to augment/use depending on whether --diffaug flag is present (default is off).')
 
 group.add_argument('--variations', action='store_true', default=False,
@@ -419,7 +419,8 @@ group.add_argument('--diffusion-upscale', action='store_true', default=False,
 group.add_argument('--diffaug-resolutions', default=512, type=int,
                    help='Resolutions for diffusion augmentation.')
 
-
+group.add_argument('--diffaug-reverse', action='store_true', default=False,
+                   help='Whether to reverse the dataloader for the augmentation process. Allows you to use 2 gpus')
 
 group.add_argument('--repeats', type=int, default=1, metavar='N',
                    help='epoch repeat multiplier (number of times to repeat dataset epoch per train epoch).')
@@ -429,6 +430,7 @@ group.add_argument('--classes', default=None, type=int, nargs='+', metavar="MILE
 
 group.add_argument('--name', default='', type=str, 
                     help='experiment name')
+
 
 def _parse_args():
     # Do we have a config file to parse?
@@ -697,7 +699,7 @@ def main():
         print("Rerun the script with the new dataset without the --diffusion-upscale flag.")
         return
     if args.diffaug:   
-        dataset_train = diffusion_augment.augment(dataset_train, preprocessor=args.preprocessor, control_dir=args.diffaug_dir, variations=args.diffaug_fewshot, res=args.diffaug_resolutions)
+        dataset_train = diffusion_augment.augment(dataset_train, preprocessor=args.preprocessor, control_dir=args.diffaug_dir, variations=args.diffaug_fewshot, res=args.diffaug_resolutions, reverse=args.diffaug_reverse)
         print("Augemented dataset created at ", args.diffaug_dir)
         print("Rerun the script with the new dataset without the --diffaug flag.")
         return 

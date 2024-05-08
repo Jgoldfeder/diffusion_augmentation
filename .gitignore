@@ -19,7 +19,9 @@ models/
 models
 wandb/
 output/
-
+caltech256_512fewshot_bad.zip
+control_augmented_images_cifar100_512/
+hfds/
 archive.zip
 cifar100-128/
 cifar100-32/
