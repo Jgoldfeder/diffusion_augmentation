@@ -34,19 +34,19 @@ class GPU:
 # initialize the queue with the GPU ids
 queue = Queue()
 
-# machine_0 = Machine0()
-# for i in [0,1,3,4,5]:
-#     queue.put(GPU(machine_0,i))
-# machine_1 = Machine1()
-# for i in range(3):
-#     queue.put(GPU(machine_1,i))
-# num_processes = 8
-
-
+machine_0 = Machine0()
+for i in [0,1,2,3,4,5,6]:
+    queue.put(GPU(machine_0,i))
 machine_1 = Machine1()
 for i in range(3):
     queue.put(GPU(machine_1,i))
-num_processes = 3
+num_processes = 10
+
+
+# machine_1 = Machine1()
+# for i in range(3):
+#     queue.put(GPU(machine_1,i))
+# num_processes = 3
 
 def get_fewshot_commands():
     commands = []
