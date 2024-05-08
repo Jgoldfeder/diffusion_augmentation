@@ -426,7 +426,7 @@ class SubClassDataSet(Dataset):
                 if int(target) in classes:
                     self.indices.append(x)
             self.indices  = np.array(self.indices)
-            np.save(fname,indices)
+            np.save(fname,self.indices)
     
     def __len__(self):
         return len(self.indices)
