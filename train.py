@@ -25,6 +25,7 @@ from contextlib import suppress
 from datetime import datetime
 from functools import partial
 import uuid
+import attack
 
 import torch
 import torch.nn as nn
@@ -71,6 +72,7 @@ try:
     has_functorch = True
 except ImportError as e:
     has_functorch = False
+import torchvision.transforms as transforms
 
 has_compile = hasattr(torch, 'compile')
 
@@ -83,7 +85,53 @@ config_parser = parser = argparse.ArgumentParser(description='Training Config', 
 parser.add_argument('-c', '--config', default='', type=str, metavar='FILE',
                     help='YAML config file specifying default arguments')
 
+def modify_args(args):
+    # give shorthand for different recipes
+    # axes are [scratch, pretrain], [SGD, ADAM], [noaug, fullaug]
+        
+    args.batch_size = 64
+    args.img_size=224    
+    args.sched="cosine"
+    args.model_ema=True
+    args.model_ema_decay=0.995  
+    args.amp=True
+    args.train_interpolation="bilinear"
+    args.smoothing=0.1
+    args.weight_decay=1e-4
+    args.checkpoint_hist=1
+    if "scratch" in args.recipe:
+        args.epochs=150         
+        args.warmup_epochs=0
 
+        if "sgd" in args.recipe:
+            args.opt="SGD"
+            args.min_lr=1e-4
+            args.lr = 1e-2
+        if "adam" in args.recipe:
+            args.opt="Adam"
+            args.min_lr=1e-5
+            args.lr = 1e-3       
+
+    if "pretrain" in args.recipe:
+        args.epochs=50         
+        args.warmup_epochs=3
+        args.pretrained = True
+        if "sgd" in args.recipe:
+            args.opt="SGD"
+            args.min_lr=1e-7
+            args.lr = 1e-2
+        if "adam" in args.recipe:
+            args.opt="Adam"
+            args.min_lr=1e-8
+            args.lr =2e-4   
+    
+    if "fullaug" in args.recipe:
+        args.reprob=0.5
+        args.aa="v0"
+
+    if "noaug" in args.recipe:
+        args.no_aug=True
+    return args
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 
 # Dataset parameters
@@ -407,8 +455,8 @@ group.add_argument('--diffaug-dir', default='', type=str,
 group.add_argument('--diffaug-fewshot', default=2, type=int,
                    help='Number of fewshot images if you want to augment/use depending on whether --diffaug flag is present (default is off).')
 
-group.add_argument('--variations', action='store_true', default=False,
-                   help='Use variations in fewshot dataset.')
+group.add_argument('--variations', type=int, default=0, metavar='S',
+                   help='random seed (default: 42)')
 
 group.add_argument('--preprocessor', default='Canny', type=str, 
                    help='Preprocessor to use for ControlNet either Canny or Depth-Anything. Default is Canny')
@@ -430,8 +478,12 @@ group.add_argument('--classes', default=None, type=int, nargs='+', metavar="MILE
 
 group.add_argument('--name', default='', type=str, 
                     help='experiment name')
-
-
+group.add_argument('--recipe', default='', type=str, 
+                    help='recipe shorthand')
+group.add_argument('--attack', action='store_true', default=False,
+                   help='FGSM attack.')
+group.add_argument('--valid-nonorm', action='store_true', default=False,
+                   help='do not normalize validation data')
 def _parse_args():
     # Do we have a config file to parse?
     args_config, remaining = config_parser.parse_known_args()
@@ -452,7 +504,7 @@ def _parse_args():
 def main():
     utils.setup_default_logging()
     args, args_text = _parse_args()
-
+    args = modify_args(args)
     if args.device_modules:
         for module in args.device_modules:
             importlib.import_module(module)
@@ -706,10 +758,10 @@ def main():
     
     if args.diffaug_dir != '':
         if args.diffaug_fewshot > 0:
-            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, include_variations=args.variations,num_repeats=args.repeats,classes = args.classes)
+            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, num_variations=args.variations,num_repeats=args.repeats,classes = args.classes)
             print(len(dataset_train))
         else:
-            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, include_variations=args.variations,num_repeats=args.repeats,classes = args.classes)
+            dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, num_variations=args.variations,num_repeats=args.repeats,classes = args.classes)
             print(len(dataset_train))
 
     if args.val_split:
@@ -815,7 +867,24 @@ def main():
             device=device,
             use_prefetcher=args.prefetcher,
         )
-
+        loader_attack = create_loader(
+            dataset_eval,
+            input_size=data_config['input_size'],
+            batch_size=1,
+            is_training=False,
+            interpolation=data_config['interpolation'],
+            mean=data_config['mean'],
+            std=data_config['std'],
+            num_workers=eval_workers,
+            distributed=args.distributed,
+            crop_pct=data_config['crop_pct'],
+            pin_memory=args.pin_mem,
+            device=device,
+            use_prefetcher=args.prefetcher,
+        )
+    if args.valid_nonorm:
+        dataset_eval.transform= transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224))])
+        
     # setup loss function
     if args.jsd_loss:
         assert num_aug_splits > 1  # JSD only valid with aug splits set
@@ -994,7 +1063,25 @@ def main():
                 'train': train_metrics,
                 'validation': eval_metrics,
             })
-
+            if epoch==num_epochs-1 and args.attack:
+                epsilons = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
+                num_steps = 5
+                device =torch.device('cuda')
+                def log_(name,val,eps):
+                    wandb.log({name: val, 'eps': eps,})
+                    
+                for epsilon in epsilons:
+                    alpha = epsilon / num_steps
+                    
+                    print("attack!")
+                    val, _ = attack.test_fgsm_untargeted(model, device, loader_attack, epsilon, mels=None)
+                    log_("test_fgsm_untargeted",val,epsilon)
+                    val, _ = attack.test_fgsm_targeted(model,args.num_classes, device, loader_attack, epsilon, mels=None)
+                    log_("test_fgsm_targeted",val,epsilon)
+                    val, _ = attack.test_iterative_untargeted(model, device, loader_attack, mels=None, epsilon=epsilon, alpha=alpha, num_steps=num_steps)
+                    log_("test_iterative_untargeted",val,epsilon)
+                    val, _ = attack.test_iterative_targeted(model, args.num_classes, device, loader_attack, mels=None, epsilon=epsilon, alpha=alpha, num_steps=num_steps)
+                    log_("test_iterative_targeted",val,epsilon)   
     except KeyboardInterrupt:
         pass
 
