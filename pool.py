@@ -56,7 +56,7 @@ def get_fewshot_commands():
     dataset = "caltech256"    
     
     # define the sweep to do
-    recipe = "sgd-pretrain-fullaug"
+    recipe = "sgd-pretrain-noaug" # fullaug
     seed = 5    
     ways = ["5","10","all"]
     shots = [1,5,10]
