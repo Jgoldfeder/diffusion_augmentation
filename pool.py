@@ -76,6 +76,8 @@ def get_fewshot_commands():
                         experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation)
 
                         target_repeats = 24 # this should yield for the variations 2 5 10 15: 24,24,22,16 
+                        if shot == 1:
+                            target_repeats*=2
                         exp_name = "exp " + model + " " + recipe
                         exp_repeats = target_repeats//(variation+1)
                         
