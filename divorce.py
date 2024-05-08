@@ -58,19 +58,19 @@ def write_to_file(pairs, file_path, focal_length=512.0): # Assuming a focal leng
             line = f"{color_file_name} {depth_file_name} {focal_length}\n"
             f.write(line)
 
-root_dir = '/home/judah/diffusion_augmentation/MidAir'
+root_dir = '/home/pat/diffusion_augmentation/MidAir'
 
 # Step 1: Extract frames.zip files in place
 # Uncomment this line to extract the files
-# extract_frames_in_place(root_dir)
+extract_frames_in_place(root_dir)
 
 # Step 2: Collect data pairs
-pairs = collect_data_pairs(root_dir)
-print(f"Collected {len(pairs)} data pairs.")
+# pairs = collect_data_pairs(root_dir)
+# print(f"Collected {len(pairs)} data pairs.")
 
-# Step 3: Split data into training and testing sets
-train_pairs, test_pairs = split_data(pairs)
+# # Step 3: Split data into training and testing sets
+# train_pairs, test_pairs = split_data(pairs)
 
-# Step 4: Write the data pairs to text files
-write_to_file(train_pairs, 'train_data.txt')
-write_to_file(test_pairs, 'test_data.txt')
+# # Step 4: Write the data pairs to text files
+# write_to_file(train_pairs, 'train_data.txt')
+# write_to_file(test_pairs, 'test_data.txt')
