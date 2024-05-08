@@ -11,19 +11,6 @@ conda activate diffusion_augment
 
 CUDA_VISIBLE_DEVICES=2 python train.py torch/sun397 --dataset torch/sun397 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=397 --opt=sgd --weight-decay=1e-4 --log-wandb --dataset-download --experiment "fewshot-no-variations" --diffaug-dir=./control_augmented_images_depth --diffaug-fewshot=20 --variations --
 
-
-###CIFAR100_512
-CUDA_VISIBLE_DEVICES=0 python train.py torch/cifar100-512 --dataset torch/cifar100-512 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=256 --opt=sgd --weight-decay=1e-4 --dataset-download --diffaug --diffaug-fewshot=15 --diffaug-dir=./control_augmented_images_cifar100_512fewshot --diffaug-resolutions=512 --diffaug-reverse
-
-CUDA_VISIBLE_DEVICES=1 python train.py torch/cifar100-512 --dataset torch/cifar100-512 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=256 --opt=sgd --weight-decay=1e-4 --dataset-download --diffaug --diffaug-fewshot=15 --diffaug-dir=./control_augmented_images_cifar100_512fewshot --diffaug-resolutions=512
-
-
-
-### Caltech256 with fewshot augmentation
-CUDA_VISIBLE_DEVICES=0 python train.py torch/caltech256 --dataset torch/caltech256 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=256 --opt=sgd --weight-decay=1e-4 --dataset-download --diffaug --diffaug-fewshot=15 --diffaug-dir=./control_augmented_images_caltech256_512fewshot --diffaug-resolutions=512
-
-CUDA_VISIBLE_DEVICES=0 python train.py torch/sun397 --dataset torch/sun397 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=397 --opt=sgd --weight-decay=1e-4 --dataset-download --diffaug --diffaug-fewshot=15 --diffaug-dir=./control_augmented_images_sun397_512fewshot --diffaug-resolutions=512
-
 ### Sun397 with augmentation
 
 ## First Create the dataset
@@ -206,7 +193,38 @@ timm.list_models()
 
 
 ## Caltech256 SCratch Shorthand
-CUDA_VISIBLE_DEVICES=0 python3 train.py torch/caltech256 --dataset torch/caltech256  --model=resnet50  --num-classes=257  --log-wandb --experiment "caltech256-recipe" --diffaug-dir=/home/augmented_data/control_augmented_images_caltech256_512  --variations 2 --repeats 1 --name "exp1x sgd-scratch-fullaug" --recipe "sgd-scratch-fullaug"
+CUDA_VISIBLE_DEVICES=2 python3 train.py /data/torch/caltech256/caltech256 --dataset torch/caltech256  --model=resnet50  --num-classes=257  --log-wandb --experiment "caltech256-recipe" --diffaug-dir=/data/puma_envs/control_augmented_images_caltech256_512  --variations 2 --repeats 1 --name "exp1x sgd-scratch-fullaug" --recipe "sgd-scratch-fullaug" --attack
 
-CUDA_VISIBLE_DEVICES=1 python3 train.py torch/caltech256 --dataset torch/caltech256  --model=resnet50  --num-classes=257  --log-wandb --experiment "caltech256-recipe" --diffaug-dir=/home/augmented_data/control_augmented_images_caltech256_512  --repeats 3 --name "3x sgd-scratch-fullaug" --recipe "sgd-scratch-fullaug"
+CUDA_VISIBLE_DEVICES=6 python3 train.py /data/torch/caltech256/caltech256 --dataset torch/caltech256  --model=resnet50  --num-classes=257  --log-wandb --experiment "caltech256-recipe" --diffaug-dir=/data/puma_envs/control_augmented_images_caltech256_512  --repeats 3 --name "3x sgd-scratch-fullaug" --recipe "sgd-scratch-fullaug" --attack
+
+
+CUDA_VISIBLE_DEVICES=2 python3 train.py /data/torch/caltech256/caltech256 --dataset torch/caltech256  --model=resnet50  --num-classes=257  --log-wandb --experiment "caltech256-recipe" --diffaug-dir=/data/puma_envs/control_augmented_images_caltech256_512  --variations 2 --repeats 1 --name "exp1x sgd-scratch-noaug" --recipe "sgd-scratch-noaug"
+
+CUDA_VISIBLE_DEVICES=3 python3 train.py /data/torch/caltech256/caltech256 --dataset torch/caltech256  --model=resnet50  --num-classes=257  --log-wandb --experiment "caltech256-recipe" --diffaug-dir=/data/puma_envs/control_augmented_images_caltech256_512  --repeats 3 --name "3x sgd-scratch-noaug" --recipe "sgd-scratch-noaug"
+
+
+
+# validnonorm
+CUDA_VISIBLE_DEVICES=4 python3 train.py /data/torch/caltech256/caltech256 --dataset torch/caltech256  --model=resnet50  --num-classes=257  --log-wandb --experiment "caltech256-recipe" --diffaug-dir=/data/puma_envs/control_augmented_images_caltech256_512  --variations 2 --repeats 1 --name "exp1x sgd-scratch-fullaug" --recipe "sgd-scratch-fullaug" --valid-nonorm
+
+CUDA_VISIBLE_DEVICES=5 python3 train.py /data/torch/caltech256/caltech256 --dataset torch/caltech256  --model=resnet50  --num-classes=257  --log-wandb --experiment "caltech256-recipe" --diffaug-dir=/data/puma_envs/control_augmented_images_caltech256_512  --repeats 3 --name "3x sgd-scratch-fullaug" --recipe "sgd-scratch-fullaug" --valid-nonorm
+
+
+
+
+
+
+
+# full
+
+CUDA_VISIBLE_DEVICES=5 python3 train.py /data/torch/caltech256 --dataset torch/caltech256 -b=64 --img-size=224 --epochs=150 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-4 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50  --num-classes=257 --opt=sgd --weight-decay=1e-4 --log-wandb --dataset-download --experiment "caltech256-recipe" --diffaug-dir=/data/puma_envs/control_augmented_images_caltech256_512  --variations 2 --repeats 1 --name "transform scratch exp 1x"
+
+
+CUDA_VISIBLE_DEVICES=6 python3 train.py /data/torch/caltech256 --dataset torch/caltech256 -b=64 --img-size=224 --epochs=150 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-4 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50  --num-classes=257 --opt=sgd --weight-decay=1e-4 --log-wandb --dataset-download --experiment "caltech256-recipe" --diffaug-dir=/data/puma_envs/control_augmented_images_caltech256_512 --repeats 3 --name "transform scratch baseline 3x"
+
+# full no aug
+CUDA_VISIBLE_DEVICES=5 python3 train.py /data/torch/caltech256 --dataset torch/caltech256 -b=64 --img-size=224 --epochs=150 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-4 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50  --num-classes=257 --opt=sgd --weight-decay=1e-4 --log-wandb --dataset-download --experiment "caltech256-recipe" --diffaug-dir=/data/puma_envs/control_augmented_images_caltech256_512  --variations 2 --repeats 1 --name "noaug scratch exp 1x" --no-aug
+
+
+CUDA_VISIBLE_DEVICES=4 python3 train.py /data/torch/caltech256 --dataset torch/caltech256 -b=64 --img-size=224 --epochs=150 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-4 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50  --num-classes=257 --opt=sgd --weight-decay=1e-4 --log-wandb --dataset-download --experiment "caltech256-recipe" --diffaug-dir=/data/puma_envs/control_augmented_images_caltech256_512 --repeats 3 --name "noaug scratch baseline 3x" --no-aug
 

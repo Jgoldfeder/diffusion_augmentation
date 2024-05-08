@@ -282,12 +282,10 @@ def create_dataset(
                 return x
             transform = transforms.Compose([transforms.ToTensor(), transforms.Lambda(lambda x: f(x))])
             generator = torch.Generator().manual_seed(42)
-            # full_dataset = Caltech256(**torch_kwargs,transform=transform)
+            full_dataset = Caltech256(**torch_kwargs,transform=transform)
             print(root)
-            # full_dataset = torchvision.datasets.ImageFolder(root=root+"/256_ObjectCategories/",transform=transform)
-            from fewshot_dataset import ImageDatasetWithFilename
-            full_dataset = ImageDatasetWithFilename(root, transform=transform)
-            # print(full_dataset.classes)
+
+            
             train_size = int(0.8 * len(full_dataset))
             test_size = len(full_dataset) - train_size
             train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
