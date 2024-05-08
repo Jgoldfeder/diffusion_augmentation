@@ -274,28 +274,28 @@ def create_dataset(
             elif split in _EVAL_SYNONYM:
                 ds = Wrapper(test_dataset)
 
-        elif name == 'caltech256_o':
-            def f(x):
-                if x.shape[0] == 1:
-                    return x.repeat(3,1,1)
-                return x
-            transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224)),transforms.Lambda(lambda x: f(x))])
-            generator = torch.Generator().manual_seed(42)
-            full_dataset = Caltech256(**torch_kwargs,transform=transform)
+        # elif name == 'caltech256_o':
+        #     def f(x):
+        #         if x.shape[0] == 1:
+        #             return x.repeat(3,1,1)
+        #         return x
+        #     transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224)),transforms.Lambda(lambda x: f(x))])
+        #     generator = torch.Generator().manual_seed(42)
+        #     full_dataset = Caltech256(**torch_kwargs,transform=transform)
             
-            print(torch_kwargs)
-            #transform = transforms.Compose([transforms.ToTensor(),transforms.Lambda(lambda x: f(x))])
-            #print(root)
-            #full_dataset = torchvision.datasets.ImageFolder(root=root+"/256_ObjectCategories/",transform=transform)
-            #print(full_dataset.classes)
+        #     print(torch_kwargs)
+        #     #transform = transforms.Compose([transforms.ToTensor(),transforms.Lambda(lambda x: f(x))])
+        #     #print(root)
+        #     #full_dataset = torchvision.datasets.ImageFolder(root=root+"/256_ObjectCategories/",transform=transform)
+        #     #print(full_dataset.classes)
             
-            train_size = int(0.8 * len(full_dataset))
-            test_size = len(full_dataset) - train_size
-            train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
-            if split in _TRAIN_SYNONYM:
-                ds = train_dataset
-            elif split in _EVAL_SYNONYM:
-                ds = test_dataset
+        #     train_size = int(0.8 * len(full_dataset))
+        #     test_size = len(full_dataset) - train_size
+        #     train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
+        #     if split in _TRAIN_SYNONYM:
+        #         ds = train_dataset
+        #     elif split in _EVAL_SYNONYM:
+        #         ds = test_dataset
                 
         
         elif name == 'dtd':
@@ -389,9 +389,8 @@ class SubClassDataSet(Dataset):
         self.classes = classes
         self.indices = []
         for x in range(len(ds)):
-            target=ds.y[x] # will throw exception for datasets named differently
-            #_, target = ds.__getitem__(x)
-            #print(len(ds),x)
+            _, target = ds[x]
+            print(len(ds),x)
 
             if int(target) in classes:
                 self.indices.append(x)
