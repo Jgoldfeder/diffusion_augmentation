@@ -380,12 +380,17 @@ import torchvision.transforms.functional as F
 class SubClassDataSet(Dataset):
     def __init__(self, ds, classes):
         
-        print(classes, " way classification")
+        print(len(classes), " way classification")
+        d_classes = {}
+        for c in classes:
+            d_classes[c]=True
+        classes=d_classes
         self.ds = ds
         self.classes = classes
         self.indices = []
         for x in range(len(ds)):
-            _, target = ds.__getitem__(x)
+            target=ds.y[x] # will throw exception for datasets named differently
+            #_, target = ds.__getitem__(x)
             #print(len(ds),x)
 
             if int(target) in classes:
