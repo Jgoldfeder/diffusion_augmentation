@@ -72,6 +72,7 @@ try:
     has_functorch = True
 except ImportError as e:
     has_functorch = False
+import torchvision.transforms as transforms
 
 has_compile = hasattr(torch, 'compile')
 
@@ -480,6 +481,8 @@ group.add_argument('--recipe', default='', type=str,
                     help='recipe shorthand')
 group.add_argument('--attack', action='store_true', default=False,
                    help='FGSM attack.')
+group.add_argument('--valid-nonorm', action='store_true', default=False,
+                   help='do not normalize validation data')
 def _parse_args():
     # Do we have a config file to parse?
     args_config, remaining = config_parser.parse_known_args()
@@ -878,7 +881,9 @@ def main():
             device=device,
             use_prefetcher=args.prefetcher,
         )
-
+    if args.valid_nonorm:
+        dataset_eval.transform= transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224))])
+        
     # setup loss function
     if args.jsd_loss:
         assert num_aug_splits > 1  # JSD only valid with aug splits set
