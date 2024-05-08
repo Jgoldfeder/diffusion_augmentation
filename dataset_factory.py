@@ -407,7 +407,7 @@ class SubClassDataSet(Dataset):
         self.classes = classes
         
         # try saving and loading
-        fname = str(len(ds))
+        fname = str(len(ds)) + "."
         for c in classes:
             fname+= str(c) + "."
         fname +="npy"
