@@ -398,7 +398,8 @@ class SubClassDataSet(Dataset):
     def __getitem__(self, idx):
         idx = self.indices[idx]
         x,y = self.ds[idx]
-        x = F.to_pil_image(x)
+        if torch.is_tensor(x):
+            x = F.to_pil_image(x)
 
         return self.transform(x),y
 
