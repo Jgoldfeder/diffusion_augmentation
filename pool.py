@@ -19,7 +19,7 @@ class Machine1:
         self.data_dir = "torch/caltech256"
         
     def run(self,command):
-        out = subprocess.run(["sshpass","-p","rjk2147","ssh", "judah@rjk2147.cuit.columbia.edu","cd diffusion_augmentation \n", command + "\n"],shell=True) 
+        out = subprocess.run(["sshpass","-p","rjk2147","ssh", "judah@rjk2147.cuit.columbia.edu","cd diffusion_augmentation \n", command + "\n"]) 
         print(out)
 
 class GPU:
