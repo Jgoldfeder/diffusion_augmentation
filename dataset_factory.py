@@ -415,6 +415,7 @@ class SubClassDataSet(Dataset):
             self.indices = np.load(fname)
         else:        
             d_classes = {}
+            self.indices=[]
             for c in classes:
                 d_classes[c]=True
             classes=d_classes
