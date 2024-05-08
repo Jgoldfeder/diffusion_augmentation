@@ -399,26 +399,34 @@ def create_dataset(
 
 from torch.utils.data import Dataset
 import torchvision.transforms.functional as F
-
+import numpy as np
 class SubClassDataSet(Dataset):
     def __init__(self, ds, classes):
-        
         print(len(classes), " way classification")
-        d_classes = {}
-        for c in classes:
-            d_classes[c]=True
-        classes=d_classes
         self.ds = ds
         self.classes = classes
-        self.indices = []
-        for x in range(len(ds)):
-            _, target = ds[x]
-            print(len(ds),x)
-
-            if int(target) in classes:
-                self.indices.append(x)
-
-
+        
+        # try saving and loading
+        fname = str(len(ds))
+        for c in classes:
+            fname+= str(c) + "."
+        fname +="npy"
+        if os.path.isfile(fname):
+            self.indices = np.load(fname)
+        else:        
+            d_classes = {}
+            for c in classes:
+                d_classes[c]=True
+            classes=d_classes
+            for x in range(len(ds)):
+                _, target = ds[x]
+                print(len(ds),x)
+    
+                if int(target) in classes:
+                    self.indices.append(x)
+            self.indices  = np.array(indices)
+            np.save(fname,indices)
+    
     def __len__(self):
         return len(self.indices)
 
