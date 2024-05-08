@@ -208,14 +208,17 @@ def create_dataset(
             transform = transforms.Compose([transforms.ToTensor()])
 
             generator = torch.Generator().manual_seed(42)
-            full_dataset = SUN397(**torch_kwargs,transform=transform)
+            # full_dataset = SUN397(**torch_kwargs,transform=transform)
+
+            from fewshot_dataset import ImageDatasetWithFilename
+            full_dataset = ImageDatasetWithFilename(root, transform=transform)
             train_size = int(0.8 * len(full_dataset))
             test_size = len(full_dataset) - train_size
             train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
             if split in _TRAIN_SYNONYM:
-                ds = Wrapper(train_dataset)
+                ds = train_dataset
             elif split in _EVAL_SYNONYM:
-                ds = Wrapper(test_dataset)       
+                ds = test_dataset    
         elif name == 'svhn':
             transform = transforms.Compose([transforms.ToTensor()])
 

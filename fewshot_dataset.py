@@ -89,7 +89,7 @@ class ImageDatasetWithFilename(Dataset):
         Load all the (image_path, label, image_name) tuples into a list.
         """
         samples = []
-        for label in sorted(os.listdir(self.root_dir)):
+        for i, label in enumerate(sorted(os.listdir(self.root_dir))):
             class_path = os.path.join(self.root_dir, label)
             if not os.path.isdir(class_path):
                 continue
@@ -98,8 +98,8 @@ class ImageDatasetWithFilename(Dataset):
                 # samples.append((img_path, int(label), img_name))
                 # self.classes.append(label)
                 # Need this for caltech256!!
-                samples.append((img_path, int(label.split(".")[0]), img_name))
-                self.classes.append(label.split(".")[1])
+                samples.append((img_path, i, img_name))
+                self.classes.append(label)
         return samples
 
     def __len__(self):

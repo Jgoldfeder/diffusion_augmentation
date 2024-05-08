@@ -107,7 +107,7 @@ class ReverseSampler(Sampler):
     
 
 # control_dir = "./control_augmented_images"
-def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images_test", variations = 2, res = 512, images_per_class = 10, reverse = False):
+def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images_test", variations = 15, res = 512, images_per_class = 10, reverse = False):
     global image_resolution
     global num_samples
 
