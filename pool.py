@@ -1,6 +1,9 @@
 from multiprocessing import Pool, current_process, Queue
 import subprocess
 
+#### TO KILL: run: pkill -9 python
+
+
 # first, define the machines, including ssh and dir navigation for remote ones, and where the main dataset and aug dataset is located 
 class Machine0:
     def __init__(self):
