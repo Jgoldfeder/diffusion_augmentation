@@ -9,7 +9,7 @@ class Machine0:
         self.data_dir = "/data/torch/caltech256/caltech256"
 
     def run(self,command):
-        out = subprocess.run([ command + "\n"]) 
+        out = subprocess.run([ command + "\n"],shell=True) 
         print(out)
 
 class Machine1:
