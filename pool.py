@@ -96,7 +96,7 @@ def get_command_string(command,gpu,aug_directory,data_dir):
 def foo(command):
     gpu = queue.get()
     try:
-        print("running on " + gpu.machine.name + ":"+ gpu.gpu_id)
+        print("running on " + gpu.machine.name + ":"+ str(gpu.gpu_id))
         command_string = get_command_string(command,gpu.gpu_id,gpu.machine.aug_dir,gpu.machine.data_dir)
         gpu.machine.dir.run(command)
     finally:
