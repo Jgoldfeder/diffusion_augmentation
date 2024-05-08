@@ -4,7 +4,7 @@ import subprocess
 # first, define the machines, including ssh and dir navigation for remote ones, and where the main dataset and aug dataset is located 
 class Machine0:
     def __init__(self):
-        self.name = "machine_1"
+        self.name = "machine_0"
         self.aug_dir = "/data/puma_envs/control_augmented_images_caltech256_512/"
         self.data_dir = "/data/torch/caltech256/caltech256"
 
@@ -37,7 +37,7 @@ for i in [0,1,3,4,5]:
 machine_1 = Machine1()
 for i in range(3):
     queue.put(GPU(machine_1,i))
-num_processes = 10
+num_processes = 8
 
 
 def get_fewshot_commands():
