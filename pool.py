@@ -100,7 +100,7 @@ def foo(command):
         command_string = get_command_string(command,gpu.gpu_id,gpu.machine.aug_dir,gpu.machine.data_dir)
         gpu.machine.dir.run(command)
     finally:
-        queue.put(gpu_id)
+        queue.put(gpu)
 
 
 
