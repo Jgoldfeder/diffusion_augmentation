@@ -106,15 +106,15 @@ def foo(command):
 
 pool = Pool(processes=num_processes)
 
-commands = get_fewshot_commands()[0:3]
+commands = get_fewshot_commands()#[0:3]
 for c in commands:
     print(get_command_string(c,0,machine_1.aug_dir,machine_1.data_dir))
     print(len(commands))
     
-# for _ in pool.imap_unordered(foo, commands):
-#     pass
-# pool.close()
-# pool.join()
+for _ in pool.imap_unordered(foo, commands):
+    pass
+pool.close()
+pool.join()
 
 
 
