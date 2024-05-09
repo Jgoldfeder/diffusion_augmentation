@@ -64,7 +64,7 @@ def get_fewshot_commands_caltech_scratch():
     models= ["resnet50"]
     
     for model in models:
-        for seed in seeds
+        for seed in seeds:
             for way in ways:
                 if way=="all":
                     way_str = ""
@@ -104,7 +104,7 @@ def get_fewshot_commands_caltech_pretrain():
     models= ["resnet50sun"]
     
     for model in models:
-        for seed in seeds
+        for seed in seeds:
             for way in ways:
                 if way=="all":
                     way_str = ""
