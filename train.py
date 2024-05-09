@@ -88,7 +88,9 @@ parser.add_argument('-c', '--config', default='', type=str, metavar='FILE',
 def modify_args(args):
     # give shorthand for different recipes
     # axes are [scratch, pretrain], [SGD, ADAM], [noaug, fullaug]
-        
+    if "all" in args.name or "all" in args.experiment:
+        import sys
+        sys.exit()
     args.batch_size = 64
     args.img_size=224    
     args.sched="cosine"
