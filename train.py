@@ -452,7 +452,7 @@ group.add_argument('--diffaug', action='store_true', default=False,
 group.add_argument('--diffaug-dir', default='', type=str,
                    help='path to folder with diffusion augmentation files')
 
-group.add_argument('--diffaug-fewshot', default=2, type=int,
+group.add_argument('--diffaug-fewshot', default=0, type=int,
                    help='Number of fewshot images if you want to augment/use depending on whether --diffaug flag is present (default is off).')
 
 group.add_argument('--variations', type=int, default=0, metavar='S',
