@@ -61,7 +61,7 @@ def get_fewshot_commands():
     ways = ["5","10"]
     shots = [1,2,5,10]
     variations = [15]#,5,10,15]
-    models= ["resnet50sun"]
+    models= ["resnet50"]
     
     for model in models:
             for way in ways:
@@ -76,10 +76,10 @@ def get_fewshot_commands():
                         experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrainsun"
 
                         target_repeats = 128 
-                        exp_name = "exp" + model + " " + recipe
+                        exp_name = "im1k exp" + model + " " + recipe
                         exp_repeats = target_repeats//(variation+1)
                         
-                        base_name = "base" + model + " " + recipe
+                        base_name = "1m1k base" + model + " " + recipe
                         base_repeats = exp_repeats * (variation+1)
 
                         commands.append([model,exp_name,experiment,recipe,shot,variation,way_str,exp_repeats,seed])
