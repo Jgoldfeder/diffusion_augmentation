@@ -8,7 +8,7 @@ import subprocess
 class Machine0:
     def __init__(self):
         self.name = "machine_0"
-        self.aug_dir = "/data/puma_envs/control_augmented_images_caltech256_512/"
+        self.aug_dir = "/data/puma_envs/control_augmented_images_caltech256_512fewshot/"
         self.data_dir = "/data/torch/caltech256/caltech256"
 
     def run(self,command):
@@ -35,7 +35,7 @@ class GPU:
 queue = Queue()
 
 machine_0 = Machine0()
-for i in [0,1,2,3,4,5,6]:#[0,1,2,3,4,5,6]:
+for i in [0,1,2,3,4,5,6]:
     queue.put(GPU(machine_0,i))
 # machine_1 = Machine1()
 # for i in range(3):
@@ -56,12 +56,12 @@ def get_fewshot_commands():
     dataset = "caltech256"    
     
     # define the sweep to do
-    recipe = "adam-pretrain-fullaug" 
+    recipe = "sgd-pretrain-fullaug" 
     seed = 5    
-    ways = ["5","10","all"]
-    shots = [1,5,10]
-    variations = [2]#,5,10,15]
-    models= ["resnet50"]
+    ways = ["5","10"]
+    shots = [1,2,5,10]
+    variations = [15]#,5,10,15]
+    models= ["resnet50sun"]
     
     for model in models:
             for way in ways:
@@ -73,15 +73,13 @@ def get_fewshot_commands():
                     way_str= " --classes 0 1 2 3 4 5 6 7 8 9 "
                 for shot in shots:
                     for variation in variations:            
-                        experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation)
+                        experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrainsun"
 
-                        target_repeats = 24 # this should yield for the variations 2 5 10 15: 24,24,22,16 
-                        if shot == 1:
-                            target_repeats*=2
-                        exp_name = "ADAM exp" + model + " " + recipe
+                        target_repeats = 128 
+                        exp_name = "exp" + model + " " + recipe
                         exp_repeats = target_repeats//(variation+1)
                         
-                        base_name = "ADAM base" + model + " " + recipe
+                        base_name = "base" + model + " " + recipe
                         base_repeats = exp_repeats * (variation+1)
 
                         commands.append([model,exp_name,experiment,recipe,shot,variation,way_str,exp_repeats,seed])
