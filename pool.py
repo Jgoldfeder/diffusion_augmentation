@@ -35,11 +35,11 @@ class GPU:
 queue = Queue()
 
 machine_0 = Machine0()
-for i in [0,1,3,4]:#[0,1,2,3,4,5,6]:
+for i in [0,1,2,3,4,5,6]:#[0,1,2,3,4,5,6]:
     queue.put(GPU(machine_0,i))
-machine_1 = Machine1()
-for i in range(3):
-    queue.put(GPU(machine_1,i))
+# machine_1 = Machine1()
+# for i in range(3):
+#     queue.put(GPU(machine_1,i))
 num_processes = 7
 
 
@@ -56,7 +56,7 @@ def get_fewshot_commands():
     dataset = "caltech256"    
     
     # define the sweep to do
-    recipe = "sgd-pretrain-fullaug" 
+    recipe = "adam-pretrain-fullaug" 
     seed = 5    
     ways = ["5","10","all"]
     shots = [1,5,10]
@@ -78,10 +78,10 @@ def get_fewshot_commands():
                         target_repeats = 24 # this should yield for the variations 2 5 10 15: 24,24,22,16 
                         if shot == 1:
                             target_repeats*=2
-                        exp_name = "exp valid-nonorm" + model + " " + recipe
+                        exp_name = "ADAM exp" + model + " " + recipe
                         exp_repeats = target_repeats//(variation+1)
                         
-                        base_name = "base valid-nonorm" + model + " " + recipe
+                        base_name = "ADAM base" + model + " " + recipe
                         base_repeats = exp_repeats * (variation+1)
 
                         commands.append([model,exp_name,experiment,recipe,shot,variation,way_str,exp_repeats,seed])
@@ -93,7 +93,7 @@ def get_fewshot_commands():
 
 def get_command_string(command,gpu,aug_directory,data_dir):
     def get_command(device,aug_directory,model,name,experiment,recipe,shots,variations,ways,repeats,seed,data_directory):
-        return 'CUDA_VISIBLE_DEVICES='+str(device)+' python3 train.py '+data_directory+' --dataset torch/caltech256  --model='+model+'  --num-classes=257  --log-wandb --experiment "'+experiment+'" --diffaug-dir='+aug_directory+' --seed '+str(seed)+'  --name "'+name+'" --recipe "'+recipe+'"  --repeats '+str(repeats)+' --variations '+str(variations)+' --diffaug-fewshot='+str(shots)+' '+ways+' --valid-nonorm '
+        return 'CUDA_VISIBLE_DEVICES='+str(device)+' python3 train.py '+data_directory+' --dataset torch/caltech256  --model='+model+'  --num-classes=257  --log-wandb --experiment "'+experiment+'" --diffaug-dir='+aug_directory+' --seed '+str(seed)+'  --name "'+name+'" --recipe "'+recipe+'"  --repeats '+str(repeats)+' --variations '+str(variations)+' --diffaug-fewshot='+str(shots)+' '+ways+'  '
      
     command_string = get_command(gpu,aug_directory,command[0],command[1],command[2],command[3],command[4],command[5],command[6],command[7],command[8],data_dir)
     return command_string
