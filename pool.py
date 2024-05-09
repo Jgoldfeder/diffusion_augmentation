@@ -35,7 +35,7 @@ class GPU:
 queue = Queue()
 
 machine_0 = Machine0()
-for i in [0,1,2,3,4,5,6]:
+for i in [0,1,2,3,4,5,6,0,1,2,3,4,5,6]:
     queue.put(GPU(machine_0,i))
 # machine_1 = Machine1()
 # for i in range(3):
@@ -48,7 +48,7 @@ machine_1 = Machine1()
 #     queue.put(GPU(machine_1,i))
 # num_processes = 3
 
-def get_fewshot_commands():
+def get_fewshot_commands_caltech_scratch():
     commands = []
 
 
@@ -56,14 +56,15 @@ def get_fewshot_commands():
     dataset = "caltech256"    
     
     # define the sweep to do
-    recipe = "sgd-scratch-fullaug" 
-    seed = 5    
-    ways = ["5","10"]
+    recipe = "sgd-scratch-short-fullaug" 
+    seeds = [10,20,30]    
+    ways = ["5","10","all"]
     shots = [1,2,5,10]
     variations = [15]#,5,10,15]
     models= ["resnet50"]
     
     for model in models:
+        for seed in seeds
             for way in ways:
                 if way=="all":
                     way_str = ""
@@ -86,6 +87,45 @@ def get_fewshot_commands():
                         commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
     return commands
 
+
+def get_fewshot_commands_caltech_pretrain():
+    commands = []
+
+
+    # define the dataset. Make sure this matches up with the directories given in the machines
+    dataset = "caltech256"    
+    
+    # define the sweep to do
+    recipe = "sgd-pretrain-fullaug" 
+    seeds = [10,20,30]    
+    ways = ["5","10","all"]
+    shots = [1,2,5,10]
+    variations = [15]#,5,10,15]
+    models= ["resnet50sun"]
+    
+    for model in models:
+        for seed in seeds
+            for way in ways:
+                if way=="all":
+                    way_str = ""
+                if way=="5":
+                    way_str = " --classes 0 1 2 3 4 "
+                if way=="10":
+                    way_str= " --classes 0 1 2 3 4 5 6 7 8 9 "
+                for shot in shots:
+                    for variation in variations:            
+                        experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrainsun"
+
+                        target_repeats = 128 
+                        exp_name = "exp seed "+str(seed) + model + " " + recipe
+                        exp_repeats = target_repeats//(variation+1)
+                        
+                        base_name = "base seed"+str(seed) + model + " " + recipe
+                        base_repeats = exp_repeats * (variation+1)
+
+                        commands.append([model,exp_name,experiment,recipe,shot,variation,way_str,exp_repeats,seed])
+                        commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
+    return commands
 
 
 
@@ -114,7 +154,7 @@ def foo(command):
 
 pool = Pool(processes=num_processes)
 
-commands = get_fewshot_commands()#[0:3]
+commands = get_fewshot_commands_caltech_scratch() + get_fewshot_commands_caltech_pretrain()
 for c in commands:
     print(get_command_string(c,0,machine_1.aug_dir,machine_1.data_dir))
     print(len(commands))

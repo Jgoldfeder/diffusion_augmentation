@@ -100,7 +100,9 @@ def modify_args(args):
     args.weight_decay=1e-4
     args.checkpoint_hist=1
     if "scratch" in args.recipe:
-        args.epochs=150         
+        args.epochs=150    
+        if "short" in args.recipe:
+            args.epochs=80
         args.warmup_epochs=0
 
         if "sgd" in args.recipe:
