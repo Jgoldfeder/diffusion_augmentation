@@ -56,7 +56,7 @@ def get_fewshot_commands():
     dataset = "caltech256"    
     
     # define the sweep to do
-    recipe = "sgd-pretrain-fullaug" 
+    recipe = "sgd-scratch-fullaug" 
     seed = 5    
     ways = ["5","10"]
     shots = [1,2,5,10]
@@ -73,13 +73,13 @@ def get_fewshot_commands():
                     way_str= " --classes 0 1 2 3 4 5 6 7 8 9 "
                 for shot in shots:
                     for variation in variations:            
-                        experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrainsun"
+                        experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-scratch"#"-pretrainsun"
 
                         target_repeats = 128 
-                        exp_name = "im1k exp" + model + " " + recipe
+                        exp_name = "exp seed "+str(seed) + model + " " + recipe
                         exp_repeats = target_repeats//(variation+1)
                         
-                        base_name = "1m1k base" + model + " " + recipe
+                        base_name = "base seed"+str(seed) + model + " " + recipe
                         base_repeats = exp_repeats * (variation+1)
 
                         commands.append([model,exp_name,experiment,recipe,shot,variation,way_str,exp_repeats,seed])
