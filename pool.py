@@ -40,7 +40,7 @@ for i in [0,1,2,3,4,5,6,0,1,2,3,4,5,6]:
 # machine_1 = Machine1()
 # for i in range(3):
 #     queue.put(GPU(machine_1,i))
-num_processes = 7
+num_processes = 14
 
 
 machine_1 = Machine1()
