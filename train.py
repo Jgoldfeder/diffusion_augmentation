@@ -1078,7 +1078,7 @@ def main():
                 'train': train_metrics,
                 'validation': eval_metrics,
             })
-            if epoch==num_epochs-1
+            if epoch==num_epochs-1:
                 wandb.log({"eval bestacc":best_metric,})
 
             if epoch==num_epochs-1 and args.attack:
