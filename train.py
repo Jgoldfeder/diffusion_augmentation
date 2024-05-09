@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+F#!/usr/bin/env python3
 """ ImageNet Training Script
 
 This is intended to be a lean and easily modifiable ImageNet training script that reproduces ImageNet
@@ -1272,6 +1272,8 @@ def validate(
     last_idx = len(loader) - 1
     with torch.no_grad():
         for batch_idx, (input, target) in enumerate(loader):
+            if batch_idx==0:
+                print(target)
             last_batch = batch_idx == last_idx
             if not args.prefetcher:
                 input = input.to(device)
