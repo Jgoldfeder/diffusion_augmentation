@@ -58,7 +58,7 @@ def get_fewshot_commands_caltech_scratch():
     # define the sweep to do
     recipe = "sgd-scratch-short-fullaug" 
     seeds = [10,20,30]    
-    ways = ["5","10","all"]
+    ways = ['all']#["5","10","all"]
     shots = [1,2,5,10]
     variations = [15]#,5,10,15]
     models= ["resnet50"]
@@ -77,6 +77,9 @@ def get_fewshot_commands_caltech_scratch():
                         experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-scratch"#"-pretrainsun"
 
                         target_repeats = 128 
+                        if ways=="all":
+                            target_repeats = 16  
+                            
                         exp_name = "exp seed "+str(seed) + model + " " + recipe
                         exp_repeats = target_repeats//(variation+1)
                         
@@ -98,7 +101,7 @@ def get_fewshot_commands_caltech_pretrain():
     # define the sweep to do
     recipe = "sgd-pretrain-fullaug" 
     seeds = [10,20,30]    
-    ways = ["5","10","all"]
+    ways = ['all']#["5","10","all"]
     shots = [1,2,5,10]
     variations = [15]#,5,10,15]
     models= ["resnet50sun"]
@@ -116,7 +119,9 @@ def get_fewshot_commands_caltech_pretrain():
                     for variation in variations:            
                         experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrainsun"
 
-                        target_repeats = 128 
+                        target_repeats = 128
+                        if ways=="all":
+                            target_repeats = 16                        
                         exp_name = "exp seed "+str(seed) + model + " " + recipe
                         exp_repeats = target_repeats//(variation+1)
                         
