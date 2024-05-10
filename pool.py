@@ -77,7 +77,7 @@ def get_fewshot_commands_caltech_scratch():
                         experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-scratch"#"-pretrainsun"
 
                         target_repeats = 128 
-                        if ways=="all":
+                        if way=="all":
                             target_repeats = 16  
                             
                         exp_name = "exp seed "+str(seed) + model + " " + recipe
@@ -120,7 +120,7 @@ def get_fewshot_commands_caltech_pretrain():
                         experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrainsun"
 
                         target_repeats = 128
-                        if ways=="all":
+                        if way=="all":
                             target_repeats = 16                        
                         exp_name = "exp seed "+str(seed) + model + " " + recipe
                         exp_repeats = target_repeats//(variation+1)
