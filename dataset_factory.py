@@ -383,7 +383,13 @@ def create_dataset(
         #     elif split in _EVAL_SYNONYM:
         #         name = "hfds/clip-benchmark/wds_fer2013"
         #         split = "test"
-
+        if "pets" in name:
+                if split in _TRAIN_SYNONYM:
+                    name = "hfds/timm/oxford-iiit-pet"
+                    split = "train"
+                elif split in _EVAL_SYNONYM:
+                    name = "hfds/timm/oxford-iiit-pet"
+                    split = "test"
         
         ds = ImageDataset(
             root,
