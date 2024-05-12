@@ -8,8 +8,8 @@ import subprocess
 class Machine0:
     def __init__(self):
         self.name = "machine_0"
-        self.aug_dir = "/data/puma_envs/control_augmented_images_aircraft_512fewshot"
-        self.data_dir = "/data/torch/aircraft"
+        self.aug_dir = "/data/puma_envs/control_augmented_images_dogs_512fewshot"
+        self.data_dir = "/data/torch/dogs"
 
     def run(self,command):
         out = subprocess.run([ command + "\n"],shell=True) 
