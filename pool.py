@@ -134,6 +134,49 @@ def get_fewshot_commands_caltech_pretrain():
 
 
 
+def get_fewshot_commands_dogs_pretrain_switch():
+    commands = []
+
+
+    # define the dataset. Make sure this matches up with the directories given in the machines
+    dataset = "dogs"    
+    
+    # define the sweep to do
+    recipe = "sgd-pretrain-fullaug" 
+    seeds = [10,20,30]    
+    ways = ["5","10"]
+    shots = [1,2,5,10]
+    variations = [15]#,5,10,15]
+    models= ["resnet50"]
+    
+    for model in models:
+        for seed in seeds:
+            for way in ways:
+                if way=="all":
+                    way_str = ""
+                if way=="5":
+                    way_str = " --classes 10 23 110 12 40 "
+                if way=="10":
+                    way_str= " --classes  10 23 110 12 40 41 100 96 95 94 "
+                for shot in shots:
+                    for variation in variations:            
+                        experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrain"
+
+                        target_repeats = 128
+                        if way=="all":
+                            target_repeats = 16                        
+                        exp_name = "exp seed "+str(seed) + model + " " + recipe
+                        exp_repeats = target_repeats//(variation+1)
+                        
+                        base_name = "base seed"+str(seed) + model + " " + recipe
+                        base_repeats = exp_repeats * (variation+1)
+
+                        commands.append([model,exp_name,experiment,recipe+ " --switch ",shot,variation,way_str,exp_repeats,seed])
+                        commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
+    return commands
+
+
+
 def get_fewshot_commands_aircraft_pretrain():
     commands = []
 
@@ -203,7 +246,7 @@ def foo(command):
 
 pool = Pool(processes=num_processes)
 
-commands = get_fewshot_commands_aircraft_pretrain()#get_fewshot_commands_caltech_scratch() + get_fewshot_commands_caltech_pretrain()
+commands = get_fewshot_commands_dogs_pretrain_switch()#get_fewshot_commands_aircraft_pretrain()#get_fewshot_commands_caltech_scratch() + get_fewshot_commands_caltech_pretrain()
 for c in commands:
     print(get_command_string(c,0,machine_1.aug_dir,machine_1.data_dir))
     print(len(commands))
