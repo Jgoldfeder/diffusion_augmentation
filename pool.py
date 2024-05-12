@@ -228,7 +228,7 @@ def get_fewshot_commands_dogs_scratch():
     # define the sweep to do
     recipe = "sgd-scratch-short-fullaug" 
     seeds = [10,20,30]    
-    ways = [5,10]#["5","10","all"]
+    ways = ["5","10"]#["5","10","all"]
     shots = [1,2,5,10]
     variations = [15]#,5,10,15]
     models= ["resnet50"]
