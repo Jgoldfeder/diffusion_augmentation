@@ -863,7 +863,7 @@ def main():
         use_multi_epochs_loader=args.use_multi_epochs_loader,
         worker_seeding=args.worker_seeding,
     )
-    if args.switch
+    if args.switch:
         loader_train_second = loader_train
         dataset_train_first = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, num_variations=0,num_repeats=args.repeats*(1+args.variations),classes = args.classes)
         loader_train_first = create_loader(
