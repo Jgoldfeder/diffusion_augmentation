@@ -486,8 +486,8 @@ group.add_argument('--attack', action='store_true', default=False,
                    help='FGSM attack.')
 group.add_argument('--valid-nonorm', action='store_true', default=False,
                    help='do not normalize validation data')
-group.add_argument('--switch', default=None, type=str,
-                   help='.')
+group.add_argument('--switch', action='store_true', default=False,
+                   help='switch dataset')
 def _parse_args():
     # Do we have a config file to parse?
     args_config, remaining = config_parser.parse_known_args()
