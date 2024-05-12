@@ -239,7 +239,6 @@ def get_fewshot_commands_dogs_scratch():
                 if way=="all":
                     way_str = ""
                 if way=="5":
-                if way=="5":
                     way_str = " --classes 10 23 110 12 40 "
                 if way=="10":
                     way_str= " --classes  10 23 110 12 40 41 100 96 95 94 "
