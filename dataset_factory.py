@@ -226,7 +226,7 @@ def create_dataset(
             ds = SVHN(split=split, **torch_kwargs,transform=transform)
         
         elif name == 'pets':
-            #transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224))])
+            transform = None#transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224))])
 
             if split in _TRAIN_SYNONYM:
                 split = 'trainval'
