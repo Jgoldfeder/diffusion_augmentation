@@ -330,10 +330,11 @@ def create_dataset(
                 split = 'val'
             ds = DTD(split=split, **torch_kwargs,transform=transform)
         elif name == 'dogs':
-            input_transforms = transforms.Compose([
-                transforms.RandomResizedCrop(224, ),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor()])
+            # input_transforms = transforms.Compose([
+            #     transforms.RandomResizedCrop(224, ),
+            #     transforms.RandomHorizontalFlip(),
+            #     transforms.ToTensor()])
+            input_transforms=None
     
             train_dataset = dogs.dogs(root=root,
                                      train=True,
