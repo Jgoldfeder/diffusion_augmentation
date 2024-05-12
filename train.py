@@ -486,6 +486,8 @@ group.add_argument('--attack', action='store_true', default=False,
                    help='FGSM attack.')
 group.add_argument('--valid-nonorm', action='store_true', default=False,
                    help='do not normalize validation data')
+group.add_argument('--switch', default=None, type=str,
+                   help='.')
 def _parse_args():
     # Do we have a config file to parse?
     args_config, remaining = config_parser.parse_known_args()
@@ -780,7 +782,6 @@ def main():
         else:
             dataset_train = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, num_variations=args.variations,num_repeats=args.repeats,classes = args.classes)
             print(len(dataset_train))
-
     if args.val_split:
         dataset_eval = create_dataset(
             args.dataset,
@@ -795,7 +796,7 @@ def main():
             target_key=args.target_key,
             num_samples=args.val_num_samples,
         )
-
+    
     if args.classes is not None:
         print("subclass eval set")
         dataset_eval = dataset_factory.SubClassDataSet(dataset_eval,args.classes)
@@ -862,7 +863,44 @@ def main():
         use_multi_epochs_loader=args.use_multi_epochs_loader,
         worker_seeding=args.worker_seeding,
     )
-
+    if args.switch
+        loader_train_second = loader_train
+        dataset_train_first = FewShotDataset(args.diffaug_dir, num_unique_files=args.diffaug_fewshot, num_variations=0,num_repeats=args.repeats*(1+args.variations),classes = args.classes)
+        loader_train_first = create_loader(
+            dataset_train_first,
+            input_size=data_config['input_size'],
+            batch_size=args.batch_size,
+            is_training=True,
+            no_aug=args.no_aug,
+            re_prob=args.reprob,
+            re_mode=args.remode,
+            re_count=args.recount,
+            re_split=args.resplit,
+            train_crop_mode=args.train_crop_mode,
+            scale=args.scale,
+            ratio=args.ratio,
+            hflip=args.hflip,
+            vflip=args.vflip,
+            color_jitter=args.color_jitter,
+            color_jitter_prob=args.color_jitter_prob,
+            grayscale_prob=args.grayscale_prob,
+            gaussian_blur_prob=args.gaussian_blur_prob,
+            auto_augment=args.aa,
+            num_aug_repeats=args.aug_repeats,
+            num_aug_splits=num_aug_splits,
+            interpolation=train_interpolation,
+            mean=data_config['mean'],
+            std=data_config['std'],
+            num_workers=args.workers,
+            distributed=args.distributed,
+            collate_fn=collate_fn,
+            pin_memory=args.pin_mem,
+            device=device,
+            use_prefetcher=args.prefetcher,
+            use_multi_epochs_loader=args.use_multi_epochs_loader,
+            worker_seeding=args.worker_seeding,
+        )
+    
     loader_eval = None
     if args.val_split:
         eval_workers = args.workers
@@ -1000,7 +1038,12 @@ def main():
                 dataset_train.set_epoch(epoch)
             elif args.distributed and hasattr(loader_train.sampler, 'set_epoch'):
                 loader_train.sampler.set_epoch(epoch)
-
+            if args.switch:
+                if epoch <=5:
+                    loader_train = loader_train_first
+                else:
+                    loader_train = loader_train_second
+                    
             train_metrics = train_one_epoch(
                 epoch,
                 model,
