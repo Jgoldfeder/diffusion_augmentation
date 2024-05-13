@@ -458,7 +458,7 @@ def foo(command):
 
 pool = Pool(processes=num_processes)
 
-commands = get_fewshot_commands_pets_pretrain_sunswitch()
+commands = get_full_dataset_commands_pets_scratch()
 #get_fewshot_commands_cars_pretrain_switch()
 #get_fewshot_commands_cars_pretrain_switch()()
 #get_fewshot_commands_dogs_scratch()#get_fewshot_commands_aircraft_pretrain()#get_fewshot_commands_caltech_scratch() + get_fewshot_commands_caltech_pretrain()
