@@ -10,10 +10,12 @@ class Machine0:
         self.name = "machine_0"
         #self.aug_dir = "/data/puma_envs/control_augmented_images_dogs_512fewshot"
         #self.data_dir = "/data/torch/dogs"
-        self.aug_dir = "/data/puma_envs/control_augmented_images_aircraft_512fewshot"
-        self.data_dir = "/data/torch/aircraft"
+        #self.aug_dir = "/data/puma_envs/control_augmented_images_aircraft_512fewshot"
+        #self.data_dir = "/data/torch/aircraft"
         #self.aug_dir = "/data/puma_envs/control_augmented_images_stanford_cars_512fewshot"
         #self.data_dir = "/data/hfds/stanford_cars"
+        self.aug_dir = "/data/puma_envs/control_augmented_images_pets_512fewshot"
+        self.data_dir = "/data/torch/pets"    
     def run(self,command):
         out = subprocess.run([ command + "\n"],shell=True) 
         print(out)
@@ -309,6 +311,49 @@ def get_fewshot_commands_dogs_pretrain_sunswitch():
 
 
 
+def get_fewshot_commands_pets_pretrain_sunswitch():
+    commands = []
+
+
+    # define the dataset. Make sure this matches up with the directories given in the machines
+    dataset = "pets"    
+    
+    # define the sweep to do
+    recipe = "sgd-pretrain-fullaug" 
+    seeds = [10,20,30]    
+    ways = ["5","10"]
+    shots = [1,2,5,10]
+    variations = [15]#,5,10,15]
+    models= ["resnet50sun"]
+    
+    for model in models:
+        for seed in seeds:
+            for way in ways:
+                if way=="all":
+                    way_str = ""
+                if way=="5":
+                    way_str = " --classes 0 1 2 3 4 "
+                if way=="10":
+                    way_str= " --classes 0 1 2 3 4 5 6 7 8 9 "
+                for shot in shots:
+                    for variation in variations:            
+                        experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrainsun"
+
+                        target_repeats = 128
+                        if way=="all":
+                            target_repeats = 16                        
+                        exp_name = "exp seed "+str(seed) + model + " " + recipe
+                        exp_repeats = target_repeats//(variation+1)
+                        
+                        base_name = "base seed"+str(seed) + model + " " + recipe
+                        base_repeats = exp_repeats * (variation+1)
+
+                        commands.append([model,exp_name,experiment,recipe,shot,variation,way_str+ " --switch ",exp_repeats,seed])
+                        commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
+    return commands
+
+
+
 
 
 
@@ -379,7 +424,7 @@ def foo(command):
 
 pool = Pool(processes=num_processes)
 
-commands = get_fewshot_commands_aircraft_pretrain_switch()
+commands = get_fewshot_commands_pets_pretrain_sunswitch()
 #get_fewshot_commands_cars_pretrain_switch()
 #get_fewshot_commands_cars_pretrain_switch()()
 #get_fewshot_commands_dogs_scratch()#get_fewshot_commands_aircraft_pretrain()#get_fewshot_commands_caltech_scratch() + get_fewshot_commands_caltech_pretrain()
