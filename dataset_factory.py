@@ -226,14 +226,14 @@ def create_dataset(
             ds = SVHN(split=split, **torch_kwargs,transform=transform)
         
         elif name == 'pets':
-            transform = transforms.Compose([transforms.ToTensor()])
+            #transform = transforms.Compose([transforms.ToTensor()])
 
             if split in _TRAIN_SYNONYM:
                 split = 'trainval'
             elif split in _EVAL_SYNONYM:
                 split = 'test'
             ds = OxfordIIITPet(split=split, **torch_kwargs,transform=transform)
-
+            ds = Wrapper(ds)
         
         elif name == 'caltech101':
             def f(x):
