@@ -11,7 +11,7 @@ class Machine0:
         #self.aug_dir = "/data/puma_envs/control_augmented_images_dogs_512fewshot"
         #self.data_dir = "/data/torch/dogs"
         self.aug_dir = "/data/puma_envs/control_augmented_images_stanford_cars_512fewshot"
-        self.data_dir = "/data/hfds/cars"
+        self.data_dir = "/data/hfds/stanford_cars"
     def run(self,command):
         out = subprocess.run([ command + "\n"],shell=True) 
         print(out)
