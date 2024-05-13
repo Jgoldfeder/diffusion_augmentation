@@ -328,7 +328,7 @@ def get_fewshot_commands_cars_pretrain_switch():
 
 
     # define the dataset. Make sure this matches up with the directories given in the machines
-    dataset = "cars"    
+    dataset = "stanford_cars"    
     
     # define the sweep to do
     recipe = "sgd-pretrain-fullaug" 
