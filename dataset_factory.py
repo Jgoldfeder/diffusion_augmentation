@@ -232,7 +232,7 @@ def create_dataset(
                 split = 'trainval'
             elif split in _EVAL_SYNONYM:
                 split = 'test'
-            ds = OxfordIIITPet(split=split, **torch_kwargs,transform=transform)
+            ds = OxfordIIITPet(split=split, **torch_kwargs,transform=None)
             ds = Wrapper(ds)
         
         elif name == 'caltech101':
