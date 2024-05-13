@@ -1103,6 +1103,20 @@ def main():
                         log_suffix=' (EMA)',
                     )
                     eval_metrics = ema_eval_metrics
+                    if args.valid_nonorm:
+                        loader_eval.transform = dataset_eval.transform_no_norm
+                            ema_eval_metrics = validate(
+                                model_ema,
+                                loader_eval,
+                                validate_loss_fn,
+                                args,
+                                device=device,
+                                amp_autocast=amp_autocast,
+                                log_suffix=' (EMA)',
+                            )  
+                        loader_eval.transform = dataset_eval.transform_norm
+                        ema_eval_metrics['top1_no_norm'] = eval_metrics_no_norm['top1']
+                    
             else:
                 eval_metrics = None
 
