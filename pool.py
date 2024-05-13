@@ -15,10 +15,10 @@ class Machine0:
         #self.aug_dir = "/data/puma_envs/control_augmented_images_stanford_cars_512fewshot"
         #self.data_dir = "/data/hfds/stanford_cars"
         
-        self.aug_dir = "/data/puma_envs/control_augmented_images_flowers102_512fewshot"
-        self.data_dir = "/data/torch/flowers102"  
-        # self.aug_dir = "/data/puma_envs/control_augmented_images_pets_512"
-        # self.data_dir = "/data/torch/pets"  
+        #self.aug_dir = "/data/puma_envs/control_augmented_images_flowers102_512fewshot"
+        #self.data_dir = "/data/torch/flowers102"  
+        self.aug_dir = "/data/puma_envs/control_augmented_images_pets_512"
+        self.data_dir = "/data/torch/pets"  
     def run(self,command):
         out = subprocess.run([ command + "\n"],shell=True) 
         print(out)
@@ -43,7 +43,7 @@ class GPU:
 queue = Queue()
 
 machine_0 = Machine0()
-for i in [0,1,2,3,4,5,6]+[0,1,2,3,4,5,6]:
+for i in [0,1,2,3,4,5,6]:#+[0,1,2,3,4,5,6]:
     queue.put(GPU(machine_0,i))
 # machine_1 = Machine1()
 # for i in range(3):
@@ -467,7 +467,7 @@ def get_full_dataset_commands_pets_scratch():
     dataset = "pets"    
     
     # define the sweep to do
-    recipes = ["sgd-scratch-fullaug","sgd-scratch-noaug" ]
+    recipes = ["sgd-scratch-fullaug"]#,"sgd-scratch-noaug" ]
     seeds = [10,20,30]    
     models= ["resnet50"]
     
@@ -479,10 +479,10 @@ def get_full_dataset_commands_pets_scratch():
                 way_str=""
                 experiment = dataset + "-" + "full"                   
                 exp_name = "exp seed "+str(seed) + model + " " + recipe
-                exp_repeats = 1
+                exp_repeats = 2
                 
                 base_name = "base seed"+str(seed) + model + " " + recipe
-                base_repeats = 3
+                base_repeats = 6
 
                 if "fullaug" in recipe:
                     way_str = " --valid-nonorm "
@@ -504,7 +504,8 @@ def foo(command):
 
 pool = Pool(processes=num_processes)
 
-commands = get_fewshot_commands_flowers_pretrain_switch()
+commands = get_full_dataset_commands_pets_scratch()
+#get_fewshot_commands_flowers_pretrain_switch()
 #get_full_dataset_commands_pets_scratch()
 #get_fewshot_commands_cars_pretrain_switch()
 #get_fewshot_commands_cars_pretrain_switch()()
