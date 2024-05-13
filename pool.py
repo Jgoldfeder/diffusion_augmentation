@@ -431,7 +431,7 @@ def get_full_dataset_commands_pets_scratch():
                 variation=2 
                 shot=0
                 way_str=""
-                experiment = dataset + "-" + "full""                      
+                experiment = dataset + "-" + "full"                   
                 exp_name = "exp seed "+str(seed) + model + " " + recipe
                 exp_repeats = 1
                 
