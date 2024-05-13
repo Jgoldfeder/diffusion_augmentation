@@ -437,6 +437,9 @@ def get_full_dataset_commands_pets_scratch():
                 
                 base_name = "base seed"+str(seed) + model + " " + recipe
                 base_repeats = 3
+
+                if "fullaug" in recipe:
+                    way_str = " --valid-nonorm "
                 commands.append([model,exp_name,experiment,recipe,shot,variation,way_str,exp_repeats,seed])
                 commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
     return commands
