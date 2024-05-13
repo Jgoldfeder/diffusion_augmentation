@@ -938,7 +938,8 @@ def main():
             use_prefetcher=args.prefetcher,
         )
     if args.valid_nonorm:
-        dataset_eval.transform= transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224))])
+        dataset_eval.transform_norm= dataset_eval.transform
+        dataset_eval.transform_no_norm= transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224))])
         
     # setup loss function
     if args.jsd_loss:
@@ -1075,7 +1076,19 @@ def main():
                     device=device,
                     amp_autocast=amp_autocast,
                 )
-
+                if args.valid_nonorm:
+                    loader_eval.transform = dataset_eval.transform_no_norm
+                    eval_metrics_no_norm = validate(
+                        model,
+                        loader_eval,
+                        validate_loss_fn,
+                        args,
+                        device=device,
+                        amp_autocast=amp_autocast,
+                    )   
+                    loader_eval.transform = dataset_eval.transform_norm
+                    eval_metrics['top1_no_norm'] = eval_metrics_no_norm['top1']
+                
                 if model_ema is not None and not args.model_ema_force_cpu:
                     if args.distributed and args.dist_bn in ('broadcast', 'reduce'):
                         utils.distribute_bn(model_ema, args.world_size, args.dist_bn == 'reduce')

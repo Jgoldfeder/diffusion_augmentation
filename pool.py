@@ -411,6 +411,37 @@ def get_fewshot_commands_cars_pretrain_switch():
                         commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
     return commands
 
+
+
+def get_full_dataset_commands_pets_scratch():
+    commands = []
+
+
+    # define the dataset. Make sure this matches up with the directories given in the machines
+    dataset = "pets"    
+    
+    # define the sweep to do
+    recipes = ["sgd-scratch-fullaug","sgd-scratch-noaug" ]
+    seeds = [10,20,30]    
+    models= ["resnet50"]
+    
+    for model in models:
+        for recipe in recipes:
+            for seed in seeds:            
+                variation=2 
+                shot=0
+                way_str=""
+                experiment = dataset + "-" + "full""                      
+                exp_name = "exp seed "+str(seed) + model + " " + recipe
+                exp_repeats = 1
+                
+                base_name = "base seed"+str(seed) + model + " " + recipe
+                base_repeats = 3
+                commands.append([model,exp_name,experiment,recipe,shot,variation,way_str,exp_repeats,seed])
+                commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
+    return commands
+
+
 def foo(command):
     gpu = queue.get()
     try:
