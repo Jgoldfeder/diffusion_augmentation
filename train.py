@@ -89,7 +89,7 @@ def modify_args(args):
     # give shorthand for different recipes
     # axes are [scratch, pretrain], [SGD, ADAM], [noaug, fullaug]
 
-    args.batch_size = 64
+    #args.batch_size = 64
     args.img_size=224    
     args.sched="cosine"
     args.model_ema=True
@@ -197,7 +197,7 @@ group.add_argument('--std', type=float, nargs='+', default=None, metavar='STD',
                    help='Override std deviation of dataset')
 group.add_argument('--interpolation', default='', type=str, metavar='NAME',
                    help='Image resize interpolation type (overrides model)')
-group.add_argument('-b', '--batch-size', type=int, default=128, metavar='N',
+group.add_argument('-b', '--batch-size', type=int, default=64, metavar='N',
                    help='Input batch size for training (default: 128)')
 group.add_argument('-vb', '--validation-batch-size', type=int, default=None, metavar='N',
                    help='Validation batch size override (default: None)')
@@ -1115,7 +1115,7 @@ def main():
                                 log_suffix=' (EMA)',
                         )  
                         loader_eval.transform = dataset_eval.transform_norm
-                        ema_eval_metrics['top1_no_norm'] = eval_metrics_no_norm['top1']
+                        eval_metrics['top1_no_norm'] = eval_metrics_no_norm['top1']
                     
             else:
                 eval_metrics = None
