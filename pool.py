@@ -10,10 +10,11 @@ class Machine0:
         self.name = "machine_0"
         #self.aug_dir = "/data/puma_envs/control_augmented_images_dogs_512fewshot"
         #self.data_dir = "/data/torch/dogs"
-        self.aug_dir = "/data/puma_envs/control_augmented_images_aircraft_512"
-        self.data_dir = "/data/torch/aircraft"
-        #self.aug_dir = "/data/puma_envs/control_augmented_images_stanford_cars_512fewshot"
-        #self.data_dir = "/data/hfds/stanford_cars"
+        #self.aug_dir = "/data/puma_envs/control_augmented_images_aircraft_512"
+        #self.data_dir = "/data/torch/aircraft"
+        
+        self.aug_dir = "/data/puma_envs/control_augmented_images_stanford_cars_512"
+        self.data_dir = "/data/hfds/stanford_cars"
         
         #self.aug_dir = "/data/puma_envs/control_augmented_images_flowers102_512fewshot"
         #self.data_dir = "/data/torch/flowers102"  
@@ -521,6 +522,39 @@ def get_full_dataset_commands_aircraft_scratch():
                 commands.append([model,exp_name,experiment,recipe,shot,variation,way_str,exp_repeats,seed])
                 commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
     return commands
+
+
+
+def get_full_dataset_commands_cars_scratch():
+    commands = []
+
+
+    # define the dataset. Make sure this matches up with the directories given in the machines
+    dataset = "stanford_cars"    
+    
+    # define the sweep to do
+    recipes = ["sgd-scratch-fullaug","sgd-scratch-noaug" ]
+    seeds = [10,20,30]    
+    models= ["resnet50"]
+    
+    for model in models:
+        for recipe in recipes:
+            for seed in seeds:            
+                variation=2 
+                shot=0
+                way_str=""
+                experiment = dataset + "-" + "full"                   
+                exp_name = "exp seed "+str(seed) + model + " " + recipe
+                exp_repeats = 2
+                
+                base_name = "base seed"+str(seed) + model + " " + recipe
+                base_repeats = 6
+
+                if "fullaug" in recipe:
+                    way_str = " --valid-nonorm "
+                commands.append([model,exp_name,experiment,recipe,shot,variation,way_str,exp_repeats,seed])
+                commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
+    return commands
 def foo(command):
     gpu = queue.get()
     try:
@@ -534,7 +568,7 @@ def foo(command):
 
 pool = Pool(processes=num_processes)
 
-commands = get_full_dataset_commands_aircraft_scratch()
+commands = get_full_dataset_commands_cars_scratch()
 #get_full_dataset_commands_pets_scratch()
 #get_fewshot_commands_flowers_pretrain_switch()
 #get_full_dataset_commands_pets_scratch()
