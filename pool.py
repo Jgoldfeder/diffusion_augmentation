@@ -8,13 +8,13 @@ import subprocess
 class Machine0:
     def __init__(self):
         self.name = "machine_0"
-        #self.aug_dir = "/data/puma_envs/control_augmented_images_dogs_512fewshot"
-        #self.data_dir = "/data/torch/dogs"
+        self.aug_dir = "/data/puma_envs/control_augmented_images_dogs_512"
+        self.data_dir = "/data/torch/dogs"
         #self.aug_dir = "/data/puma_envs/control_augmented_images_aircraft_512"
         #self.data_dir = "/data/torch/aircraft"
         
-        self.aug_dir = "/data/puma_envs/control_augmented_images_stanford_cars_512"
-        self.data_dir = "/data/hfds/stanford_cars"
+        #self.aug_dir = "/data/puma_envs/control_augmented_images_stanford_cars_512"
+        #self.data_dir = "/data/hfds/stanford_cars"
         
         #self.aug_dir = "/data/puma_envs/control_augmented_images_flowers102_512fewshot"
         #self.data_dir = "/data/torch/flowers102"  
@@ -366,7 +366,7 @@ def get_fewshot_commands_pets_pretrain_sunswitch():
 def get_command_string(command,gpu,aug_directory,data_dir):
     def get_command(device,aug_directory,model,name,experiment,recipe,shots,variations,ways,repeats,seed,data_directory):
         dataset = experiment.split("-")[0]
-        return 'CUDA_VISIBLE_DEVICES='+str(device)+' python3 train.py '+data_directory+' --dataset hfds/'+dataset+'  --model='+model+'  --num-classes=257  --log-wandb --experiment "'+experiment+'" --diffaug-dir='+aug_directory+' --seed '+str(seed)+'  --name "'+name+'" --recipe "'+recipe+'"  --repeats '+str(repeats)+' --variations '+str(variations)+' --diffaug-fewshot='+str(shots)+' '+ways+'  '
+        return 'CUDA_VISIBLE_DEVICES='+str(device)+' python3 train.py '+data_directory+' --dataset torch/'+dataset+'  --model='+model+'  --num-classes=257  --log-wandb --experiment "'+experiment+'" --diffaug-dir='+aug_directory+' --seed '+str(seed)+'  --name "'+name+'" --recipe "'+recipe+'"  --repeats '+str(repeats)+' --variations '+str(variations)+' --diffaug-fewshot='+str(shots)+' '+ways+'  '
      
     command_string = get_command(gpu,aug_directory,command[0],command[1],command[2],command[3],command[4],command[5],command[6],command[7],command[8],data_dir)
     return command_string
@@ -552,6 +552,39 @@ def get_full_dataset_commands_cars_scratch():
 
                 if "fullaug" in recipe:
                     way_str = " --valid-nonorm "
+                commands.append([model,exp_name,experiment,recipe,shot,variation,way_str,exp_repeats,seed])
+                commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
+    return commands
+
+
+
+def get_full_dataset_commands_dogs_scratch():
+    commands = []
+
+
+    # define the dataset. Make sure this matches up with the directories given in the machines
+    dataset = "dogs"    
+    
+    # define the sweep to do
+    recipes = ["sgd-scratch-fullaug","sgd-scratch-noaug" ]
+    seeds = [10,20,30]    
+    models= ["resnet50"]
+    
+    for model in models:
+        for recipe in recipes:
+            for seed in seeds:            
+                variation=2 
+                shot=0
+                way_str=""
+                experiment = dataset + "-" + "full"                   
+                exp_name = "exp seed "+str(seed) + model + " " + recipe
+                exp_repeats = 2
+                
+                base_name = "base seed"+str(seed) + model + " " + recipe
+                base_repeats = 6
+
+                # if "fullaug" in recipe:
+                #     way_str = " --valid-nonorm "
                 commands.append([model,exp_name,experiment,recipe,shot,variation,way_str,exp_repeats,seed])
                 commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
     return commands
