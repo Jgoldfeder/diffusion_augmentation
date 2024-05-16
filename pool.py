@@ -601,7 +601,8 @@ def foo(command):
 
 pool = Pool(processes=num_processes)
 
-commands = get_full_dataset_commands_cars_scratch()
+commands = get_full_dataset_commands_dogs_scratch()
+#get_full_dataset_commands_cars_scratch()
 #get_full_dataset_commands_pets_scratch()
 #get_fewshot_commands_flowers_pretrain_switch()
 #get_full_dataset_commands_pets_scratch()
