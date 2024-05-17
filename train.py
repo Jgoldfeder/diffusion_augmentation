@@ -1040,7 +1040,7 @@ def main():
             elif args.distributed and hasattr(loader_train.sampler, 'set_epoch'):
                 loader_train.sampler.set_epoch(epoch)
             if args.switch:
-                if epoch <=5:
+                if epoch <=40:
                     loader_train = loader_train_first
                 else:
                     loader_train = loader_train_second
