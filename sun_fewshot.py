@@ -55,7 +55,7 @@ def get_fewshot_commands_sun_pretrain_switch():
     recipe = "sgd-pretrain-fullaug" 
     seeds = [11,21,31]    
     ways = ["5","10"]
-    shots = [1,2,5,10]
+    shots = [1,2]#,5,10]
     variations = [15]#,5,10,15]
     models= ["resnet50"]
     
@@ -75,10 +75,10 @@ def get_fewshot_commands_sun_pretrain_switch():
                         target_repeats = 128
                         if way=="all":
                             target_repeats = 16                        
-                        exp_name = "exp seed "+str(seed) + model + " " + recipe
+                        exp_name = "n exp seed "+str(seed) + model + " " + recipe
                         exp_repeats = target_repeats//(variation+1)
                         
-                        base_name = "base seed"+str(seed) + model + " " + recipe
+                        base_name = "n base seed"+str(seed) + model + " " + recipe
                         base_repeats = exp_repeats * (variation+1)
                         
                         commands.append([model,exp_name,experiment,recipe,shot,variation,way_str+ " --switch ",exp_repeats,seed])
