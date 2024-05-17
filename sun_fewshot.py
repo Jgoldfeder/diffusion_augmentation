@@ -70,15 +70,15 @@ def get_fewshot_commands_sun_pretrain_switch():
                     way_str= " --classes 0 1 2 3 4 5 6 7 8 9 "
                 for shot in shots:
                     for variation in variations:            
-                        experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrain"
+                        experiment = 'n_'+dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrain"
 
                         target_repeats = 128
                         if way=="all":
                             target_repeats = 16                        
-                        exp_name = "n exp seed "+str(seed) + model + " " + recipe
+                        exp_name = "exp seed "+str(seed) + model + " " + recipe
                         exp_repeats = target_repeats//(variation+1)
                         
-                        base_name = "n base seed"+str(seed) + model + " " + recipe
+                        base_name = "base seed"+str(seed) + model + " " + recipe
                         base_repeats = exp_repeats * (variation+1)
                         
                         commands.append([model,exp_name,experiment,recipe,shot,variation,way_str+ " --switch ",exp_repeats,seed])
