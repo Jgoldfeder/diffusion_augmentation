@@ -218,12 +218,12 @@ def create_dataset(
             elif split in _EVAL_SYNONYM:
                 ds = Wrapper(test_dataset) 
 
-                # HACK SINCE PAT AUGMENTED WRONG DS
-                full_dataset = Wrapper(train_dataset)
-                train_size = int(0.6 * len(full_dataset))
-                test_size = len(full_dataset) - train_size
-                train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
-                ds = Wrapper(test_dataset)
+                # # HACK SINCE PAT AUGMENTED WRONG DS
+                # full_dataset = Wrapper(train_dataset)
+                # train_size = int(0.6 * len(full_dataset))
+                # test_size = len(full_dataset) - train_size
+                # train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
+                # ds = Wrapper(test_dataset)
                 
         elif name == 'svhn':
             transform = transforms.Compose([transforms.ToTensor()])
