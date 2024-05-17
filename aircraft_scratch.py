@@ -91,7 +91,7 @@ commands = get_full_dataset_commands_aircraft_scratch()
 
 
 for c in commands:
-    print(get_command_string(c,0,machine_1.aug_dir,machine_1.data_dir))
+    print(get_command_string(c,0,machine_0.aug_dir,machine_0.data_dir))
     print(len(commands))
     
 for _ in pool.imap_unordered(foo, commands):
