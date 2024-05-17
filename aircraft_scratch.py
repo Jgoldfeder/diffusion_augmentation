@@ -71,7 +71,7 @@ def get_full_dataset_commands_aircraft_scratch():
 
                 # if "fullaug" in recipe:
                 #     way_str = " --valid-nonorm "
-                commands.append([model,exp_name,experiment,recipe,shot,variation,way_str +" --switch "+,exp_repeats,seed])
+                commands.append([model,exp_name,experiment,recipe,shot,variation,way_str +" --switch ",exp_repeats,seed])
                 commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
     return commands
 def foo(command):
