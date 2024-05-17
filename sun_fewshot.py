@@ -8,8 +8,8 @@ import subprocess
 class Machine0:
     def __init__(self):
         self.name = "machine_0"
-        self.aug_dir = "/home/ubuntu/control_augmented_images_pets_512"
-        self.data_dir = "torch/pets"
+        self.aug_dir = "/data/puma_envs/control_augmented_images_pets_512"
+        self.data_dir = "/data/torch/pets"
         
     def run(self,command):
         out = subprocess.run([ command + "\n"],shell=True) 
@@ -27,9 +27,9 @@ class GPU:
 queue = Queue()
 
 machine_0 = Machine0()
-for i in [0,1,2,3,4,5,6,7]: #+ [0,1,2,3,4,5,6,7]:
+for i in [0,1,2,3,4,5,6]+ [0,1,2,3,4,5,6]:
     queue.put(GPU(machine_0,i))
-num_processes = 8
+num_processes = 14
 
 
 
