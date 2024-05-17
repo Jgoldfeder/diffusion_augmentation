@@ -54,7 +54,7 @@ def get_full_dataset_commands_aircraft_scratch():
     # define the sweep to do
     recipes = ["sgd-scratch-fullaug"] #,"sgd-scratch-noaug" ]
     seeds = [11,21]#[10,20,30]    
-    models= ["resnet101","vit_base_patch8_224"]#["vgg19","efficientnet_b2"]#["resnet50",vit_base_patch8_224]
+    models= ["resnet101","vit_base_patch16_224"]#["vgg19","efficientnet_b2"]#["resnet50",vit_base_patch8_224]
     
     for model in models:
         for recipe in recipes:
