@@ -65,12 +65,12 @@ def get_fewshot_commands_sun_pretrain_switch():
                 if way=="all":
                     way_str = ""
                 if way=="5":
-                    way_str = " --classes 0 1 2 3 4 "
+                    way_str = " --classes 0 82 85 95 231 "
                 if way=="10":
-                    way_str= " --classes 0 1 2 3 4 5 6 7 8 9 "
+                    way_str= " --classes 0 82 85 95 231 240 242 343 191 222 "
                 for shot in shots:
                     for variation in variations:            
-                        experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrain"
+                        experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrain_finegrain"
 
                         target_repeats = 128
                         if way=="all":
