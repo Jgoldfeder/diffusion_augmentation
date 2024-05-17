@@ -92,7 +92,7 @@ def modify_args(args):
     #args.batch_size = 64
     args.img_size=224    
     args.sched="cosine"
-    if step in args.recipe:
+    if "step" in args.recipe:
         args.sched = "step"
         args.decay_milestones = [80,120]
         
