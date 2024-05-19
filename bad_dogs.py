@@ -81,7 +81,7 @@ def get_fewshot_commands_dogs_pretrain_sunswitch():
                         base_repeats = exp_repeats * (variation+1)
 
                         commands.append([model,exp_name,experiment,recipe,shot,variation,way_str+ " --switch ",exp_repeats,seed])
-                        commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
+                        #commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
     return commands
 
 
