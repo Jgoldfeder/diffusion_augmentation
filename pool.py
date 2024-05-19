@@ -567,7 +567,7 @@ def get_full_dataset_commands_dogs_scratch():
     
     # define the sweep to do
     recipes = ["sgd-scratch-fullaug"] #,"sgd-scratch-noaug" ]
-    seeds = [10,20]#[10,20,30]    
+    seeds = [10,20,30]    
     models= ["resnet101"]#["resnet50",vit_base_patch8_224]
     
     for model in models:
