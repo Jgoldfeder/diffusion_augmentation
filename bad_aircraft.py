@@ -69,7 +69,7 @@ def get_fewshot_commands_aircraft_pretrain_sunswitch():
                     way_str= " --classes  10 23 110 12 40 41 100 96 95 94 "
                 for shot in shots:
                     for variation in variations:            
-                        experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrainsun_baddogs"
+                        experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrain_badaircraft"
 
                         target_repeats = 128
                         if way=="all":
@@ -81,7 +81,7 @@ def get_fewshot_commands_aircraft_pretrain_sunswitch():
                         base_repeats = exp_repeats * (variation+1)
 
                         commands.append([model,exp_name,experiment,recipe,shot,variation,way_str+ " --switch ",exp_repeats,seed])
-                        #commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
+                        commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
     return commands
 
 
