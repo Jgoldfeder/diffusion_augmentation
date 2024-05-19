@@ -66,7 +66,7 @@ def get_fewshot_commands_aircraft_pretrain_sunswitch():
                 if way=="all":
                     way_str = ""
                 if way=="5":
-                    way_str = " --classes 0 1 2 3 4 5 "
+                    way_str = " --classes 0 1 2 3 4 "
                 if way=="10":
                     way_str= " --classes  0 1 2 3 4 5 6 7 8 9 "
                 for shot in shots:
