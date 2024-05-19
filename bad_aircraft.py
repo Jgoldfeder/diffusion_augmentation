@@ -9,6 +9,8 @@ class Machine0:
     def __init__(self):
         self.name = "machine_0"
         self.aug_dir = "/data/puma_envs/no_control_augmented_images_aircraft_correct"
+        #self.aug_dir = "/data/puma_envs/control_augmented_images_aircraft_512fewshot"
+
         self.data_dir = "/data/torch/aircraft"
         
     def run(self,command):
@@ -64,9 +66,9 @@ def get_fewshot_commands_aircraft_pretrain_sunswitch():
                 if way=="all":
                     way_str = ""
                 if way=="5":
-                    way_str = " --classes 10 23 110 12 40 "
+                    way_str = " --classes 0 1 2 3 4 5 "
                 if way=="10":
-                    way_str= " --classes  10 23 110 12 40 41 100 96 95 94 "
+                    way_str= " --classes  0 1 2 3 4 5 6 7 8 9 "
                 for shot in shots:
                     for variation in variations:            
                         experiment = dataset + "-" + way + "-" + str(shot) + "-" + str(variation) + "-pretrain_badaircraft"
@@ -74,14 +76,14 @@ def get_fewshot_commands_aircraft_pretrain_sunswitch():
                         target_repeats = 128
                         if way=="all":
                             target_repeats = 16                        
-                        exp_name = "exp seed "+str(seed) + model + " " + recipe
+                        exp_name = "fixed exp seed "+str(seed) + model + " " + recipe
                         exp_repeats = target_repeats//(variation+1)
                         
-                        base_name = "base seed"+str(seed) + model + " " + recipe
+                        base_name = "fixed base seed"+str(seed) + model + " " + recipe
                         base_repeats = exp_repeats * (variation+1)
 
                         commands.append([model,exp_name,experiment,recipe,shot,variation,way_str+ " --switch ",exp_repeats,seed])
-                        commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
+                        #commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
     return commands
 
 
