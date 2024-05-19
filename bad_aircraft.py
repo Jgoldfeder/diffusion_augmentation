@@ -8,7 +8,7 @@ import subprocess
 class Machine0:
     def __init__(self):
         self.name = "machine_0"
-        self.aug_dir = "/data/puma_envs/no_control_augmented_images_aircraft"
+        self.aug_dir = "/data/puma_envs/no_control_augmented_images_aircraft_correct"
         self.data_dir = "/data/torch/aircraft"
         
     def run(self,command):
