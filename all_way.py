@@ -87,39 +87,6 @@ def get_fewshot_commands(dataset,sun=False):
                         commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
     return commands
 
-
-
-def foo(command):
-    gpu = queue.get()
-    try:
-        print("running on " + gpu.machine.name + ":"+ str(gpu.gpu_id))
-        dataset = command[2].split("-")[0]
-        aug_dir,data_dir = get_dirs(dataset)
-        print(get_command_string(c,0,aug_dir,data_dir))
-            
-        gpu.machine.run(command_string)
-    finally:
-        queue.put(gpu)
-
-
-
-pool = Pool(processes=num_processes)
-
-commands = []
-
-datasets = [
-    ("dogs",True),
-    ("aircraft",False),
-    ("pets",True),
-    ("stanford_cars",False),
-    ("food101",False),
-    ("sun397",False),
-]
-for d,s in datasets:
-    commands += get_fewshot_commands(d,s)
-
-
-
 def get_dirs(ds_name):
     if ds_name == "dogs":
         aug_dir = "/data/puma_envs/control_augmented_images_dogs_512fewshot"
@@ -153,6 +120,40 @@ def get_dirs_bad(ds_name):
         aug_dir = "/home/judah/no_control_augmented_images_cars"
         data_dir = "hfds/stanford_cars"
     return aug_dir,data_dir
+
+
+def foo(command):
+    gpu = queue.get()
+    try:
+        print("running on " + gpu.machine.name + ":"+ str(gpu.gpu_id))
+        dataset = command[2].split("-")[0]
+        aug_dir,data_dir = get_dirs(dataset)
+        print(get_command_string(c,0,aug_dir,data_dir))
+            
+        gpu.machine.run(command_string)
+    finally:
+        queue.put(gpu)
+
+
+
+pool = Pool(processes=num_processes)
+
+commands = []
+
+datasets = [
+    ("dogs",True),
+    ("aircraft",False),
+    ("pets",True),
+    ("stanford_cars",False),
+    ("food101",False),
+    ("sun397",False),
+]
+for d,s in datasets:
+    commands += get_fewshot_commands(d,s)
+
+
+
+
 
 for c in commands:
     dataset = c[2].split("-")[0]
