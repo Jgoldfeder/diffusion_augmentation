@@ -128,7 +128,8 @@ def foo(command):
         print("running on " + gpu.machine.name + ":"+ str(gpu.gpu_id))
         dataset = command[2].split("-")[0]
         aug_dir,data_dir = get_dirs(dataset)
-        print(get_command_string(command,0,aug_dir,data_dir))
+        command_string=get_command_string(command,0,aug_dir,data_dir)
+        print(command_string)
             
         gpu.machine.run(command_string)
     finally:
