@@ -8,8 +8,8 @@ import subprocess
 class Machine0:
     def __init__(self):
         self.name = "machine_0"
-        self.aug_dir = "/home/ubuntu/control_augmented_images_pets_512"
-        self.data_dir = "torch/pets"
+        self.aug_dir = "/home/ubuntu/control_augmented_images_caltech256_512"
+        self.data_dir = "torch/caltech256"
         
     def run(self,command):
         out = subprocess.run([ command + "\n"],shell=True) 
@@ -49,7 +49,7 @@ def get_full_dataset_commands_aircraft_scratch():
 
 
     # define the dataset. Make sure this matches up with the directories given in the machines
-    dataset = "pets"    
+    dataset = "caltech256"    
     
     # define the sweep to do
     recipes = ["sgd-scratch-fullaug"] #,"sgd-scratch-noaug" ]
