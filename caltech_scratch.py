@@ -64,10 +64,10 @@ def get_full_dataset_commands_aircraft_scratch():
                 way_str=""
                 experiment = dataset + "-" + "full"                   
                 exp_name = "switch exp seed "+str(seed) + model + " " + recipe
-                exp_repeats = 2
+                exp_repeats = 1
                 
                 base_name = "switch base seed"+str(seed) + model + " " + recipe
-                base_repeats = 6
+                base_repeats = 3
 
                 # if "fullaug" in recipe:
                 #     way_str = " --valid-nonorm "
