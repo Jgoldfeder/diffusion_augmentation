@@ -492,6 +492,8 @@ group.add_argument('--valid-nonorm', action='store_true', default=False,
                    help='do not normalize validation data')
 group.add_argument('--switch', action='store_true', default=False,
                    help='switch dataset')
+group.add_argument('--switch-epoch', type=int, default=5, metavar='N',
+                   help='switch epoch')
 def _parse_args():
     # Do we have a config file to parse?
     args_config, remaining = config_parser.parse_known_args()
@@ -1044,7 +1046,7 @@ def main():
             elif args.distributed and hasattr(loader_train.sampler, 'set_epoch'):
                 loader_train.sampler.set_epoch(epoch)
             if args.switch:
-                if epoch <=5:
+                if epoch <=args.switch_epoch:
                     loader_train = loader_train_first
                 else:
                     loader_train = loader_train_second

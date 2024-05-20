@@ -8,7 +8,7 @@ import subprocess
 class Machine0:
     def __init__(self):
         self.name = "machine_0"
-        self.aug_dir = "/home/ubuntu/control_augmented_images_aircraft_512"
+        self.aug_dir = "/home/ubuntu/control_augmented_images_aircraft_512fewshot"
         self.data_dir = "torch/aircraft"
         
     def run(self,command):
@@ -54,7 +54,7 @@ def get_full_dataset_commands_aircraft_scratch():
     # define the sweep to do
     recipes = ["sgd-scratch-fullaug"] #,"sgd-scratch-noaug" ]
     seeds = [10,20]#[10,20,30]    
-    models= ["vgg19","efficientnet_b2"]#["resnet50",vit_base_patch8_224]
+    models= ["vgg19","resnet101"]#["resnet50",vit_base_patch8_224]
     
     for model in models:
         for recipe in recipes:
@@ -71,7 +71,7 @@ def get_full_dataset_commands_aircraft_scratch():
 
                 # if "fullaug" in recipe:
                 #     way_str = " --valid-nonorm "
-                commands.append([model,exp_name,experiment,recipe,shot,variation,way_str +" --switch ",exp_repeats,seed])
+                commands.append([model,exp_name,experiment,recipe,shot,variation,way_str +"  --switch --switch-epoch 40 ",exp_repeats,seed])
                 commands.append([model,base_name,experiment,recipe,shot,0,way_str,base_repeats,seed])
     return commands
 def foo(command):
