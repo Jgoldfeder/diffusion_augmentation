@@ -8,7 +8,7 @@ import subprocess
 class Machine0:
     def __init__(self):
         self.name = "machine_0"
-        self.aug_dir = "/home/ubuntu/control_augmented_images_cars_512fewshot"
+        self.aug_dir = "/home/ubuntu/control_augmented_images_stanford_cars_512"
         self.data_dir = "torch/stanford_cars"
         
     def run(self,command):
