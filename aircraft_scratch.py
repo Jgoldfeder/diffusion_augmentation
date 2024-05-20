@@ -26,11 +26,14 @@ class GPU:
 # initialize the queue with the GPU ids
 queue = Queue()
 
+# machine_0 = Machine0()
+# for i in [0,1,2,3,4,5,6,7]: #+ [0,1,2,3,4,5,6,7]:
+#     queue.put(GPU(machine_0,i))
+# num_processes = 8
 machine_0 = Machine0()
-for i in [0,1,2,3,4,5,6,7]: #+ [0,1,2,3,4,5,6,7]:
+for i in [3,3,3,3,2,2,2,2]: #+ [0,1,2,3,4,5,6,7]:
     queue.put(GPU(machine_0,i))
 num_processes = 8
-
 
 
 
@@ -53,8 +56,8 @@ def get_full_dataset_commands_aircraft_scratch():
     
     # define the sweep to do
     recipes = ["sgd-scratch-fullaug"] #,"sgd-scratch-noaug" ]
-    seeds = [10,20]#[10,20,30]    
-    models= ["vgg19","resnet101"]#["resnet50",vit_base_patch8_224]
+    seeds = [10]#[10,20,30]    
+    models= ["efficientnet_b2","visformer_tiny","swin_s3_tiny_224","mixer_s16_224"]#["resnet50",vit_base_patch8_224]
     
     for model in models:
         for recipe in recipes:

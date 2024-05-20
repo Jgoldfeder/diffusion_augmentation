@@ -8,8 +8,8 @@ import subprocess
 class Machine0:
     def __init__(self):
         self.name = "machine_0"
-        self.aug_dir = "/home/ubuntu/control_augmented_images_stanford_cars_512"
-        self.data_dir = "torch/stanford_cars"
+        self.aug_dir = "/home/ubuntu/control_augmented_images_dogs_512"
+        self.data_dir = "torch/dogs"
         
     def run(self,command):
         out = subprocess.run([ command + "\n"],shell=True) 
@@ -30,8 +30,9 @@ queue = Queue()
 # for i in [0,1,2,3,4,5,6,7]: #+ [0,1,2,3,4,5,6,7]:
 #     queue.put(GPU(machine_0,i))
 # num_processes = 8
+
 machine_0 = Machine0()
-for i in [4,4,4,4,5,5,5,5]: #+ [0,1,2,3,4,5,6,7]:
+for i in [0,0,0,0,1,1,1,1]: #+ [0,1,2,3,4,5,6,7]:
     queue.put(GPU(machine_0,i))
 num_processes = 8
 
@@ -42,7 +43,7 @@ num_processes = 8
 def get_command_string(command,gpu,aug_directory,data_dir):
     def get_command(device,aug_directory,model,name,experiment,recipe,shots,variations,ways,repeats,seed,data_directory):
         dataset = experiment.split("-")[0]
-        return 'CUDA_VISIBLE_DEVICES='+str(device)+' python3 train.py '+data_directory+' --dataset hfds/'+dataset+'  --model='+model+'  --num-classes=257  --log-wandb --experiment "'+experiment+'" --diffaug-dir='+aug_directory+' --seed '+str(seed)+'  --name "'+name+'" --recipe "'+recipe+'"  --repeats '+str(repeats)+' --variations '+str(variations)+' --diffaug-fewshot='+str(shots)+' '+ways+'  '
+        return 'CUDA_VISIBLE_DEVICES='+str(device)+' python3 train.py '+data_directory+' --dataset torch/'+dataset+'  --model='+model+'  --num-classes=257  --log-wandb --experiment "'+experiment+'" --diffaug-dir='+aug_directory+' --seed '+str(seed)+'  --name "'+name+'" --recipe "'+recipe+'"  --repeats '+str(repeats)+' --variations '+str(variations)+' --diffaug-fewshot='+str(shots)+' '+ways+'  '
      
     command_string = get_command(gpu,aug_directory,command[0],command[1],command[2],command[3],command[4],command[5],command[6],command[7],command[8],data_dir)
     return command_string
@@ -53,7 +54,7 @@ def get_full_dataset_commands_aircraft_scratch():
 
 
     # define the dataset. Make sure this matches up with the directories given in the machines
-    dataset = "stanford_cars"    
+    dataset = "dogs"    
     
     # define the sweep to do
     recipes = ["sgd-scratch-fullaug"] #,"sgd-scratch-noaug" ]
