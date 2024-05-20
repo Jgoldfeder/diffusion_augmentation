@@ -27,7 +27,7 @@ class GPU:
 queue = Queue()
 
 machine_0 = Machine0()
-for i in [0,1,2,3,4,5,6,7] #+ [0,1,2,3,4,5,6,7]:
+for i in [0,1,2,3,4,5,6,7]: #+ [0,1,2,3,4,5,6,7]:
     queue.put(GPU(machine_0,i))
 num_processes = 8
 
