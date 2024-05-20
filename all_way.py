@@ -63,7 +63,7 @@ def get_fewshot_commands(dataset,sun=False):
     recipe = "sgd-pretrain-fullaug" 
     seeds = [10,20]#,30]    
     ways = ["all"]
-    shots = [5]#,5,10]
+    shots = [10]#,5,10]
     variations = [15]#,5,10,15]
     models = ["resnet50"]
     if sun:
