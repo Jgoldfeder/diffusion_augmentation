@@ -33,6 +33,10 @@ for i in [0,1,2,3,4,5,6]+ [0,1,2,3,4,5,6]:
     queue.put(GPU(machine_0,i))
 num_processes = 14
 
+# machine_0 = Machine0()
+# for i in [0,0,1,1]:
+#     queue.put(GPU(machine_0,i))
+# num_processes = 4
 
 
 
@@ -59,7 +63,7 @@ def get_fewshot_commands(dataset,sun=False):
     recipe = "sgd-pretrain-fullaug" 
     seeds = [10,20]#,30]    
     ways = ["all"]
-    shots = [1,2]#,5,10]
+    shots = [5]#,5,10]
     variations = [15]#,5,10,15]
     models = ["resnet50"]
     if sun:
@@ -147,8 +151,9 @@ datasets = [
     ("pets",True),
     ("stanford_cars",False),
     ("food101",False),
-    ("sun397",False),
+    #("sun397",False),
 ]
+
 for d,s in datasets:
     commands += get_fewshot_commands(d,s)
 
