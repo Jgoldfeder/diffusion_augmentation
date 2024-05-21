@@ -8,8 +8,9 @@ import subprocess
 class Machine0:
     def __init__(self):
         self.name = "machine_0"
-        self.aug_dir = "/data/puma_envs/control_augmented_images_dogs_512"
-        self.data_dir = "/data/torch/dogs"
+        #self.aug_dir = "/data/puma_envs/control_augmented_images_dogs_512"
+        self.aug_dir = "/home/ubuntu/control_augmented_images_dogs_512"
+        self.data_dir = "torch/dogs"
         
     def run(self,command):
         out = subprocess.run([ command + "\n"],shell=True) 
@@ -26,15 +27,15 @@ class GPU:
 # initialize the queue with the GPU ids
 queue = Queue()
 
-machine_0 = Machine0()
-for i in [0,1,2,3,4,5,6]: #+ [0,1,2,3,4,5,6,7]:
-    queue.put(GPU(machine_0,i))
-num_processes = 7
-
 # machine_0 = Machine0()
-# for i in [0,0,0,0,1,1,1,1]: #+ [0,1,2,3,4,5,6,7]:
+# for i in [0,1,2,3,4,5,6]: #+ [0,1,2,3,4,5,6,7]:
 #     queue.put(GPU(machine_0,i))
-# num_processes = 8
+# num_processes = 7
+
+machine_0 = Machine0()
+for i in [0,0,0,0,0,1,1,1,1,1]: #+ [0,1,2,3,4,5,6,7]:
+    queue.put(GPU(machine_0,i))
+num_processes = 10
 
 
 
@@ -59,7 +60,8 @@ def get_full_dataset_commands_aircraft_scratch():
     # define the sweep to do
     recipes = ["sgd-scratch-fullaug"] #,"sgd-scratch-noaug" ]
     seeds = [21]#[10,20,30]    
-    models= ["vit_base_patch8_224","vgg19","beit_base_patch16_224"]#["efficientnet_b2","visformer_tiny","swin_s3_tiny_224","mixer_s16_224"]#["resnet50",vit_base_patch8_224]
+    models= ['vit_base_patch8_224',"deit_tiny_distilled_patch16_224","poolformer_s24","mobilenetv3_small_100","densenet121"]
+    #models= ["vit_base_patch8_224","vgg19","beit_base_patch16_224"]#["efficientnet_b2","visformer_tiny","swin_s3_tiny_224","mixer_s16_224"]#["resnet50",vit_base_patch8_224]
     
     for model in models:
         for recipe in recipes:
