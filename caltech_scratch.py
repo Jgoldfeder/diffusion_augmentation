@@ -9,6 +9,8 @@ class Machine0:
     def __init__(self):
         self.name = "machine_0"
         self.aug_dir = "/home/ubuntu/control_augmented_images_caltech256_512"
+        #self.aug_dir = "/home/pat/diffusion_augmentation/control_augmented_images_caltech256_512"
+        
         self.data_dir = "torch/caltech256"
         
     def run(self,command):
@@ -31,6 +33,9 @@ for i in [0,1,2,3,4,5,6,7]: #+ [0,1,2,3,4,5,6,7]:
     queue.put(GPU(machine_0,i))
 num_processes = 8
 
+# for i in [0,1]: #+ [0,1,2,3,4,5,6,7]:
+#     queue.put(GPU(machine_0,i))
+# num_processes = 2
 
 
 
@@ -54,7 +59,7 @@ def get_full_dataset_commands_aircraft_scratch():
     # define the sweep to do
     recipes = ["sgd-scratch-fullaug"] #,"sgd-scratch-noaug" ]
     seeds = [11]#[10,20,30]    
-    models= ["efficientnet_b2","visformer_tiny","swin_s3_tiny_224","mixer_s16_224"]#["vgg19","efficientnet_b2"]#["resnet50",vit_base_patch8_224]
+    models= ['beit_base_patch16_224','vit_base_patch8_224',"deit_tiny_distilled_patch16_224","poolformer_s24"]#["efficientnet_b2","visformer_tiny","swin_s3_tiny_224","mixer_s16_224"]#["vgg19","efficientnet_b2"]#["resnet50",vit_base_patch8_224]
     
     for model in models:
         for recipe in recipes:
