@@ -8,7 +8,7 @@ import subprocess
 class Machine0:
     def __init__(self):
         self.name = "machine_0"
-        self.aug_dir = "/data/puma_envs/no_control_augmented_images_aircraft_correct"
+        self.aug_dir = "/data/puma_envs/no_control_augmented_images_aircraft_512_just_class"
         #self.aug_dir = "/data/puma_envs/control_augmented_images_aircraft_512fewshot"
 
         self.data_dir = "/data/torch/aircraft"
@@ -76,10 +76,10 @@ def get_fewshot_commands_aircraft_pretrain_sunswitch():
                         target_repeats = 128
                         if way=="all":
                             target_repeats = 16                        
-                        exp_name = "fixed exp seed "+str(seed) + model + " " + recipe
+                        exp_name = "justclass exp seed "+str(seed) + model + " " + recipe
                         exp_repeats = target_repeats//(variation+1)
                         
-                        base_name = "fixed base seed"+str(seed) + model + " " + recipe
+                        base_name = "justclass base seed"+str(seed) + model + " " + recipe
                         base_repeats = exp_repeats * (variation+1)
 
                         commands.append([model,exp_name,experiment,recipe,shot,variation,way_str+ " --switch ",exp_repeats,seed])
