@@ -9,7 +9,7 @@ class Machine0:
     def __init__(self):
         self.name = "machine_0"
         #self.aug_dir = "/home/ubuntu/control_augmented_images_caltech256_512"
-        self.aug_dir = "/data/puma_envs/diffusion_augmentation/control_augmented_images_caltech256_512"
+        self.aug_dir = "/data/puma_envs/control_augmented_images_caltech256_512"
         
         self.data_dir = "/data/torch/caltech256"
         
