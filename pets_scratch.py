@@ -11,7 +11,7 @@ class Machine0:
         #self.aug_dir = "/home/ubuntu/control_augmented_images_pets_512"
         self.aug_dir = "/data/puma_envs/control_augmented_images_pets_512"
 
-        self.data_dir = "torch/pets"
+        self.data_dir = "/data/torch/pets"
         
     def run(self,command):
         out = subprocess.run([ command + "\n"],shell=True) 
