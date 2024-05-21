@@ -8,8 +8,8 @@ import subprocess
 class Machine0:
     def __init__(self):
         self.name = "machine_0"
-        #self.aug_dir = "/data/puma_envs/no_control_augmented_images_cars"
-        self.aug_dir = "/data/puma_envs/control_augmented_images_stanford_cars_512fewshot"
+        self.aug_dir = "/data/puma_envs/no_control_augmented_images_cars"
+        #self.aug_dir = "/data/puma_envs/control_augmented_images_stanford_cars_512fewshot"
 
         self.data_dir = "/data/torch/stanford_cars"
         
@@ -56,7 +56,7 @@ def get_fewshot_commands_cars_pretrain_sunswitch():
     recipe = "sgd-pretrain-fullaug" 
     seeds = [10,20,30]    
     ways = ["5"]
-    shots = [1,2,5,10]
+    shots = [10]#[1,2,5,10]
     variations = [15]#,5,10,15]
     models= ["resnet50"]
     
@@ -76,10 +76,10 @@ def get_fewshot_commands_cars_pretrain_sunswitch():
                         target_repeats = 128
                         if way=="all":
                             target_repeats = 16                        
-                        exp_name = " exp seed "+str(seed) + model + " " + recipe
+                        exp_name = "bad exp seed "+str(seed) + model + " " + recipe
                         exp_repeats = target_repeats//(variation+1)
                         
-                        base_name = " base seed"+str(seed) + model + " " + recipe
+                        base_name = "bad base seed"+str(seed) + model + " " + recipe
                         base_repeats = exp_repeats * (variation+1)
 
                         commands.append([model,exp_name,experiment,recipe,shot,variation,way_str+ " --switch ",exp_repeats,seed])
