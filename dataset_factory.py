@@ -5,77 +5,30 @@ Original Script by Ross Wightman
 Greatly expanded by Judah Goldfeder
 """
 import os
-from typing import Optional
+import numpy as np
 import torch
-from torchvision.datasets import CIFAR100, CIFAR10, MNIST, KMNIST, FashionMNIST,ImageFolder,FGVCAircraft,Caltech101,Food101,Flowers102,OxfordIIITPet,Country211,Caltech256,DTD,FER2013,STL10,SUN397,SVHN,USPS,Cityscapes,CelebA
 import dogs
-import cub
-import torchvision
+import torchvision.transforms as transforms
+import torchvision.transforms.functional as F
+from typing import Optional
+from torchvision.datasets import FGVCAircraft, Food101, Flowers102, \
+    OxfordIIITPet, Caltech256, SUN397
+from timm.data.dataset import IterableImageDataset, ImageDataset
+from torch.utils.data import Dataset
 
 datasets ={    
-    'inaturalist': 10000,
-    'cifar100': 100,
-    'cifar10': 10,
-    'mnist': 10,
-    'kmnist': 10,
-    'fashion_mnist': 10,
-    'qmnist': 10,
-    'places365': 365,
     'aircraft':102,
     'food101': 101,
     'flowers102': 102,
-    'country211': 211,
-    'stl10': 10,
     'sun397': 397,
-    'svhn':10,
     'pets': 37,
     'caltech256': 257,# off by 1 indexing
-    'caltech101': 102, # off by one indexing
-    'dtd': 47,
     'dogs': 120,
-    'cub2011': 200,
     'stanford_cars': 196,
-    'eurosat': 10,
 }
 
-#broken link: fer2013,Cityscapes,CelebA,
-
-try:
-    from torchvision.datasets import Places365
-    has_places365 = True
-except ImportError:
-    has_places365 = False
-try:
-    from torchvision.datasets import INaturalist
-    has_inaturalist = True
-except ImportError:
-    has_inaturalist = False
-try:
-    from torchvision.datasets import QMNIST
-    has_qmnist = True
-except ImportError:
-    has_qmnist = False
-try:
-    from torchvision.datasets import ImageNet
-    has_imagenet = True
-except ImportError:
-    has_imagenet = False
-import torchvision
-import torchvision.transforms as transforms
-from timm.data.dataset import IterableImageDataset, ImageDataset
-
-_TORCH_BASIC_DS = dict(
-    cifar10=CIFAR10,
-    cifar100=CIFAR100,
-    mnist=MNIST,
-    kmnist=KMNIST,
-    fashion_mnist=FashionMNIST,
-    usps = USPS,
-)
-_TRAIN_SYNONYM = dict(train=None, training=None)
-_EVAL_SYNONYM = dict(val=None, valid=None, validation=None, eval=None, evaluation=None)
-
-
+_TRAIN_SYNONYM = { "train", "training" }
+_EVAL_SYNONYM = { "val", "valid", "validation", "eval", "evaluation" }
 
 
 def create_dataset(
@@ -88,9 +41,6 @@ def create_dataset(
         num_samples: Optional[int] = None,
         seed: int = 42,
         input_img_mode: str = 'RGB',
-        is_training=True,
-        batch_size=1,
-        repeats=1,
         **kwargs,
 ):
     """ Dataset factory method
@@ -116,102 +66,43 @@ def create_dataset(
     if name.startswith('torch/'):
         name = name.split('/', 2)[-1]
         torch_kwargs = dict(root=root, download=download, **kwargs)
-        if name in _TORCH_BASIC_DS:
-            ds_class = _TORCH_BASIC_DS[name]
-            use_train = split in _TRAIN_SYNONYM
-            ds = ds_class(train=use_train, **torch_kwargs,)
-        elif name == 'inaturalist' or name == 'inat':
-            assert has_inaturalist, 'Please update to PyTorch 1.10, torchvision 0.11+ for Inaturalist'
-            target_type = 'full'
-            split_split = split.split('/')
-            if len(split_split) > 1:
-                target_type = split_split[0].split('_')
-                if len(target_type) == 1:
-                    target_type = target_type[0]
-                split = split_split[-1]
-            if split in _TRAIN_SYNONYM:
-                split = '2021_train'
-            elif split in _EVAL_SYNONYM:
-                split = '2021_valid'
-            ds = INaturalist(version=split, target_type=target_type, **torch_kwargs)
-        elif name == 'places365':
-            assert has_places365, 'Please update to a newer PyTorch and torchvision for Places365 dataset.'
-            if split in _TRAIN_SYNONYM:
-                split = 'train-standard'
-            elif split in _EVAL_SYNONYM:
-                split = 'val'
-            transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224))])
-            ds = Places365(split=split, **torch_kwargs,transform=transform)
-        elif name == 'qmnist':
-            assert has_qmnist, 'Please update to a newer PyTorch and torchvision for QMNIST dataset.'
-            use_train = split in _TRAIN_SYNONYM
-            ds = QMNIST(train=use_train, **torch_kwargs)
-        elif name == 'imagenet':
-            assert has_imagenet, 'Please update to a newer PyTorch and torchvision for ImageNet dataset.'
-            if split in _EVAL_SYNONYM:
-                split = 'val'
-            ds = ImageNet(split=split, **torch_kwargs)
-        elif name == 'aircraft':
+     
+        if name == 'aircraft':
             if split in _TRAIN_SYNONYM:
                 split = 'trainval'
             elif split in _EVAL_SYNONYM:
                 split = 'test'
             ds = FGVCAircraft(split=split, **torch_kwargs)
+            classes = ds.classes
+
         elif name == 'food101':
             if split in _TRAIN_SYNONYM:
                 split = 'train'
             elif split in _EVAL_SYNONYM:
                 split = 'test'
             ds = Food101(split=split, **torch_kwargs)
-        elif name == 'flowers102':
-            if split in _TRAIN_SYNONYM:
-                split = 'train'
-            elif split in _EVAL_SYNONYM:
-                split = 'test'
-            ds = Flowers102(split=split, **torch_kwargs)
-        elif name == 'fer2013':
-            if split in _TRAIN_SYNONYM:
-                split = 'train'
-            elif split in _EVAL_SYNONYM:
-                split = 'test'
-            ds = FER2013(split=split, **torch_kwargs)
-        
-        elif name == 'country211':
-            if split in _TRAIN_SYNONYM:
-                split = 'train'
-            elif split in _EVAL_SYNONYM:
-                split = 'test'
-            ds = Country211(split=split, **torch_kwargs)
-        elif name == 'celeba':
-            if split in _TRAIN_SYNONYM:
-                split = 'train'
-            elif split in _EVAL_SYNONYM:
-                split = 'test'
-            ds = CelebA(split=split, **torch_kwargs)
-        
-        elif name == 'stl10':
-            if split in _TRAIN_SYNONYM:
-                split = 'train'
-            elif split in _EVAL_SYNONYM:
-                split = 'test'
-            ds = STL10(split=split, **torch_kwargs)
+            classes = ds.classes
 
-        elif name == 'cityscapes':
-            if split in _TRAIN_SYNONYM:
-                split = 'train'
-            elif split in _EVAL_SYNONYM:
-                split = 'test'
-            ds = Cityscapes(split=split, **torch_kwargs)
-
+        #elif name == 'flowers102':
+        #    if split in _TRAIN_SYNONYM:
+        #        split = 'train'
+        #    elif split in _EVAL_SYNONYM:
+        #        split = 'test'
+        #    ds = Flowers102(split=split, **torch_kwargs)
         
+
         elif name == 'sun397':
             transform = transforms.Compose([transforms.ToTensor()])
 
-            generator = torch.Generator().manual_seed(42)
+            generator = torch.Generator().manual_seed(seed)
             full_dataset = SUN397(**torch_kwargs,transform=transform)
             train_size = int(0.8 * len(full_dataset))
             test_size = len(full_dataset) - train_size
-            train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
+            train_dataset, test_dataset = torch.utils.data.random_split(
+                full_dataset, 
+                [train_size, test_size], 
+                generator=generator
+                )
 
             if split in _TRAIN_SYNONYM:
                 ds = Wrapper(train_dataset)
@@ -224,15 +115,7 @@ def create_dataset(
                 # test_size = len(full_dataset) - train_size
                 # train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
                 # ds = Wrapper(test_dataset)
-                
-        elif name == 'svhn':
-            transform = transforms.Compose([transforms.ToTensor()])
-
-            if split in _TRAIN_SYNONYM:
-                split = 'train'
-            elif split in _EVAL_SYNONYM:
-                split = 'test'
-            ds = SVHN(split=split, **torch_kwargs,transform=transform)
+            classes = None
         
         elif name == 'pets':
             #transform = transforms.Compose([transforms.ToTensor()])
@@ -243,25 +126,9 @@ def create_dataset(
                 split = 'test'
             ds = OxfordIIITPet(split=split, **torch_kwargs,transform=None)
             ds = Wrapper(ds)
-        
-        elif name == 'caltech101':
-            def f(x):
-                if x.shape[0] == 1:
-                    return x.repeat(3,1,1)
-                return x
-            transform = transforms.Compose([transforms.ToTensor(),transforms.Lambda(lambda x: f(x))])
-            generator = torch.Generator().manual_seed(42)
-            full_dataset = Caltech101(**torch_kwargs,transform=transform)
-            train_size = int(0.8 * len(full_dataset))
-            test_size = len(full_dataset) - train_size
-            train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
-            if split in _TRAIN_SYNONYM:
-                ds = Wrapper(train_dataset)
-            elif split in _EVAL_SYNONYM:
-                ds = Wrapper(test_dataset)
+            classes = ds.ds.classes
 
         elif name == 'caltech256':
-            import torchvision.transforms.functional as F
 
             def f(x):
                 if not torch.is_tensor(x):
@@ -270,74 +137,25 @@ def create_dataset(
                     return x.repeat(3,1,1)
                 return F.to_pil_image(x)
             transform = transforms.Compose([transforms.Lambda(lambda x: f(x))])
-            generator = torch.Generator().manual_seed(42)
+            generator = torch.Generator().manual_seed(seed)
             full_dataset = Caltech256(**torch_kwargs,transform=transform)
             print(root)
+            classes = [el.split('.')[1] for el in sorted(os.listdir(f"{ root }/caltech256/256_ObjectCategories"))]
             #full_dataset = torchvision.datasets.ImageFolder(root=root+"/256_ObjectCategories/",transform=transform)
             #print(full_dataset.classes)
             train_size = int(0.8 * len(full_dataset))
             test_size = len(full_dataset) - train_size
-            train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
+            train_dataset, test_dataset = torch.utils.data.random_split(
+                full_dataset, 
+                [train_size, test_size], 
+                generator=generator
+                )
             if split in _TRAIN_SYNONYM:
                 ds = Wrapper(train_dataset)
             elif split in _EVAL_SYNONYM:
                 ds = Wrapper(test_dataset)
                 
-        elif name == 'cifar100-512':
-            def f(x):
-                if x.shape[0] == 1:
-                    return x.repeat(3,1,1)
-                return x
-            transform = transforms.Compose([transforms.ToTensor(), transforms.Lambda(lambda x: f(x))])
-            generator = torch.Generator().manual_seed(42)
-            # full_dataset = Caltech256(**torch_kwargs,transform=transform)
-            print(root)
-            # full_dataset = torchvision.datasets.ImageFolder(root=root+"/256_ObjectCategories/",transform=transform)
-            from fewshot_dataset import ImageDatasetWithFilename
-            full_dataset = ImageDatasetWithFilename(root, transform=transform)
-            # print(full_dataset.classes)
-            train_size = int(0.8 * len(full_dataset))
-            test_size = len(full_dataset) - train_size
-            train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
-            if split in _TRAIN_SYNONYM:
-                ds = train_dataset
-            elif split in _EVAL_SYNONYM:
-                ds = test_dataset
-
-                ds = Wrapper(test_dataset)
-
-        # elif name == 'caltech256_o':
-        #     def f(x):
-        #         if x.shape[0] == 1:
-        #             return x.repeat(3,1,1)
-        #         return x
-        #     transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224)),transforms.Lambda(lambda x: f(x))])
-        #     generator = torch.Generator().manual_seed(42)
-        #     full_dataset = Caltech256(**torch_kwargs,transform=transform)
-            
-        #     print(torch_kwargs)
-        #     #transform = transforms.Compose([transforms.ToTensor(),transforms.Lambda(lambda x: f(x))])
-        #     #print(root)
-        #     #full_dataset = torchvision.datasets.ImageFolder(root=root+"/256_ObjectCategories/",transform=transform)
-        #     #print(full_dataset.classes)
-            
-        #     train_size = int(0.8 * len(full_dataset))
-        #     test_size = len(full_dataset) - train_size
-        #     train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size],generator=generator)
-        #     if split in _TRAIN_SYNONYM:
-        #         ds = train_dataset
-        #     elif split in _EVAL_SYNONYM:
-        #         ds = test_dataset
-                
-        
-        elif name == 'dtd':
-            transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((224,224)),transforms.Lambda(lambda x: f(x))])
-
-            if split in _TRAIN_SYNONYM:
-                split = 'train'
-            elif split in _EVAL_SYNONYM:
-                split = 'val'
-            ds = DTD(split=split, **torch_kwargs,transform=transform)
+    
         elif name == 'dogs':
             # input_transforms = transforms.Compose([
             #     transforms.RandomResizedCrop(224, ),
@@ -359,12 +177,7 @@ def create_dataset(
                 ds = train_dataset
             elif split in _EVAL_SYNONYM:
                 ds = test_dataset 
-
-        elif name == 'cub2011':
-            if split in _TRAIN_SYNONYM:
-                ds = cub.Cub2011('./cub2011', train=True, download=True)
-            elif split in _EVAL_SYNONYM:
-                ds = cub.Cub2011('./cub2011', train=False, download=True)
+            classes = ds.classes
 
         
         else:
@@ -379,20 +192,9 @@ def create_dataset(
             elif split in _EVAL_SYNONYM:
                 name = "hfds/Multimodal-Fatima/StanfordCars_test"
                 split = "test"
-        if "eurosat" in name:
-            if split in _TRAIN_SYNONYM:
-                name = "hfds/timm/eurosat-rgb"
-                split = "train"
-            elif split in _EVAL_SYNONYM:
-                name = "hfds/timm/eurosat-rgb"
-                split = "test"
-        # if "fer2013" in name:
-        #     if split in _TRAIN_SYNONYM:
-        #         name = "hfds/clip-benchmark/wds_fer2013"
-        #         split = "train"
-        #     elif split in _EVAL_SYNONYM:
-        #         name = "hfds/clip-benchmark/wds_fer2013"
-        #         split = "test"
+            classes = ["am general hummer suv 2000", "acura rl sedan 2012", "acura tl sedan 2012", "acura tl type-s 2008", "acura tsx sedan 2012", "acura integra type r 2001", "acura zdx hatchback 2012", "aston martin v8 vantage convertible 2012", "aston martin v8 vantage coupe 2012", "aston martin virage convertible 2012", "aston martin virage coupe 2012", "audi rs 4 convertible 2008", "audi a5 coupe 2012", "audi tts coupe 2012", "audi r8 coupe 2012", "audi v8 sedan 1994", "audi 100 sedan 1994", "audi 100 wagon 1994", "audi tt hatchback 2011", "audi s6 sedan 2011", "audi s5 convertible 2012", "audi s5 coupe 2012", "audi s4 sedan 2012", "audi s4 sedan 2007", "audi tt rs coupe 2012", "bmw activehybrid 5 sedan 2012", "bmw 1 series convertible 2012", "bmw 1 series coupe 2012", "bmw 3 series sedan 2012", "bmw 3 series wagon 2012", "bmw 6 series convertible 2007", "bmw x5 suv 2007", "bmw x6 suv 2012", "bmw m3 coupe 2012", "bmw m5 sedan 2010", "bmw m6 convertible 2010", "bmw x3 suv 2012", "bmw z4 convertible 2012", "bentley continental supersports conv. convertible 2012", "bentley arnage sedan 2009", "bentley mulsanne sedan 2011", "bentley continental gt coupe 2012", "bentley continental gt coupe 2007", "bentley continental flying spur sedan 2007", "bugatti veyron 16.4 convertible 2009", "bugatti veyron 16.4 coupe 2009", "buick regal gs 2012", "buick rainier suv 2007", "buick verano sedan 2012", "buick enclave suv 2012", "cadillac cts-v sedan 2012", "cadillac srx suv 2012", "cadillac escalade ext crew cab 2007", "chevrolet silverado 1500 hybrid crew cab 2012", "chevrolet corvette convertible 2012", "chevrolet corvette zr1 2012", "chevrolet corvette ron fellows edition z06 2007", "chevrolet traverse suv 2012", "chevrolet camaro convertible 2012", "chevrolet hhr ss 2010", "chevrolet impala sedan 2007", "chevrolet tahoe hybrid suv 2012", "chevrolet sonic sedan 2012", "chevrolet express cargo van 2007", "chevrolet avalanche crew cab 2012", "chevrolet cobalt ss 2010", "chevrolet malibu hybrid sedan 2010", "chevrolet trailblazer ss 2009", "chevrolet silverado 2500hd regular cab 2012", "chevrolet silverado 1500 classic extended cab 2007", "chevrolet express van 2007", "chevrolet monte carlo coupe 2007", "chevrolet malibu sedan 2007", "chevrolet silverado 1500 extended cab 2012", "chevrolet silverado 1500 regular cab 2012", "chrysler aspen suv 2009", "chrysler sebring convertible 2010", "chrysler town and country minivan 2012", "chrysler 300 srt-8 2010", "chrysler crossfire convertible 2008", "chrysler pt cruiser convertible 2008", "daewoo nubira wagon 2002", "dodge caliber wagon 2012", "dodge caliber wagon 2007", "dodge caravan minivan 1997", "dodge ram pickup 3500 crew cab 2010", "dodge ram pickup 3500 quad cab 2009", "dodge sprinter cargo van 2009", "dodge journey suv 2012", "dodge dakota crew cab 2010", "dodge dakota club cab 2007", "dodge magnum wagon 2008", "dodge challenger srt8 2011", "dodge durango suv 2012", "dodge durango suv 2007", "dodge charger sedan 2012", "dodge charger srt-8 2009", "eagle talon hatchback 1998", "fiat 500 abarth 2012", "fiat 500 convertible 2012", "ferrari ff coupe 2012", "ferrari california convertible 2012", "ferrari 458 italia convertible 2012", "ferrari 458 italia coupe 2012", "fisker karma sedan 2012", "ford f-450 super duty crew cab 2012", "ford mustang convertible 2007", "ford freestar minivan 2007", "ford expedition el suv 2009", "ford edge suv 2012", "ford ranger supercab 2011", "ford gt coupe 2006", "ford f-150 regular cab 2012", "ford f-150 regular cab 2007", "ford focus sedan 2007", "ford e-series wagon van 2012", "ford fiesta sedan 2012", "gmc terrain suv 2012", "gmc savana van 2012", "gmc yukon hybrid suv 2012", "gmc acadia suv 2012", "gmc canyon extended cab 2012", "geo metro convertible 1993", "hummer h3t crew cab 2010", "hummer h2 sut crew cab 2009", "honda odyssey minivan 2012", "honda odyssey minivan 2007", "honda accord coupe 2012", "honda accord sedan 2012", "hyundai veloster hatchback 2012", "hyundai santa fe suv 2012", "hyundai tucson suv 2012", "hyundai veracruz suv 2012", "hyundai sonata hybrid sedan 2012", "hyundai elantra sedan 2007", "hyundai accent sedan 2012", "hyundai genesis sedan 2012", "hyundai sonata sedan 2012", "hyundai elantra touring hatchback 2012", "hyundai azera sedan 2012", "infiniti g coupe ipl 2012", "infiniti qx56 suv 2011", "isuzu ascender suv 2008", "jaguar xk xkr 2012", "jeep patriot suv 2012", "jeep wrangler suv 2012", "jeep liberty suv 2012", "jeep grand cherokee suv 2012", "jeep compass suv 2012", "lamborghini reventon coupe 2008", "lamborghini aventador coupe 2012", "lamborghini gallardo lp 570-4 superleggera 2012", "lamborghini diablo coupe 2001", "land rover range rover suv 2012", "land rover lr2 suv 2012", "lincoln town car sedan 2011", "mini cooper roadster convertible 2012", "maybach landaulet convertible 2012", "mazda tribute suv 2011", "mclaren mp4-12c coupe 2012", "mercedes-benz 300-class convertible 1993", "mercedes-benz c-class sedan 2012", "mercedes-benz sl-class coupe 2009", "mercedes-benz e-class sedan 2012", "mercedes-benz s-class sedan 2012", "mercedes-benz sprinter van 2012", "mitsubishi lancer sedan 2012", "nissan leaf hatchback 2012", "nissan nv passenger van 2012", "nissan juke hatchback 2012", "nissan 240sx coupe 1998", "plymouth neon coupe 1999", "porsche panamera sedan 2012", "ram c/v cargo van minivan 2012", "rolls-royce phantom drophead coupe convertible 2012", "rolls-royce ghost sedan 2012", "rolls-royce phantom sedan 2012", "scion xd hatchback 2012", "spyker c8 convertible 2009", "spyker c8 coupe 2009", "suzuki aerio sedan 2007", "suzuki kizashi sedan 2012", "suzuki sx4 hatchback 2012", "suzuki sx4 sedan 2012", "tesla model s sedan 2012", "toyota sequoia suv 2012", "toyota camry sedan 2012", "toyota corolla sedan 2012", "toyota 4runner suv 2012", "volkswagen golf hatchback 2012", "volkswagen golf hatchback 1991", "volkswagen beetle hatchback 2012", "volvo c30 hatchback 2012", "volvo 240 sedan 1993", "volvo xc90 suv 2007", "smart fortwo convertible 2012"]
+
+ 
         if "pets" in name:
                 if split in _TRAIN_SYNONYM:
                     name = "hfds/timm/oxford-iiit-pet"
@@ -409,13 +211,9 @@ def create_dataset(
             input_img_mode=input_img_mode,
             **kwargs,
         )   
-    return ds
+    return ds, classes
 
 
-
-from torch.utils.data import Dataset
-import torchvision.transforms.functional as F
-import numpy as np
 class SubClassDataSet(Dataset):
     def __init__(self, ds, classes):
         print(len(classes), " way classification")
@@ -426,7 +224,7 @@ class SubClassDataSet(Dataset):
         fname = str(len(ds)) + "."
         for c in classes:
             fname+= str(c) + "."
-        fname +="npy"
+        fname += "npy"
         if os.path.isfile(fname):
             self.indices = np.load(fname)
         else:        
@@ -437,7 +235,7 @@ class SubClassDataSet(Dataset):
             classes=d_classes
             for x in range(len(ds)):
                 _, target = ds[x]
-                print(len(ds),x)
+                print(len(ds), x)
     
                 if int(target) in classes:
                     self.indices.append(x)
@@ -456,7 +254,6 @@ class SubClassDataSet(Dataset):
         return self.transform(x),y
 
 
-from torch.utils.data import Dataset
 class Wrapper(Dataset):
     def __init__(self, ds,transform=None):
         self.ds = ds
