@@ -11,7 +11,7 @@ import torch
 import numpy as np
 
 from einops import rearrange
-from annotator.util import annotator_ckpts_path, safe_step
+from annotator.util import annotator_ckpts_path
 
 
 class DoubleConvBlock(torch.nn.Module):
@@ -63,7 +63,7 @@ class HEDdetector:
         self.netNetwork = ControlNetHED_Apache2().float().cuda().eval()
         self.netNetwork.load_state_dict(torch.load(modelpath))
 
-    def __call__(self, input_image, safe=False):
+    def __call__(self, input_image):
         assert input_image.ndim == 3
         H, W, C = input_image.shape
         with torch.no_grad():
@@ -74,7 +74,23 @@ class HEDdetector:
             edges = [cv2.resize(e, (W, H), interpolation=cv2.INTER_LINEAR) for e in edges]
             edges = np.stack(edges, axis=2)
             edge = 1 / (1 + np.exp(-np.mean(edges, axis=2).astype(np.float64)))
-            if safe:
-                edge = safe_step(edge)
             edge = (edge * 255.0).clip(0, 255).astype(np.uint8)
             return edge
+
+
+def nms(x, t, s):
+    x = cv2.GaussianBlur(x.astype(np.float32), (0, 0), s)
+
+    f1 = np.array([[0, 0, 0], [1, 1, 1], [0, 0, 0]], dtype=np.uint8)
+    f2 = np.array([[0, 1, 0], [0, 1, 0], [0, 1, 0]], dtype=np.uint8)
+    f3 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.uint8)
+    f4 = np.array([[0, 0, 1], [0, 1, 0], [1, 0, 0]], dtype=np.uint8)
+
+    y = np.zeros_like(x)
+
+    for f in [f1, f2, f3, f4]:
+        np.putmask(y, cv2.dilate(x, kernel=f) == x, x)
+
+    z = np.zeros_like(y, dtype=np.uint8)
+    z[y > t] = 255
+    return z

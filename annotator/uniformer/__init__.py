@@ -9,7 +9,7 @@ from annotator.uniformer.mmseg.core.evaluation import get_palette
 from annotator.util import annotator_ckpts_path
 
 
-checkpoint_file = "https://huggingface.co/lllyasviel/Annotators/resolve/main/upernet_global_small.pth"
+checkpoint_file = "https://huggingface.co/lllyasviel/ControlNet/resolve/main/annotator/ckpts/upernet_global_small.pth"
 
 
 class UniformerDetector:

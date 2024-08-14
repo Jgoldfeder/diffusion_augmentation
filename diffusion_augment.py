@@ -105,6 +105,7 @@ class ReverseSampler(Sampler):
     def __len__(self):
         return len(self.data_source)
     
+# ['sun_bsegmfmvpxfdgkkg.jpg', 'sun_aubczhogizfeakaf.jpg', 'sun_aveoyjxhnzidqewq.jpg', 'sun_bwlllvsnamiycbfe.jpg', 'sun_agtryqbvjkpiypzo.jpg', 'sun_aufzwmcumasvivyn.jpg', 'sun_brqufrhphspuijou.jpg', 'sun_bhheuiomlapxutgy.jpg', 'sun_adieyvqrqcdifwfg.jpg', 'sun_azvofkmhyuxnlqht.jpg']
 
 # control_dir = "./control_augmented_images"
 def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_images_test", variations = 15, res = 512, images_per_class = 10, reverse = False):
@@ -181,7 +182,9 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
         
         label_path = os.path.join(control_dir, formatted_label)
         print("Checking variations for ", label_path, image_names[0].split(".")[0]+"_original.png")
-        if check_variations(label_path, image_names[0].split(".")[0]+"_original.png"):
+        check_filename = image_names[0].split(".")[0]+"_original.png"
+
+        if os.path.exists(os.path.join(label_path, check_filename)):
             print("SKIPPING BATCH at filename ", label_path, image_names[0].split(".")[0]+"_original.png")
             # count+=batch_size
             # print("SKIPPING BATCH")
@@ -221,6 +224,14 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
                 if len(files_in_dir)/(variations + 1) >= images_per_class:
                     print("Max images per class reached in class ", label)
                     continue
+            
+            # check if file exists then skip
+            print("Original shape: ", og_img.shape)
+            original_filename = image_name.split(".")[0]+"_original.png"
+
+            if os.path.exists(os.path.join(label_path, original_filename)):
+                print("Original image already exists, ", original_filename,  " - skipping...")
+                continue
 
             #print the image shape
             print(img.shape)
@@ -260,12 +271,7 @@ def augment(dataset, preprocessor = "Canny", control_dir = "./control_augmented_
                 cv2.imwrite(result_path, cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
             
             # Save the original image
-            print("Original shape: ", og_img.shape)
-            original_filename = image_name.split(".")[0]+"_original.png"
-            # check if original image already exists then skip
-            if os.path.exists(os.path.join(label_path, original_filename)):
-                print("Original image already exists, ", original_filename,  " - skipping...")
-                continue
+
             original_path = os.path.join(label_path, original_filename)
             og_img = og_img.numpy()
 

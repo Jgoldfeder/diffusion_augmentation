@@ -22,7 +22,11 @@ CUDA_VISIBLE_DEVICES=1 python train.py torch/cifar100-512 --dataset torch/cifar1
 ### Caltech256 with fewshot augmentation
 CUDA_VISIBLE_DEVICES=0 python train.py torch/caltech256 --dataset torch/caltech256 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=256 --opt=sgd --weight-decay=1e-4 --dataset-download --diffaug --diffaug-fewshot=15 --diffaug-dir=./control_augmented_images_caltech256_512fewshot --diffaug-resolutions=512
 
+
+### Sun397 with fewshot
 CUDA_VISIBLE_DEVICES=0 python train.py torch/sun397 --dataset torch/sun397 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=397 --opt=sgd --weight-decay=1e-4 --dataset-download --diffaug --diffaug-fewshot=15 --diffaug-dir=./control_augmented_images_sun397_512fewshot --diffaug-resolutions=512
+
+CUDA_VISIBLE_DEVICES=1 python train.py torch/sun397 --dataset torch/sun397 -b=128 --img-size=224 --epochs=50 --color-jitter=0 --amp --lr=1e-2 --sched='cosine' --model-ema --model-ema-decay=0.995 --reprob=0.5 --smoothing=0.1 --min-lr=1e-8 --warmup-epochs=3 --train-interpolation=bilinear --aa=v0 --model=resnet50 --pretrained --num-classes=397 --opt=sgd --weight-decay=1e-4 --dataset-download --diffaug --diffaug-fewshot=15 --diffaug-dir=./control_augmented_images_sun397_512fewshot --diffaug-resolutions=512 --diffaug-reverse
 
 ### Sun397 with augmentation
 
