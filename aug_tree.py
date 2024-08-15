@@ -1,3 +1,16 @@
+import os
+import sys
+#if color doesn't work ensure that you uninstall diffusers and use the color controlnet version instead
+
+zero123_dir = os.path.join("/home/pat", 'diffusion_augmentation', 'zero123')
+sys.path.append(zero123_dir)
+
+controlnet_dir = os.path.join("/home/pat", 'diffusion_augmentation', 'controlnet')
+sys.path.append(controlnet_dir)
+
+controlnet_dir = os.path.join("/home/pat", 'diffusion_augmentation', 'color_controlnet')
+sys.path.append(controlnet_dir)
+
 import torch
 import numpy as np
 import cv2
@@ -7,90 +20,159 @@ import einops
 from torchvision.transforms.functional import to_pil_image
 from transformers import AutoProcessor, LlavaForConditionalGeneration, SamModel, AutoImageProcessor, DPTForDepthEstimation
 from transformers import pipeline
-from annotator.util import resize_image, HWC3
-from annotator.canny import CannyDetector
-from annotator.uniformer import UniformerDetector
-from annotator.midas import MidasDetector
-
-from cldm.model import create_model, load_state_dict
-from cldm.ddim_hacked import DDIMSampler
+from controlnet.annotator.util import resize_image, HWC3
+from controlnet.annotator.canny import CannyDetector
+from controlnet.annotator.uniformer import UniformerDetector
+from controlnet.annotator.midas import MidasDetector
+from omegaconf import OmegaConf
+from controlnet.cldm.model import create_model, load_state_dict
+from controlnet.cldm.ddim_hacked import DDIMSampler
 from pytorch_lightning import seed_everything
 
+# Zero123 imports
+from zero123.nerf import load_model_from_config, generate_angles
+from zero123.ldm.util import create_carvekit_interface
 
-# Initialize ControlNet models
-model_names = ['control_v11p_sd15_canny', 'control_v11f1p_sd15_depth', 'control_v11p_sd15_seg']
-models = {}
-for name in model_names:
-    model = create_model(f'./models/{name}.yaml').cpu()
-    model.load_state_dict(load_state_dict('./models/v1-5-pruned.ckpt', location='cuda'), strict=False)
-    model.load_state_dict(load_state_dict(f'./models/{name}.pth', location='cuda'), strict=False)
-    models[name] = model.cuda()
-
-
+# Color Control imports
+from color_controlnet.diffusers import ControlNetModel, LineartDetector, StableDiffusionImg2ImgControlNetPalettePipeline
+from color_controlnet.diffusers import UniPCMultistepScheduler
+from color_controlnet.infer_palette import get_cond_color, show_anns, image_grid, HWC3, resize_in_buckets, SAMImageAnnotator
+from color_controlnet.infer_palette_img2img import control_color_augment
 
 
-# Initialize detectors
-
-apply_canny = CannyDetector()
-apply_depth = MidasDetector()
-apply_seg = UniformerDetector()
-
-# Initialize LLAVA model
-model_id = "llava-hf/llava-1.5-7b-hf"
-processor = AutoProcessor.from_pretrained(model_id)
-llava_model = LlavaForConditionalGeneration.from_pretrained(model_id)
+control_net_device = 'cuda:0'
+zero123_device = 'cuda:1'
+color_control_device = 'cuda:1'
 
 
-def process(det, input_image, prompt, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold):
+def initialize_models():
+    """
+    Initialize all models and detectors used in the pipeline
+    Returns:
+        control_net: dict, containing all ControlNet models and detectors
+        llava: dict, containing the LLAVA model and processor
+        zero123: dict, containing the Zero123 model and Carvekit interface
+        color_control: dict, containing the Color Control model and SAM annotator
+
+    """
+
+    # Initialize ControlNet models
+    print('Loading ControlNet models...')
+    control_net = {}
+    model_names = ['control_v11p_sd15_canny', 'control_v11f1p_sd15_depth', 'control_v11p_sd15_seg']
+    models = {}
+    for name in model_names:
+        model = create_model(f'./models/{name}.yaml').cpu()
+        model.load_state_dict(load_state_dict('./models/v1-5-pruned.ckpt', location=control_net_device), strict=False)
+        model.load_state_dict(load_state_dict(f'./models/{name}.pth', location=control_net_device), strict=False)
+        models[name] = model.to(control_net_device)
+
+    # Initialize Control Netdetectors
+    apply_canny = CannyDetector()
+    apply_depth = MidasDetector()
+    apply_seg = UniformerDetector()
+    detectors = {'Canny': apply_canny, 'Depth': apply_depth, 'Segmentation': apply_seg}
+    
+    control_net['models'] = models
+    control_net['detectors'] = detectors
+
+    # Initialize LLAVA model
+    print('Loading LLAVA model...')
+    llava = {}
+    model_id = "llava-hf/llava-1.5-7b-hf"
+    processor = AutoProcessor.from_pretrained(model_id)
+    llava_model = LlavaForConditionalGeneration.from_pretrained(model_id)
+    llava['processor'] = processor
+    llava['model'] = llava_model
+
+    # Zero123 models
+    print('Loading Zero123 models...')
+    zero123 = {}
+    config_path = './models/sd-objaverse-finetune-c_concat-256.yaml'
+    config = OmegaConf.load(config_path)
+
+    model_path = "./models/105000.ckpt"
+    model = load_model_from_config(config, model_path, zero123_device)
+    model = model.to(zero123_device)
+
+    # print('Creating Carvekit interface...')
+    carvekit_interface = create_carvekit_interface()
+
+    zero123['model'] = model
+    zero123['carvekit_interface'] = carvekit_interface 
+
+
+    # Color Control model
+    print('Loading Color Control model...')
+    color_control = {}
+
+    controlnet = ControlNetModel.from_config("./model_configs/controlnet_config.json").half()
+    adapter = ControlNetModel.from_config("./model_configs/controlnet_config.json").half()
+
+    sketch_method = "skmodel"
+    sam_annotator = SAMImageAnnotator()
+
+    model_ckpt = f"./model_configs/color_img2img_palette.pt"
+    model_sd = torch.load(model_ckpt, map_location="cpu")["module"]
+
+    # assign the weights of the controlnet and adapter separately
+    controlnet_sd = {}
+    adapter_sd = {}
+    for k in model_sd.keys():
+        if k.startswith("controlnet"):
+            controlnet_sd[k.replace("controlnet.", "")] = model_sd[k]
+        if k.startswith("adapter"):
+            adapter_sd[k.replace("adapter.", "")] = model_sd[k]
+
+    msg_control = controlnet.load_state_dict(controlnet_sd, strict=True)
+    print(f"msg_control: {msg_control} ")
+    if adapter is not None:
+        msg_adapter = adapter.load_state_dict(adapter_sd, strict=False)
+        print(f"msg_adapter: {msg_adapter} ")
+
+    # define the inference pipline
+    # sdv15_path = "/home/pat/diffusion_augmentation/color_controlnet/model_configs/sd15_config.json"
+    pipe = StableDiffusionImg2ImgControlNetPalettePipeline.from_pretrained(
+        "runwayml/stable-diffusion-v1-5",
+        controlnet=controlnet,
+        adapter=adapter,
+        torch_dtype=torch.float16,
+        safety_checker=None,
+    ).to(color_control_device)
+    pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
+
+    color_control['pipe'] = pipe
+    color_control['sam_annotator'] = sam_annotator
+    color_control['adapter'] = adapter 
+
+    return control_net, llava, zero123, color_control
+
+def control_augment(control_net, device, det, input_image, prompt, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, low_threshold, high_threshold):
     with torch.no_grad():
-        # input_image is pil image need to change back to numpy
         input_image = np.array(input_image)
         input_image = HWC3(input_image)
         input_image = resize_image(input_image, detect_resolution)
         H, W, C = input_image.shape
+
         if det == 'Canny':
-           
-            detected_map = apply_canny(input_image, low_threshold, high_threshold)
-            detected_map = HWC3(detected_map)
-            detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
-
-            # Choose model and sampler
-            model = models['control_v11p_sd15_canny']
-            ddim_sampler = DDIMSampler(models['control_v11p_sd15_canny'])  # Using Canny model for sampling
-
+            detected_map = control_net['detectors']['Canny'](input_image, low_threshold, high_threshold)
+            model = control_net['models']['control_v11p_sd15_canny']
         elif det == 'Depth':
-            detected_map, _ = apply_depth(input_image)
-            detected_map = HWC3(detected_map)
-            detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
-
-            depth = Image.fromarray(detected_map)
-            depth.save(f"./test/preprocessed_depth.png")
-            # print(models.keys())
-
-            # Choose model and sampler
-            model = models['control_v11f1p_sd15_depth']
-            ddim_sampler = DDIMSampler(models['control_v11f1p_sd15_depth'])  # Using Depth Anything model for sampling
-
-
+            detected_map, _ = control_net['detectors']['Depth'](input_image)
+            model = control_net['models']['control_v11f1p_sd15_depth']
         elif det == 'Segmentation':
-            detected_map = apply_seg(input_image)
-            detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_NEAREST)
-            # print(type(detected_map))
-            # show_masks_on_image(input_image, masks)
-            Image.fromarray(detected_map).save(f"./test/preprocessed_segment.png")
-
-            # Choose model and sampler
-            model = models['control_v11p_sd15_seg']
-            ddim_sampler = DDIMSampler(models['control_v11p_sd15_seg'])
+            detected_map = control_net['detectors']['Segmentation'](input_image)
+            model = control_net['models']['control_v11p_sd15_seg']
         else:
             raise ValueError(f"Unknown detection type: {det}")
 
-        img = resize_image(HWC3(np.array(input_image)), image_resolution)
+        detected_map = HWC3(detected_map)
+        detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
+
+        img = resize_image(input_image, image_resolution)
         H, W, C = img.shape
 
-        
-
-        control = torch.from_numpy(detected_map.copy()).float().cuda() / 255.0
+        control = torch.from_numpy(detected_map.copy()).float().to(device) / 255.0
         control = torch.stack([control for _ in range(num_samples)], dim=0)
         control = einops.rearrange(control, 'b h w c -> b c h w').clone()
 
@@ -108,6 +190,7 @@ def process(det, input_image, prompt, a_prompt, n_prompt, num_samples, image_res
 
         model.control_scales = [strength * (0.825 ** float(12 - i)) for i in range(13)] if guess_mode else ([strength] * 13)
 
+        ddim_sampler = DDIMSampler(model)
         samples, intermediates = ddim_sampler.sample(ddim_steps, num_samples,
                                                      shape, cond, verbose=False, eta=eta,
                                                      unconditional_guidance_scale=scale,
@@ -119,29 +202,71 @@ def process(det, input_image, prompt, a_prompt, n_prompt, num_samples, image_res
         x_samples = (einops.rearrange(x_samples, 'b c h w -> b h w c') * 127.5 + 127.5).cpu().numpy().clip(0, 255).astype(np.uint8)
 
         results = [x_samples[i] for i in range(num_samples)]
-        #save the result
-        Image.fromarray(results[0]).save(f"./test/augmented_{det}.png")
-    return detected_map, results[0]  # Return both the preprocessed map and the augmented image
+    return detected_map, results[0]
 
-def augment(image, class_label, det_type):
-
-    # Step 1: Generate caption using LLAVA
-    pil_image = to_pil_image(image) if not isinstance(image, Image.Image) else image
-    # prompt = "USER: <image>\nDescribe the image in detail in as many words as possible. Describe the colors, what's in focus, out of focus, on the ground, and in the sky. \nASSISTANT:"
-    # inputs = processor(prompt, images=[pil_image], return_tensors="pt")
+import colorsys
+def random_color_augmentation(image, num_colors=6):
+        # Convert the image to grayscale
+    grayscale = image.convert('L')
     
-    # generated_ids = llava_model.generate(**inputs, max_length=100)
-    # caption = processor.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
+    # Convert grayscale image to numpy array
+    gray_array = np.array(grayscale)
+    
+    # Generate random colors
+    colors = [colorsys.hsv_to_rgb(np.random.random(), 
+                                  np.random.uniform(0.5, 1.0), 
+                                  np.random.uniform(0.5, 1.0)) for _ in range(num_colors)]
+    
+    # Create an empty array for the colored image
+    colored_array = np.zeros((gray_array.shape[0], gray_array.shape[1], 3), dtype=np.float32)
+    
+    # Normalize the gray values to be between 0 and 1
+    normalized_gray = gray_array / 255.0
+    
+    # Apply the color gradient
+    for i in range(num_colors - 1):
+        mask = ((normalized_gray >= i / (num_colors - 1)) & 
+                (normalized_gray < (i + 1) / (num_colors - 1)))
+        
+        t = (normalized_gray[mask] - i / (num_colors - 1)) * (num_colors - 1)
+        
+        colored_array[mask] = (1 - t[:, np.newaxis]) * colors[i] + t[:, np.newaxis] * colors[i+1]
+    
+    # Handle the last interval
+    mask = (normalized_gray >= (num_colors - 1) / (num_colors - 1))
+    colored_array[mask] = colors[-1]
+    
+    # Convert to uint8
+    colored_array = (colored_array * 255).astype(np.uint8)
+    
+    # Convert the numpy array back to a PIL Image
+    colored_image = Image.fromarray(colored_array)
+    
+    return colored_image
+
+
+def auto_augment(image, class_label, models):
+    pil_image = to_pil_image(image) if not isinstance(image, Image.Image) else image
+    
+    control_net, llava, zero123, color_control = models
+    # If you want to use LLAVA for captioning, uncomment these lines:
+    # prompt = "USER: <image>\nDescribe the image in detail in as many words as possible. Describe the colors, what's in focus, out of focus, on the ground, and in the sky. \nASSISTANT:"
+    # inputs = llava['processor'](prompt, images=[pil_image], return_tensors="pt")
+    # generated_ids = llava['model'].generate(**inputs, max_length=100)
+    # caption = llava['processor'].batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
+    
     caption = "a tent in the middle of a field"
     print(f"Generated caption: {caption}")
     
-    
-    # Step 3: Apply ControlNet with different detection types
     augmented_images = {}
     preprocessed_images = {}
+
+    # Apply Control Net augmentation
     for det_type in ['Canny', 'Depth', 'Segmentation']:
         print(f"Processing {det_type}...")
-        preprocessed, augmented = process(
+        preprocessed, augmented = control_augment(
+            control_net=control_net,
+            device=control_net_device,
             det=det_type,
             input_image=pil_image,
             prompt=caption,
@@ -157,33 +282,53 @@ def augment(image, class_label, det_type):
             seed=-1,
             eta=0.0,
             low_threshold=100,
-            high_threshold=200
+            high_threshold=200,
+            
         )
         augmented_images[det_type] = Image.fromarray(augmented)
         preprocessed_images[det_type] = Image.fromarray(preprocessed)
 
+    #Apply random color augmentation
+    augmented_images['RandomColor'] = random_color_augmentation(augmented_images[det_type])
+
+    # Apply Zero123 augmentations
+    angles = [
+        ("front", 0, 0, 0),
+        ("left", 0, -15, 0),
+        ("right", 0, 15, 0),
+        ("above", -15, 0, 0),
+        ("below", 15, 0, 0),
+        ("behind", 0, 180, 0),
+    ]
+
+    # Returns the preprocessed image and then a list of augmented images of type Image
+    preprocessed_zero, augmented_zero = generate_angles(image, angles, zero123['model'], zero123['carvekit_interface'], zero123_device, ddim_steps=50, scale=3.0, n_samples=1)
     
-    return image, preprocessed_images, augmented_images, class_label, caption
+    preprocessed_images['Zero123'] = preprocessed_zero
 
+    #right now will only return the first image 
+    augmented_images['Zero123'] = augmented_zero[0]
 
-# Example usage
+    # Apply Color Control augmentation returns a list of images
+    color_augmented = control_color_augment(pil_image, color_control['adapter'], color_control['pipe'], caption, color_control['sam_annotator'], 1, color_control_device)
+
+    augmented_images['ColorControl'] = color_augmented[0]
+   
+    return pil_image, preprocessed_images, augmented_images, class_label, caption
+
 if __name__ == "__main__":
-    # Load an example image (replace with your own image loading logic)
-    example_image = Image.open("/home/pat/diffusion_augmentation/torch/sun397_og/SUN397/t/tent/outdoor/sun_atybcwhfakdbxhlg.jpg")
-    example_image.save("./test/original.png")
+    models = initialize_models()
+    example_image = Image.open("./test_images/original.png")
     example_class = "tent"
     
-    original, preprocessed_dict, augmented_dict, label, caption = augment(example_image, example_class)
+    original, preprocessed_dict, augmented_dict, label, caption = auto_augment(example_image, example_class, models)
     
-    # Save or display results
-    original.save("./test/original.png")
-    for det_type in ['Canny', 'Depth', 'Segmentation']:
-        preprocessed_dict[det_type].save(f"./test/preprocessed_{det_type.lower()}.png")
-        augmented_dict[det_type].save(f"./test/augmented_{det_type.lower()}.png")
+
+    for det_type in ['Canny', 'Depth', 'Segmentation', 'RandomColor', 'Zero123', 'ColorControl']:
+        augmented_dict[det_type].save(f"./test_images/augmented_{det_type.lower()}.png")
+        try:
+            preprocessed_dict[det_type].save(f"./test_images/preprocessed_{det_type.lower()}.png")
+        except KeyError:
+            pass
     print(f"Class: {label}")
     print(f"Caption: {caption}")
-
-
-
-
-     
