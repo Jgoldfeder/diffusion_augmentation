@@ -1,10 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os.path as osp
 
-try:
-    from annotator.uniformer.mmcv.utils import TORCH_VERSION, digit_version
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.utils import TORCH_VERSION, digit_version
+from annotator.uniformer.mmcv.utils import TORCH_VERSION, digit_version
 from ...dist_utils import master_only
 from ..hook import HOOKS
 from .base import LoggerHook

@@ -3,12 +3,8 @@ from __future__ import division
 
 import numpy as np
 
-try:
-    from annotator.uniformer.mmcv.image import rgb2bgr
-    from annotator.uniformer.mmcv.video import flowread
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.image import rgb2bgr
-    from controlnet.annotator.uniformer.mmcv.video import flowread
+from annotator.uniformer.mmcv.image import rgb2bgr
+from annotator.uniformer.mmcv.video import flowread
 from .image import imshow
 
 

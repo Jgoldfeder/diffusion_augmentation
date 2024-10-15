@@ -1,11 +1,6 @@
-
-try:
-    import annotator.uniformer.mmcv as mmcv
-    from annotator.uniformer.mmcv.utils import deprecated_api_warning, is_tuple_of
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
-    from controlnet.annotator.uniformer.mmcv.utils import deprecated_api_warning, is_tuple_of
+import annotator.uniformer.mmcv as mmcv
 import numpy as np
+from annotator.uniformer.mmcv.utils import deprecated_api_warning, is_tuple_of
 from numpy import random
 
 from ..builder import PIPELINES

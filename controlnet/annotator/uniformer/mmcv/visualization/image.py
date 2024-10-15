@@ -1,10 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import cv2
 import numpy as np
-try:
-    from annotator.uniformer.mmcv.image import imread, imwrite
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.image import imread, imwrite
+
+from annotator.uniformer.mmcv.image import imread, imwrite
 from .color import color_val
 
 

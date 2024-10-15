@@ -1,9 +1,6 @@
 from collections import OrderedDict
 
-try:
-    import annotator.uniformer.mmcv as mmcv
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
+import annotator.uniformer.mmcv as mmcv
 import numpy as np
 import torch
 

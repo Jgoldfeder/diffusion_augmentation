@@ -2,10 +2,7 @@ import warnings
 
 import torch
 
-try:
-    from annotator.uniformer.mmcv.utils import digit_version
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.utils import digit_version
+from annotator.uniformer.mmcv.utils import digit_version
 
 
 def is_jit_tracing() -> bool:

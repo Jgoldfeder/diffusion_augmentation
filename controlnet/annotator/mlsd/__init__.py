@@ -15,7 +15,7 @@ from .utils import pred_lines
 from annotator.util import annotator_ckpts_path
 
 
-remote_model_path = "https://huggingface.co/lllyasviel/ControlNet/resolve/main/annotator/ckpts/mlsd_large_512_fp32.pth"
+remote_model_path = "https://huggingface.co/lllyasviel/Annotators/resolve/main/mlsd_large_512_fp32.pth"
 
 
 class MLSDdetector:

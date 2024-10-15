@@ -3,19 +3,12 @@ import pickle
 import shutil
 import tempfile
 
+import annotator.uniformer.mmcv as mmcv
 import numpy as np
 import torch
 import torch.distributed as dist
-try:
-    import annotator.uniformer.mmcv as mmcv
-
-    from annotator.uniformer.mmcv.image import tensor2imgs
-    from annotator.uniformer.mmcv.runner import get_dist_info
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
-
-    from controlnet.annotator.uniformer.mmcv.image import tensor2imgs
-    from controlnet.annotator.uniformer.mmcv.runner import get_dist_info
+from annotator.uniformer.mmcv.image import tensor2imgs
+from annotator.uniformer.mmcv.runner import get_dist_info
 
 
 def np2tmp(array, temp_file_name=None):

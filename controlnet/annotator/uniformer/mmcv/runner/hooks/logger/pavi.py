@@ -6,10 +6,7 @@ import os.path as osp
 import torch
 import yaml
 
-try:
-    import annotator.uniformer.mmcv as mmcv
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
+import annotator.uniformer.mmcv as mmcv
 from ....parallel.utils import is_module_wrapper
 from ...dist_utils import master_only
 from ..hook import HOOKS

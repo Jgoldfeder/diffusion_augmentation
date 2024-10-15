@@ -71,13 +71,13 @@ def control_color_augment(pil_image, adapter, pipe, prompt, sam_annotator, num_i
 if __name__ == "__main__":
     # use cuda device
     device = "cuda:0"
-    controlnet = ControlNetModel.from_config("./model_configs/controlnet_config.json").half()
-    adapter = ControlNetModel.from_config("./model_configs/controlnet_config.json").half()
+    controlnet = ControlNetModel.from_config("../model_configs/controlnet_config.json").half()
+    adapter = ControlNetModel.from_config("../model_configs/controlnet_config.json").half()
 
     sketch_method = "skmodel"
     sam_annotator = SAMImageAnnotator()
 
-    model_ckpt = f"./model_configs/color_img2img_palette.pt"
+    model_ckpt = f"../models/color_img2img_palette.pt"
     model_sd = torch.load(model_ckpt, map_location="cpu")["module"]
 
     # assign the weights of the controlnet and adapter separately
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     ).to(device)
     pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
 
-    all_files = sorted(list(glob.glob("/home/pat/diffusion_augmentation/test/*")))
+    all_files = sorted(list(glob.glob("/home/pat/diffusion_augmentation/test_images/*")))
 
     save_dir = "./figs"
     os.makedirs(save_dir, exist_ok=True)
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         # open image
         pil_image = Image.open(fname)
         pil_image = resize_in_buckets(pil_image)
-        sketch_cond, c_palette, sketch_img, palette_img, palette_sam = preprocess_sketch_and_palette(pil_image, sam_annotator)
+        sketch_cond, c_palette, sketch_img, palette_img, palette_sam = preprocess_sketch_and_palette(pil_image, sam_annotator, device)
 
         # get text prompt
         prompt = "detailed high-quality professional image"

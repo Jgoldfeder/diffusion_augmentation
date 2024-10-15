@@ -4,11 +4,7 @@ import os.path as osp
 import subprocess
 import tempfile
 
-try:
-    from annotator.uniformer.mmcv.utils import requires_executable
-
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.utils import requires_executable
+from annotator.uniformer.mmcv.utils import requires_executable
 
 
 @requires_executable('ffmpeg')

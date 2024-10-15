@@ -7,10 +7,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch import Tensor
-try:
-    from annotator.uniformer.mmcv.utils import Registry, build_from_cfg, get_logger, print_log
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.utils import Registry, build_from_cfg, get_logger, print_log
+
+from annotator.uniformer.mmcv.utils import Registry, build_from_cfg, get_logger, print_log
+
 INITIALIZERS = Registry('initializer')
 
 

@@ -1,7 +1,5 @@
-try:
-    from annotator.uniformer.mmcv.utils import Registry, build_from_cfg
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.utils import Registry, build_from_cfg
+from annotator.uniformer.mmcv.utils import Registry, build_from_cfg
+
 PIXEL_SAMPLERS = Registry('pixel sampler')
 
 

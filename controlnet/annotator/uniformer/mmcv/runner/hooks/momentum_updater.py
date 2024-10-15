@@ -1,9 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-
-try:
-    import annotator.uniformer.mmcv as mmcv
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
+import annotator.uniformer.mmcv as mmcv
 from .hook import HOOKS, Hook
 from .lr_updater import annealing_cos, annealing_linear, format_param
 

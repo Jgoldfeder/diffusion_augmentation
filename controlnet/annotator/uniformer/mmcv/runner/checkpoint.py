@@ -14,11 +14,8 @@ import torch
 import torchvision
 from torch.optim import Optimizer
 from torch.utils import model_zoo
-try:
-    
-    import annotator.uniformer.mmcv as mmcv
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
+
+import annotator.uniformer.mmcv as mmcv
 from ..fileio import FileClient
 from ..fileio import load as load_file
 from ..parallel import is_module_wrapper

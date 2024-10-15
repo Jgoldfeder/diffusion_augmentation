@@ -1,9 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
-try:
-    import annotator.uniformer.mmcv as mmcv
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
+
+import annotator.uniformer.mmcv as mmcv
 
 try:
     import torch

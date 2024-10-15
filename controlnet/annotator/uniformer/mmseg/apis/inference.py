@@ -1,21 +1,12 @@
 import matplotlib.pyplot as plt
-
+import annotator.uniformer.mmcv as mmcv
 import torch
-try:
-    import annotator.uniformer.mmcv as mmcv
-    from annotator.uniformer.mmcv.parallel import collate, scatter
-    from annotator.uniformer.mmcv.runner import load_checkpoint
+from annotator.uniformer.mmcv.parallel import collate, scatter
+from annotator.uniformer.mmcv.runner import load_checkpoint
 
-    from annotator.uniformer.mmseg.datasets.pipelines import Compose
-    from annotator.uniformer.mmseg.models import build_segmentor
+from annotator.uniformer.mmseg.datasets.pipelines import Compose
+from annotator.uniformer.mmseg.models import build_segmentor
 
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
-    from controlnet.annotator.uniformer.mmcv.parallel import collate, scatter
-    from controlnet.annotator.uniformer.mmcv.runner import load_checkpoint
-
-    from controlnet.annotator.uniformer.mmseg.datasets.pipelines import Compose
-    from controlnet.annotator.uniformer.mmseg.models import build_segmentor
 
 def init_segmentor(config, checkpoint=None, device='cuda:0'):
     """Initialize a segmentor from config file.

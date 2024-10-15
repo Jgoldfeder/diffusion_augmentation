@@ -4,10 +4,8 @@ import torch
 import numpy as np
 from tqdm import tqdm
 
-try:
-    from ldm.modules.diffusionmodules.util import make_ddim_sampling_parameters, make_ddim_timesteps, noise_like, extract_into_tensor
-except ModuleNotFoundError:
-    from controlnet.ldm.modules.diffusionmodules.util import make_ddim_sampling_parameters, make_ddim_timesteps, noise_like, extract_into_tensor
+from ldm.modules.diffusionmodules.util import make_ddim_sampling_parameters, make_ddim_timesteps, noise_like, extract_into_tensor
+
 
 class DDIMSampler(object):
     def __init__(self, model, schedule="linear", **kwargs):
@@ -18,8 +16,8 @@ class DDIMSampler(object):
 
     def register_buffer(self, name, attr):
         if type(attr) == torch.Tensor:
-            if attr.device != torch.device("cuda:0"):
-                attr = attr.to(torch.device("cuda:0"))
+            if attr.device != torch.device("cuda"):
+                attr = attr.to(torch.device("cuda"))
         setattr(self, name, attr)
 
     def make_schedule(self, ddim_num_steps, ddim_discretize="uniform", ddim_eta=0., verbose=True):

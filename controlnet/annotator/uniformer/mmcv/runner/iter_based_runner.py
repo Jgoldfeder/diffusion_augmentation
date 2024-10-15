@@ -8,10 +8,7 @@ import warnings
 import torch
 from torch.optim import Optimizer
 
-try:
-    import annotator.uniformer.mmcv as mmcv
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
+import annotator.uniformer.mmcv as mmcv
 from .base_runner import BaseRunner
 from .builder import RUNNERS
 from .checkpoint import save_checkpoint

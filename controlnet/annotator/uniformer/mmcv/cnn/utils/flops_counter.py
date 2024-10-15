@@ -30,10 +30,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-try:
-    import annotator.uniformer.mmcv as mmcv
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
+import annotator.uniformer.mmcv as mmcv
+
 
 def get_model_complexity_info(model,
                               input_shape,

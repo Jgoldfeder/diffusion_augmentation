@@ -8,10 +8,8 @@ from collections import defaultdict
 
 import cv2
 import torch
-try:
-    import annotator.uniformer.mmcv as mmcv
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
+
+import annotator.uniformer.mmcv as mmcv
 from .parrots_wrapper import get_build_config
 
 

@@ -2,10 +2,7 @@
 import torch
 import torch.nn as nn
 
-try:
-    from annotator.uniformer.mmcv import build_from_cfg
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv import build_from_cfg
+from annotator.uniformer.mmcv import build_from_cfg
 from .registry import DROPOUT_LAYERS
 
 

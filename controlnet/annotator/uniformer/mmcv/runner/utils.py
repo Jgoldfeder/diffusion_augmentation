@@ -10,10 +10,8 @@ from socket import gethostname
 import numpy as np
 import torch
 
-try:
-    import annotator.uniformer.mmcv as mmcv
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
+import annotator.uniformer.mmcv as mmcv
+
 
 def get_host_info():
     """Get hostname and username.

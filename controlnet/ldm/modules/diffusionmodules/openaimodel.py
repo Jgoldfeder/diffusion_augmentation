@@ -6,30 +6,17 @@ import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 
-try:
-    from controlnet.ldm.modules.diffusionmodules.util import (
-        checkpoint,
-        conv_nd,
-        linear,
-        avg_pool_nd,
-        zero_module,
-        normalization,
-        timestep_embedding,
-    )
-    from controlnet.ldm.modules.attention import SpatialTransformer
-    from controlnet.ldm.util import exists
-except ModuleNotFoundError:  
-    from ldm.modules.diffusionmodules.util import (
-        checkpoint,
-        conv_nd,
-        linear,
-        avg_pool_nd,
-        zero_module,
-        normalization,
-        timestep_embedding,
-    )
-    from ldm.modules.attention import SpatialTransformer
-    from ldm.util import exists
+from ldm.modules.diffusionmodules.util import (
+    checkpoint,
+    conv_nd,
+    linear,
+    avg_pool_nd,
+    zero_module,
+    normalization,
+    timestep_embedding,
+)
+from ldm.modules.attention import SpatialTransformer
+from ldm.util import exists
 
 
 # dummy replace

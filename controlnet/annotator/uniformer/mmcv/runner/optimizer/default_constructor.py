@@ -4,12 +4,8 @@ import warnings
 import torch
 from torch.nn import GroupNorm, LayerNorm
 
-try:
-    from annotator.uniformer.mmcv.utils import _BatchNorm, _InstanceNorm, build_from_cfg, is_list_of
-    from annotator.uniformer.mmcv.utils.ext_loader import check_ops_exist
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.utils import _BatchNorm, _InstanceNorm, build_from_cfg, is_list_of
-    from controlnet.annotator.uniformer.mmcv.utils.ext_loader import check_ops_exist
+from annotator.uniformer.mmcv.utils import _BatchNorm, _InstanceNorm, build_from_cfg, is_list_of
+from annotator.uniformer.mmcv.utils.ext_loader import check_ops_exist
 from .builder import OPTIMIZER_BUILDERS, OPTIMIZERS
 
 

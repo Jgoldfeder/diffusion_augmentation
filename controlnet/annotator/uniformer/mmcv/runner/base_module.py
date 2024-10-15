@@ -7,12 +7,9 @@ from logging import FileHandler
 
 import torch.nn as nn
 
-try:
-    from annotator.uniformer.mmcv.runner.dist_utils import master_only
-    from annotator.uniformer.mmcv.utils.logging import get_logger, logger_initialized, print_log
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.runner.dist_utils import master_only
-    from controlnet.annotator.uniformer.mmcv.utils.logging import get_logger, logger_initialized, print_log
+from annotator.uniformer.mmcv.runner.dist_utils import master_only
+from annotator.uniformer.mmcv.utils.logging import get_logger, logger_initialized, print_log
+
 
 class BaseModule(nn.Module, metaclass=ABCMeta):
     """Base module for all modules in openmmlab.

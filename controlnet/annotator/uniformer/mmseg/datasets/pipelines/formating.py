@@ -1,13 +1,9 @@
 from collections.abc import Sequence
 
-try:
-    import annotator.uniformer.mmcv as mmcv
-    from annotator.uniformer.mmcv.parallel import DataContainer as DC
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
-    from controlnet.annotator.uniformer.mmcv.parallel import DataContainer as DC
+import annotator.uniformer.mmcv as mmcv
 import numpy as np
 import torch
+from annotator.uniformer.mmcv.parallel import DataContainer as DC
 
 from ..builder import PIPELINES
 

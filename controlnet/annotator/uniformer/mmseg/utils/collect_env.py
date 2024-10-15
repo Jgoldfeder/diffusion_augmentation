@@ -1,12 +1,7 @@
-try:
-    from annotator.uniformer.mmcv.utils import collect_env as collect_base_env
-    from annotator.uniformer.mmcv.utils import get_git_hash
-    import annotator.uniformer.mmseg as mmseg
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.utils import collect_env as collect_base_env
-    from controlnet.annotator.uniformer.mmcv.utils import get_git_hash
-    import controlnet.annotator.uniformer.mmseg as mmseg
+from annotator.uniformer.mmcv.utils import collect_env as collect_base_env
+from annotator.uniformer.mmcv.utils import get_git_hash
 
+import annotator.uniformer.mmseg as mmseg
 
 
 def collect_env():

@@ -5,8 +5,8 @@ import sys
 zero123_dir = os.path.join("/home/pat", 'diffusion_augmentation', 'zero123')
 sys.path.append(zero123_dir)
 
-controlnet_dir = os.path.join("/home/pat", 'diffusion_augmentation', 'controlnet')
-sys.path.append(controlnet_dir)
+# controlnet_dir = os.path.join("/home/pat", 'diffusion_augmentation', 'controlnet')
+# sys.path.append(controlnet_dir)
 
 controlnet_dir = os.path.join("/home/pat", 'diffusion_augmentation', 'color_controlnet')
 sys.path.append(controlnet_dir)
@@ -20,17 +20,17 @@ import einops
 from torchvision.transforms.functional import to_pil_image
 from transformers import AutoProcessor, LlavaForConditionalGeneration, SamModel, AutoImageProcessor, DPTForDepthEstimation
 from transformers import pipeline
-from controlnet.annotator.util import resize_image, HWC3
-from controlnet.annotator.canny import CannyDetector
-from controlnet.annotator.uniformer import UniformerDetector
-from controlnet.annotator.midas import MidasDetector
+from controlnet_old.annotator.util import resize_image, HWC3
+from controlnet_old.annotator.canny import CannyDetector
+from controlnet_old.annotator.uniformer import UniformerDetector
+from controlnet_old.annotator.midas import MidasDetector
 from omegaconf import OmegaConf
-from controlnet.cldm.model import create_model, load_state_dict
-from controlnet.cldm.ddim_hacked import DDIMSampler
+from controlnet_old.cldm.model import create_model, load_state_dict
+from controlnet_old.cldm.ddim_hacked import DDIMSampler
 from pytorch_lightning import seed_everything
 
 # Zero123 imports
-from zero123.nerf import load_model_from_config, generate_angles
+# from zero123.nerf import load_model_from_config, generate_angles
 from zero123.ldm.util import create_carvekit_interface
 
 # Color Control imports
@@ -40,7 +40,7 @@ from color_controlnet.infer_palette import get_cond_color, show_anns, image_grid
 from color_controlnet.infer_palette_img2img import control_color_augment
 
 
-control_net_device = 'cuda:0'
+control_net_device = 'cuda:1'
 zero123_device = 'cuda:1'
 color_control_device = 'cuda:1'
 

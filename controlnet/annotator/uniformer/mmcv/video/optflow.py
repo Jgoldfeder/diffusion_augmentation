@@ -4,14 +4,10 @@ import warnings
 import cv2
 import numpy as np
 
-try:
-    from annotator.uniformer.mmcv.arraymisc import dequantize, quantize
-    from annotator.uniformer.mmcv.image import imread, imwrite
-    from annotator.uniformer.mmcv.utils import is_str
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.arraymisc import dequantize, quantize
-    from controlnet.annotator.uniformer.mmcv.image import imread, imwrite
-    from controlnet.annotator.uniformer.mmcv.utils import is_str
+from annotator.uniformer.mmcv.arraymisc import dequantize, quantize
+from annotator.uniformer.mmcv.image import imread, imwrite
+from annotator.uniformer.mmcv.utils import is_str
+
 
 def flowread(flow_or_path, quantize=False, concat_axis=0, *args, **kwargs):
     """Read an optical flow map.

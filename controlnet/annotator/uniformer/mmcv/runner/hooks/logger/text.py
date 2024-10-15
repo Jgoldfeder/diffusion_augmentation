@@ -7,16 +7,9 @@ from collections import OrderedDict
 import torch
 import torch.distributed as dist
 
-try:
-    import annotator.uniformer.mmcv as mmcv
-    from annotator.uniformer.mmcv.fileio.file_client import FileClient
-    from annotator.uniformer.mmcv.utils import is_tuple_of, scandir
-
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
-    from controlnet.annotator.uniformer.mmcv.fileio.file_client import FileClient
-    from controlnet.annotator.uniformer.mmcv.utils import is_tuple_of, scandir
-    
+import annotator.uniformer.mmcv as mmcv
+from annotator.uniformer.mmcv.fileio.file_client import FileClient
+from annotator.uniformer.mmcv.utils import is_tuple_of, scandir
 from ..hook import HOOKS
 from .base import LoggerHook
 

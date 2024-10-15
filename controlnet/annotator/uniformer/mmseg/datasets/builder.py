@@ -4,17 +4,10 @@ import random
 from functools import partial
 
 import numpy as np
-try:
-    from annotator.uniformer.mmcv.parallel import collate
-    from annotator.uniformer.mmcv.runner import get_dist_info
-    from annotator.uniformer.mmcv.utils import Registry, build_from_cfg
-    from annotator.uniformer.mmcv.utils.parrots_wrapper import DataLoader, PoolDataLoader
-
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.parallel import collate
-    from controlnet.annotator.uniformer.mmcv.runner import get_dist_info
-    from controlnet.annotator.uniformer.mmcv.utils import Registry, build_from_cfg
-    from controlnet.annotator.uniformer.mmcv.utils.parrots_wrapper import DataLoader, PoolDataLoader
+from annotator.uniformer.mmcv.parallel import collate
+from annotator.uniformer.mmcv.runner import get_dist_info
+from annotator.uniformer.mmcv.utils import Registry, build_from_cfg
+from annotator.uniformer.mmcv.utils.parrots_wrapper import DataLoader, PoolDataLoader
 from torch.utils.data import DistributedSampler
 
 if platform.system() != 'Windows':

@@ -1,9 +1,7 @@
 import warnings
 
-try:
-    import annotator.uniformer.mmcv as mmcv
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
+import annotator.uniformer.mmcv as mmcv
+
 from ..builder import PIPELINES
 from .compose import Compose
 

@@ -1,8 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-try:
-    from annotator.uniformer.mmcv.utils import Registry
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.utils import Registry
+from annotator.uniformer.mmcv.utils import Registry
+
 CONV_LAYERS = Registry('conv layer')
 NORM_LAYERS = Registry('norm layer')
 ACTIVATION_LAYERS = Registry('activation layer')

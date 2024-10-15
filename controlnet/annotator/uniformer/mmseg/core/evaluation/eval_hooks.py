@@ -1,11 +1,8 @@
 import os.path as osp
 
-try:
-    from annotator.uniformer.mmcv.runner import DistEvalHook as _DistEvalHook
-    from annotator.uniformer.mmcv.runner import EvalHook as _EvalHook
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.runner import DistEvalHook as _DistEvalHook
-    from controlnet.annotator.uniformer.mmcv.runner import EvalHook as _EvalHook
+from annotator.uniformer.mmcv.runner import DistEvalHook as _DistEvalHook
+from annotator.uniformer.mmcv.runner import EvalHook as _EvalHook
+
 
 class EvalHook(_EvalHook):
     """Single GPU EvalHook, with efficient test support.

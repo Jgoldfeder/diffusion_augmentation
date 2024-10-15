@@ -3,10 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-try:
-    from annotator.uniformer.mmcv.utils import TORCH_VERSION, build_from_cfg, digit_version
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.utils import TORCH_VERSION, build_from_cfg, digit_version
+from annotator.uniformer.mmcv.utils import TORCH_VERSION, build_from_cfg, digit_version
 from .registry import ACTIVATION_LAYERS
 
 for module in [

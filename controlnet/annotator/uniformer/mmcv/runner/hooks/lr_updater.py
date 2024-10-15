@@ -2,10 +2,7 @@
 import numbers
 from math import cos, pi
 
-try:
-    import annotator.uniformer.mmcv as mmcv
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
+import annotator.uniformer.mmcv as mmcv
 from .hook import HOOKS, Hook
 
 

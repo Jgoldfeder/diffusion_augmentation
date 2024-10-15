@@ -5,10 +5,7 @@ from itertools import chain
 
 from torch.nn.utils import clip_grad
 
-try:
-    from annotator.uniformer.mmcv.utils import TORCH_VERSION, _BatchNorm, digit_version
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.utils import TORCH_VERSION, _BatchNorm, digit_version
+from annotator.uniformer.mmcv.utils import TORCH_VERSION, _BatchNorm, digit_version
 from ..dist_utils import allreduce_grads
 from ..fp16_utils import LossScaler, wrap_fp16_model
 from .hook import HOOKS, Hook

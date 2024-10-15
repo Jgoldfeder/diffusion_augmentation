@@ -10,15 +10,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterable, Iterator, Optional, Tuple, Union
 from urllib.request import urlopen
-try:
-    import annotator.uniformer.mmcv as mmcv
-    from annotator.uniformer.mmcv.utils.misc import has_method
-    from annotator.uniformer.mmcv.utils.path import is_filepath
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
-    from controlnet.annotator.uniformer.mmcv.utils.misc import has_method
-    from controlnet.annotator.uniformer.mmcv.utils.path import is_filepath
 
+import annotator.uniformer.mmcv as mmcv
+from annotator.uniformer.mmcv.utils.misc import has_method
+from annotator.uniformer.mmcv.utils.path import is_filepath
 
 
 class BaseStorageBackend(metaclass=ABCMeta):

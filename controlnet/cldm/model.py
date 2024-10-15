@@ -2,10 +2,7 @@ import os
 import torch
 
 from omegaconf import OmegaConf
-try:
-    from ldm.util import instantiate_from_config
-except ModuleNotFoundError:
-    from controlnet.ldm.util import instantiate_from_config
+from ldm.util import instantiate_from_config
 
 
 def get_state_dict(d):

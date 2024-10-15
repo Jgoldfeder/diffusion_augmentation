@@ -10,11 +10,7 @@ from .midas.dpt_depth import DPTDepthModel
 from .midas.midas_net import MidasNet
 from .midas.midas_net_custom import MidasNet_small
 from .midas.transforms import Resize, NormalizeImage, PrepareForNet
-try:
-    from annotator.util import annotator_ckpts_path
-except ModuleNotFoundError:
-    from controlnet.annotator.util import annotator_ckpts_path
-# from annotator.util import annotator_ckpts_path
+from annotator.util import annotator_ckpts_path
 
 
 ISL_PATHS = {
@@ -24,7 +20,7 @@ ISL_PATHS = {
     "midas_v21_small": "",
 }
 
-remote_model_path = "https://huggingface.co/lllyasviel/ControlNet/resolve/main/annotator/ckpts/dpt_hybrid-midas-501f0c75.pt"
+remote_model_path = "https://huggingface.co/lllyasviel/Annotators/resolve/main/dpt_hybrid-midas-501f0c75.pt"
 
 
 def disabled_train(self, mode=True):

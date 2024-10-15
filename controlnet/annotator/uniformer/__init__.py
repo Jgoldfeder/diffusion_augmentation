@@ -3,17 +3,13 @@
 # # Apache-2.0 license
 
 import os
-try:
-    from annotator.uniformer.mmseg.apis import init_segmentor, inference_segmentor, show_result_pyplot
-    from annotator.uniformer.mmseg.core.evaluation import get_palette
-    from annotator.util import annotator_ckpts_path
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmseg.apis import init_segmentor, inference_segmentor, show_result_pyplot
-    from controlnet.annotator.uniformer.mmseg.core.evaluation import get_palette
-    from controlnet.annotator.util import annotator_ckpts_path
+
+from annotator.uniformer.mmseg.apis import init_segmentor, inference_segmentor, show_result_pyplot
+from annotator.uniformer.mmseg.core.evaluation import get_palette
+from annotator.util import annotator_ckpts_path
 
 
-checkpoint_file = "https://huggingface.co/lllyasviel/ControlNet/resolve/main/annotator/ckpts/upernet_global_small.pth"
+checkpoint_file = "https://huggingface.co/lllyasviel/Annotators/resolve/main/upernet_global_small.pth"
 
 
 class UniformerDetector:

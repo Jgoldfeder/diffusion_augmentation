@@ -3,21 +3,14 @@ import os.path as osp
 from collections import OrderedDict
 from functools import reduce
 
-
+import annotator.uniformer.mmcv as mmcv
 import numpy as np
-
+from annotator.uniformer.mmcv.utils import print_log
 from prettytable import PrettyTable
 from torch.utils.data import Dataset
-try:
-    import annotator.uniformer.mmcv as mmcv
-    from annotator.uniformer.mmcv.utils import print_log
-    from annotator.uniformer.mmseg.core import eval_metrics
-    from annotator.uniformer.mmseg.utils import get_root_logger
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
-    from controlnet.annotator.uniformer.mmcv.utils import print_log
-    from controlnet.annotator.uniformer.mmseg.core import eval_metrics
-    from controlnet.annotator.uniformer.mmseg.utils import get_root_logger
+
+from annotator.uniformer.mmseg.core import eval_metrics
+from annotator.uniformer.mmseg.utils import get_root_logger
 from .builder import DATASETS
 from .pipelines import Compose
 

@@ -15,8 +15,6 @@ control_augmented_images_sun397_512/
 control_augmented_images_caltech256_512fewshot/
 control_depth_variations.zip
 control_depth_variations/
-models/
-models
 wandb/
 output/
 caltech256_512fewshot_bad.zip
@@ -31,3 +29,4 @@ control_augmented_images_sun397_512fewshot/
 *.pth
 *.pt
 *.zip
+*.ckpt

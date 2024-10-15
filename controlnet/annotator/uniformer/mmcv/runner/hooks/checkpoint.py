@@ -2,10 +2,7 @@
 import os.path as osp
 import warnings
 
-try:
-    from annotator.uniformer.mmcv.fileio import FileClient
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.fileio import FileClient
+from annotator.uniformer.mmcv.fileio import FileClient
 from ..dist_utils import allreduce_params, master_only
 from .hook import HOOKS, Hook
 

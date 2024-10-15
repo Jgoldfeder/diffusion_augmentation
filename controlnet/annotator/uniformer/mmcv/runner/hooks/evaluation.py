@@ -7,12 +7,8 @@ import torch.distributed as dist
 from torch.nn.modules.batchnorm import _BatchNorm
 from torch.utils.data import DataLoader
 
-try:
-    from annotator.uniformer.mmcv.fileio import FileClient
-    from annotator.uniformer.mmcv.utils import is_seq_of
-except ModuleNotFoundError:
-    from controlnet.annotator.uniformer.mmcv.fileio import FileClient
-    from controlnet.annotator.uniformer.mmcv.utils import is_seq_of
+from annotator.uniformer.mmcv.fileio import FileClient
+from annotator.uniformer.mmcv.utils import is_seq_of
 from .hook import Hook
 from .logger import LoggerHook
 

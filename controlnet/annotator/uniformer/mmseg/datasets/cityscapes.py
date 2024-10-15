@@ -1,14 +1,9 @@
 import os.path as osp
 import tempfile
 
-try:
-    import annotator.uniformer.mmcv as mmcv
-    from annotator.uniformer.mmcv.utils import print_log
-except ModuleNotFoundError:
-    import controlnet.annotator.uniformer.mmcv as mmcv
-    from controlnet.annotator.uniformer.mmcv.utils import print_log
-
+import annotator.uniformer.mmcv as mmcv
 import numpy as np
+from annotator.uniformer.mmcv.utils import print_log
 from PIL import Image
 
 from .builder import DATASETS
