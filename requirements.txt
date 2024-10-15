@@ -1,4 +1,12 @@
 #python 3.10.15
+
+# do this first!
+#git clone https://github.com/CompVis/taming-transformers.git
+#pip install -e taming-transformers/
+#git clone https://github.com/openai/CLIP.git
+#pip install -e CLIP/
+
+
 absl-py==2.1.0
 accelerate==0.33.0
 addict==2.4.0

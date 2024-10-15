@@ -30,3 +30,7 @@ control_augmented_images_sun397_512fewshot/
 *.pt
 *.zip
 *.ckpt
+
+taming-transformers/
+CLIP/
+src/
