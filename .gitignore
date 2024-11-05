@@ -1,4 +1,5 @@
 torch/
+augmented_images/
 __pycache__/*
 annotator/__pycache__/*
 *.pyc
