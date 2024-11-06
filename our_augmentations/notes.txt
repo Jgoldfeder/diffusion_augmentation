@@ -1,0 +1,21 @@
+our parameters:
+
+depth map, color map, edge detection, segmentation, nerf rotation
+
+captioning style
+
+model used for diffusion
+
+for ea. a probability
+
+
+
+download caltech 256
+
+
+for each category take 8 images and produce augmentations for them
+
+
+controlnet - canny, depth, segmentation
+color_controlnet - color control model (colorimg2imgpalette)
+nerf - 6 angles (front, left, right, above, below, behind)

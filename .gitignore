@@ -35,3 +35,6 @@ control_augmented_images_sun397_512fewshot/
 taming-transformers/
 CLIP/
 src/
+
+ControlNet/
+models/
