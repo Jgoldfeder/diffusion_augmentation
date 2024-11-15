@@ -18,6 +18,6 @@ wget https://huggingface.co/lllyasviel/Annotators/resolve/main/sk_model2.pth -O 
 
 # Download files for Zero123
 echo "Downloading Zero123 files..."
-wget https://huggingface.co/spaces/cvlab/zero123-live/resolve/d7776c37857ae042bf9e31f74d54f736a432ed8a/105000.ckpt -O zero123_105000.ckpt
+wget https://huggingface.co/spaces/cvlab/zero123-live/resolve/d7776c37857ae042bf9e31f74d54f736a432ed8a/105000.ckpt -O 105000.ckpt
 
 echo "All files downloaded successfully."
