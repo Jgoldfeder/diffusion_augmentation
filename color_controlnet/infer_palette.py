@@ -102,7 +102,7 @@ def show_anns(anns, cond_image):
 
 class SAMImageAnnotator:
     def __init__(self):
-        sam_checkpoint = "/home/vaibhav/diffusion_augmentation/models/sam_vit_h_4b8939.pth"
+        sam_checkpoint = "/home/shreyes/diffusion_augmentation/models/sam_vit_h_4b8939.pth"
         model_type = "default"  # "vit_l"
 
         sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)

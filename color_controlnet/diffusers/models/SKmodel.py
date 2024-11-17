@@ -89,8 +89,8 @@ class Generator(nn.Module):
 class LineartDetector(nn.Module):
     def __init__(self):
         super(LineartDetector, self).__init__()
-        self.model = self.load_model('/home/vaibhav/diffusion_augmentation/models/sk_model.pth')
-        self.model_coarse = self.load_model('/home/vaibhav/diffusion_augmentation/models/sk_model2.pth')
+        self.model = self.load_model('/home/shreyes/diffusion_augmentation/models/sk_model.pth')
+        self.model_coarse = self.load_model('/home/shreyes/diffusion_augmentation/models/sk_model2.pth')
 
     def load_model(self, name):
         # remote_model_path = "https://huggingface.co/lllyasviel/Annotators/resolve/main/" + name
