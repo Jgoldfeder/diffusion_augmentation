@@ -46,41 +46,59 @@ def preprocess_image(image_path, preprocessor_type):
 
 # Example usage:
 image_path = "torch/caltech256/256_ObjectCategories/001.ak47/001_0001.jpg"
-preprocessor_type = "segmentation"  # Options: "canny", "midas", "segmentation"
 
-processed_image = preprocess_image(image_path, preprocessor_type)
-processed_image.show()  # Display the image
-processed_image.save(f"output_{preprocessor_type}.png")  # Save the processed image
+# Process and save images with each preprocessor type
+preprocessor_types = ["canny", "midas", "segmentation"]
+processed_images = {}
 
+for preprocessor_type in preprocessor_types:
+    processed_image = preprocess_image(image_path, preprocessor_type)
+    processed_image.show()  # Display the image
+    processed_image.save(f"output_{preprocessor_type}.png")  # Save the processed image
+    processed_images[preprocessor_type] = processed_image
 
 from diffusers import StableDiffusionControlNetPipeline, ControlNetModel
 import torch
-
-controlnet = ControlNetModel.from_pretrained("lllyasviel/sd-controlnet-canny", torch_dtype=torch.float16)
-pipe = StableDiffusionControlNetPipeline.from_pretrained(
-    "runwayml/stable-diffusion-v1-5", controlnet=controlnet, torch_dtype=torch.float16
-)
-
 from diffusers import UniPCMultistepScheduler
 
-pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
-
-pipe.enable_model_cpu_offload()
-
-pipe.enable_xformers_memory_efficient_attention()
+# ControlNet model mappings
+controlnet_models = {
+    "canny": "lllyasviel/sd-controlnet-canny",
+    "midas": "lllyasviel/sd-controlnet-depth",
+    "segmentation": "lllyasviel/sd-controlnet-seg"
+}
 
 prompt = ["ak47, best quality, extremely detailed"]
-generator = [torch.Generator(device="cpu").manual_seed(2) for i in range(len(prompt))]
+negative_prompt = ["monochrome, lowres, bad anatomy, worst quality, low quality"]
 
-output = pipe(
-    prompt,
-    processed_image,
-    negative_prompt=["monochrome, lowres, bad anatomy, worst quality, low quality"] * len(prompt),
-    generator=generator,
-    num_inference_steps=20,
-)
+# Process with each ControlNet model
+for preprocessor_type, model_id in controlnet_models.items():
+    # Load the specific ControlNet model
+    controlnet = ControlNetModel.from_pretrained(
+        model_id,
+        torch_dtype=torch.float16
+    ).to("cuda")
 
-# Save each image to the current directory
-for i, img in enumerate(output.images):
-    img.save(f"output_image_{i}.png")
-print("Images saved to the current directory.")
+    pipe = StableDiffusionControlNetPipeline.from_pretrained(
+        "runwayml/stable-diffusion-v1-5",
+        controlnet=controlnet,
+        torch_dtype=torch.float16
+    ).to("cuda")
+
+    pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
+    pipe.enable_xformers_memory_efficient_attention()
+
+    generator = [torch.Generator(device="cuda").manual_seed(2) for _ in range(len(prompt))]
+
+    output = pipe(
+        prompt,
+        processed_images[preprocessor_type],
+        negative_prompt=negative_prompt * len(prompt),
+        generator=generator,
+        num_inference_steps=20,
+    )
+
+    # Save each image to the current directory
+    for i, img in enumerate(output.images):
+        img.save(f"output_image_{preprocessor_type}_{i}.png")
+    print(f"Images for {preprocessor_type} ControlNet saved to the current directory.")

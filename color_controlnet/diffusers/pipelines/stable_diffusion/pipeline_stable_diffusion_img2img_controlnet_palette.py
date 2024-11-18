@@ -861,8 +861,8 @@ class StableDiffusionImg2ImgControlNetPalettePipeline(DiffusionPipeline):
                     t, 
                     encoder_hidden_states=prompt_embeds,
                     down_block_additional_residuals=down_block_res_samples,
-                    mid_block_additional_residual=mid_block_res_sample,
-                    adapter_features=adapter_features).sample
+                    mid_block_additional_residual=mid_block_res_sample
+                    ).sample
 
                 # perform guidance
                 if do_classifier_free_guidance:
