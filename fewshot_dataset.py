@@ -148,43 +148,43 @@ optimizer_normal = optim.Adam(model_normal.parameters(), lr=1e-4)
 optimizer_augmented = optim.Adam(model_augmented.parameters(), lr=1e-4)
 criterion = nn.CrossEntropyLoss()
 
-# #normal training loop
-# for epoch in range(600):
-#     model_augmented.train()
-#     running_loss = 0.0
-#     for images, labels in train_loader_normal:
-#         images = images.to('cuda:0' if torch.cuda.is_available() else 'cpu')
-#         labels = labels.to('cuda:0' if torch.cuda.is_available() else 'cpu')
+#normal training loop
+for epoch in range(600):
+    model_augmented.train()
+    running_loss = 0.0
+    for images, labels in train_loader_normal:
+        images = images.to('cuda:0' if torch.cuda.is_available() else 'cpu')
+        labels = labels.to('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-#         optimizer_normal.zero_grad()
+        optimizer_normal.zero_grad()
         
-#         outputs = model_normal(images)
-#         loss = criterion(outputs, labels)
-#         loss.backward()
-#         optimizer_normal.step()
+        outputs = model_normal(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer_normal.step()
         
-#         running_loss += loss.item()
-#     print(f"Epoch {epoch+1}, Loss: {running_loss/len(train_loader_normal)}")
+        running_loss += loss.item()
+    print(f"Epoch {epoch+1}, Loss: {running_loss/len(train_loader_normal)}")
 
 
-# # Test dataset and DataLoader
-# test_dataset = TestDataset(root_dir=".", dataset="caltech256", categories=categories, transform=transform)
-# test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+# Test dataset and DataLoader
+test_dataset = TestDataset(root_dir=".", dataset="caltech256", categories=categories, transform=transform)
+test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-# # Testing loop
-# model_normal.eval()
-# correct = 0
-# total = 0
+# Testing loop
+model_normal.eval()
+correct = 0
+total = 0
 
-# with torch.no_grad():
-#     for images, labels in test_loader:
-#         images, labels = images.to('cuda:0' if torch.cuda.is_available() else 'cpu'), labels.to('cuda:0' if torch.cuda.is_available() else 'cpu')
-#         outputs = model_normal(images)
-#         _, predicted = torch.max(outputs, 1)
-#         total += labels.size(0)
-#         correct += (predicted == labels).sum().item()
+with torch.no_grad():
+    for images, labels in test_loader:
+        images, labels = images.to('cuda:0' if torch.cuda.is_available() else 'cpu'), labels.to('cuda:0' if torch.cuda.is_available() else 'cpu')
+        outputs = model_normal(images)
+        _, predicted = torch.max(outputs, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
 
-# print(f"Test Accuracy: {100 * correct / total}%")
+print(f"Test Accuracy: {100 * correct / total}%")
 
 
 #augmented training loop
