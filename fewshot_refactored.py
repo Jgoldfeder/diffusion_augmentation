@@ -144,7 +144,7 @@ model_normal = initialize_model(num_classes=len(categories), device=device)
 optimizer_normal = optim.Adam(model_normal.parameters(), lr=1e-4)
 criterion = nn.CrossEntropyLoss()
 
-train_model(model_normal, train_loader_normal, criterion, optimizer_normal, device, num_epochs=100)
+train_model(model_normal, train_loader_normal, criterion, optimizer_normal, device, num_epochs=600)
 evaluate_model(model_normal, test_loader, device)
 
 # Augmented Model Training & Evaluation
