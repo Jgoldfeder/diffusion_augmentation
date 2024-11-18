@@ -1,5 +1,6 @@
 torch/
 augmented_images/
+color_controlnet/
 __pycache__/*
 annotator/__pycache__/*
 *.pyc
