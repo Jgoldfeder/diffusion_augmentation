@@ -73,9 +73,9 @@ class ControlNetAugmentationManager:
 
                 pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
                 pipe.enable_xformers_memory_efficient_attention()
-
-                class_prompt = image_path.split('/')[-1].split('.')[1].replace('-', ' ')
-                prompt = [f"{class_prompt}, best quality, extremely detailed"]
+                
+                class_prompt = image_path.split('/')[-2].split('.')[1].replace('-', ' ')
+                prompt = [f"{class_prompt}"]
                 negative_prompt = ["monochrome, lowres, bad anatomy, worst quality, low quality"]
                 generator = [torch.Generator(device=self.control_net_device).manual_seed(2) for _ in range(len(prompt))]
 
