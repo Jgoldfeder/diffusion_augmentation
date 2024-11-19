@@ -180,8 +180,8 @@ if __name__ == '__main__':
 	num_classes = len(class_names)
 
 	print('base')
-	finetune_resnet(base_dataset, test_dataset, num_classes, epochs=20, batch_size=1, learning_rate=1e-4)
+	finetune_resnet(base_dataset, test_dataset, num_classes, epochs=100, batch_size=1, learning_rate=1e-4)
 	print('repeated')
-	finetune_resnet(repeated_dataset, test_dataset, num_classes, epochs=20, batch_size=1, learning_rate=1e-4)
+	finetune_resnet(repeated_dataset, test_dataset, num_classes, epochs=100, batch_size=1, learning_rate=1e-4)
 	print('augmented')
-	finetune_resnet(augmented_dataset, test_dataset, num_classes, epochs=20, batch_size=1, learning_rate=1e-4)
+	finetune_resnet(augmented_dataset, test_dataset, num_classes, epochs=100, batch_size=1, learning_rate=1e-4)
