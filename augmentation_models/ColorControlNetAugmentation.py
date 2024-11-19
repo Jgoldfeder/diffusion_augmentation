@@ -100,6 +100,5 @@ class ColorControlNetAugmentationManager:
             )
             
             augmented_images[image_path] = color_augmented[0]
-            count += 1
             
         return augmented_images

@@ -1,7 +1,3 @@
-# sample 2 images from 3 classes of caltech256
-# test controlnet, color controlnet, nerf
-# assert that the output is a dictionary with the correct keys and values
-
 import unittest
 from PIL import Image
 from pathlib import Path
@@ -9,6 +5,7 @@ import random
 import torch
 import time
 import sys 
+import os
 
 project_root = str(Path(__file__).parent.parent)
 sys.path.append(project_root)
@@ -22,19 +19,12 @@ sample_image_paths = [
     "/home/vaibhav/diffusion_augmentation/torch/caltech256/256_ObjectCategories/002.american-flag/002_0001.jpg",
 ]
 
-# Initialize ControlNet augmentation manager
-controlnet_manager = ControlNetAugmentationManager()
-color_controlnet_manager = ColorControlNetAugmentationManager()
-nerf_manager = NerfAugmentationManager()
-
-# Generate augmentations
-canny_augmented, depth_augmented, segmentation_augmented = controlnet_manager.generate_augmentations(sample_image_paths)
-color_augmented = color_controlnet_manager.generate_augmentations(sample_image_paths)
-nerf_augmented = nerf_manager.generate_augmentations(sample_image_paths)
-
-# Save the augmented images
 output_dir = "/home/vaibhav/diffusion_augmentation/test_augmentations"
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
+controlnet_manager = ControlNetAugmentationManager()
+canny_augmented, depth_augmented, segmentation_augmented = controlnet_manager.generate_augmentations(sample_image_paths)
 for image_path, augmented_image in canny_augmented.items():
     class_name = Path(image_path).stem
     augmented_image.save(f"{output_dir}/canny_{class_name}_augmented.png")
@@ -47,10 +37,15 @@ for image_path, augmented_image in segmentation_augmented.items():
     class_name = Path(image_path).stem
     augmented_image.save(f"{output_dir}/segmentation_{class_name}_augmented.png")
 
+color_controlnet_manager = ColorControlNetAugmentationManager()
+color_augmented = color_controlnet_manager.generate_augmentations(sample_image_paths)
+
 for image_path, augmented_image in color_augmented.items():
     class_name = Path(image_path).stem
     augmented_image.save(f"{output_dir}/color_{class_name}_augmented.png")
 
+nerf_manager = NerfAugmentationManager()
+nerf_augmented = nerf_manager.generate_augmentations(sample_image_paths)
 for image_path, augmented_image in nerf_augmented.items():
     class_name = Path(image_path).stem
     augmented_image.save(f"{output_dir}/nerf_{class_name}_augmented.png")
