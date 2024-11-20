@@ -48,7 +48,7 @@ class NerfAugmentationManager:
         count = 0
 
         for image_path in image_paths:
-            img = Image.open(image_path)
+            img = Image.open(image_path).convert("RGB")
             
             preprocessed_image, augmented_images = generate_angles(
                 input_image=img,

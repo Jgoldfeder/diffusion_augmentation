@@ -84,7 +84,7 @@ class ColorControlNetAugmentationManager:
         augmented_images = {}
         
         for image_path in image_paths:
-            img = Image.open(image_path)
+            img = Image.open(image_path).convert("RGB")
             
             # Extract class name from directory path
             class_name = os.path.basename(image_path).split("/")[-1].split(".")[-1]

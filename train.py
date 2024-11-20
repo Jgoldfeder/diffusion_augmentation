@@ -13,6 +13,7 @@ import os
 from augmentation_models.ControlNetAugmentation import ControlNetAugmentationManager
 from augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
 from augmentation_models.NerfAugmentation import NerfAugmentationManager
+import wandb
 
 torch.manual_seed(42)
 random.seed(42)
@@ -101,10 +102,10 @@ class CustomDataset(Dataset):
             return image, self.labels[true_idx]
 
 def create_datasets():
-    dataset = Caltech256(root='./data', download=True)
+    dataset = Caltech256(root='./torch', download=True)
     
     all_classes = list(set([label for _, label in dataset]))
-    selected_classes = random.sample(all_classes, 2)
+    selected_classes = random.sample(all_classes, 5)
     
     class_images = {c: [] for c in selected_classes}
     for img, label in dataset:
@@ -116,6 +117,7 @@ def create_datasets():
     test_images = []
     test_labels = []
     
+    label = 0
     for class_idx in selected_classes:
         # Filter for images that exist in the directory
         valid_images = []
@@ -128,11 +130,13 @@ def create_datasets():
         
         selected_imgs = random.sample(valid_images, 2)
         train_images.extend(selected_imgs)
-        train_labels.extend([class_idx] * 2)
+        train_labels.extend([label] * 2)
         
         remaining_imgs = [img for img in class_images[class_idx] if img not in selected_imgs]
         test_images.extend(remaining_imgs)
-        test_labels.extend([class_idx] * len(remaining_imgs))
+        test_labels.extend([label] * len(remaining_imgs))
+
+        label += 1
     
     augmented_dataset = CustomDataset(train_images, train_labels, basic_transform, use_diffusion_aug=True)
     original_dataset = CustomDataset(train_images, train_labels, basic_transform, duplicate=6)
@@ -147,7 +151,7 @@ def train_model(train_dataset, test_dataset, model_name):
     test_loader = DataLoader(test_dataset, batch_size=32)
     
     model = resnet18(weights=ResNet18_Weights.DEFAULT)
-    model.fc = nn.Linear(model.fc.in_features, 2)
+    model.fc = nn.Linear(model.fc.in_features, 5)
     model = model.to(device)
     
     criterion = nn.CrossEntropyLoss()
@@ -160,6 +164,9 @@ def train_model(train_dataset, test_dataset, model_name):
     for epoch in range(epochs):
         model.train()
         epoch_loss = 0
+        train_correct = 0
+        train_total = 0
+        
         for images, labels in train_loader:
             images, labels = images.to(device), labels.to(device)
             
@@ -170,23 +177,41 @@ def train_model(train_dataset, test_dataset, model_name):
             optimizer.step()
             
             epoch_loss += loss.item()
+            
+            # Calculate training accuracy
+            _, predicted = torch.max(outputs.data, 1)
+            train_total += labels.size(0)
+            train_correct += (predicted == labels).sum().item()
         
+        # Evaluation loop
         model.eval()
-        correct = 0
-        total = 0
+        test_correct = 0
+        test_total = 0
         with torch.no_grad():
             for images, labels in test_loader:
                 images, labels = images.to(device), labels.to(device)
                 outputs = model(images)
                 _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
+                test_total += labels.size(0)
+                test_correct += (predicted == labels).sum().item()
         
-        accuracy = 100 * correct / total
-        train_losses.append(epoch_loss / len(train_loader))
-        test_accuracies.append(accuracy)
+        # Calculate metrics
+        train_accuracy = 100 * train_correct / train_total
+        test_accuracy = 100 * test_correct / test_total
+        avg_loss = epoch_loss / len(train_loader)
         
-        print(f'{model_name} - Epoch {epoch+1}/{epochs}, Loss: {epoch_loss/len(train_loader):.4f}, Test Accuracy: {accuracy:.2f}%')
+        # Log metrics to wandb
+        wandb.log({
+            f"{model_name}/train_loss": avg_loss,
+            f"{model_name}/train_accuracy": train_accuracy,
+            f"{model_name}/test_accuracy": test_accuracy,
+            "epoch": epoch
+        })
+        
+        print(f'{model_name} - Epoch {epoch+1}/{epochs}, '
+              f'Loss: {avg_loss:.4f}, '
+              f'Train Accuracy: {train_accuracy:.2f}%, '
+              f'Test Accuracy: {test_accuracy:.2f}%')
     
     return train_losses, test_accuracies
 
