@@ -1,7 +1,7 @@
 import torch
 import torchvision
 import torchvision.transforms as transforms
-from torchvision.datasets import Caltech256
+from torchvision.datasets import Caltech256, Flowers102
 from torchvision.models import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
 from torch.utils.data import Dataset, DataLoader
 import random
@@ -38,6 +38,8 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=20, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate for optimizer')
+    parser.add_argument('--dataset', type=str, choices=['caltech256', 'flowers102'], 
+                       required=True, help='Dataset to use (caltech256 or flowers102)')
     
     return parser.parse_args()
 
@@ -144,9 +146,13 @@ class CustomDataset(Dataset):
             return image, self.labels[true_idx]
 
 def create_datasets(args):
-    dataset = Caltech256(root='./torch', download=True)
+    if args.dataset == 'caltech256':
+        dataset = Caltech256(root='./torch', download=True)
+    else:  # flowers102
+        dataset = Flowers102(root='./torch', download=True)
     
     all_classes = list(set([label for _, label in dataset]))
+    num_classes = 102 if args.dataset == 'flowers102' else 256
     selected_classes = random.sample(all_classes, 5)
     
     class_images = {c: [] for c in selected_classes}
@@ -200,8 +206,7 @@ def train_model(train_dataset, test_dataset, dataset_type, args):
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size)
     
-    model = resnet18(weights=ResNet18_Weights.DEFAULT)
-    model.fc = nn.Linear(model.fc.in_features, 5)
+    model = get_model(args.architecture, num_classes=5)
     model = model.to(device)
     
     criterion = nn.CrossEntropyLoss()
@@ -261,13 +266,13 @@ def main():
     args = parse_args()
     
     wandb.init(
-        project="caltech256-augmentation",
+        project="diffusion-augmentation",
         config={
             "epochs": args.epochs,
             "batch_size": args.batch_size,
             "learning_rate": args.learning_rate,
             "architecture": args.architecture,
-            "dataset": "Caltech256",
+            "dataset": args.dataset,
             "use_canny": args.use_canny,
             "use_depth": args.use_depth,
             "use_seg": args.use_seg,
