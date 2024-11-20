@@ -22,10 +22,10 @@ class NerfAugmentationManager:
     def _initialize_zero123_models(self):
         """Initialize Zero123 models and return as dictionary"""
         zero123 = {}
-        config_path = '../model_configs/sd-objaverse-finetune-c_concat-256.yaml'
+        config_path = './model_configs/sd-objaverse-finetune-c_concat-256.yaml'
         config = OmegaConf.load(config_path)
 
-        model_path = "../models/105000.ckpt"
+        model_path = "./models/105000.ckpt"
         model = load_model_from_config(config, model_path, self.zero123_device)
         model = model.to(self.zero123_device)
 

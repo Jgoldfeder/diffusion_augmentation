@@ -35,12 +35,12 @@ class ColorControlNetAugmentationManager:
         print('Loading Color Control model...')
         color_control = {}
 
-        controlnet = ControlNetModel.from_config("../model_configs/controlnet_config.json").half()
-        adapter = ControlNetModel.from_config("../model_configs/controlnet_config.json").half()
+        controlnet = ControlNetModel.from_config("./model_configs/controlnet_config.json").half()
+        adapter = ControlNetModel.from_config("./model_configs/controlnet_config.json").half()
 
         sam_annotator = SAMImageAnnotator()
 
-        model_ckpt = "../models/color_img2img_palette.pt"
+        model_ckpt = "./models/color_img2img_palette.pt"
         model_sd = torch.load(model_ckpt, map_location="cpu")["module"]
 
         # assign the weights of the controlnet and adapter separately
