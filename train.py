@@ -2,7 +2,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from torchvision.datasets import Caltech256
-from torchvision.models import resnet18, ResNet18_Weights
+from torchvision.models import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
 from torch.utils.data import Dataset, DataLoader
 import random
 import numpy as np
@@ -34,11 +34,23 @@ def parse_args():
     parser.add_argument('--use_color', action='store_true', help='Use Color ControlNet augmentation')
     parser.add_argument('--use_nerf', action='store_true', help='Use NeRF augmentation')
     
+    parser.add_argument('--architecture', type=str, default='resnet18', help='Model architecture (e.g., resnet18, resnet50)')
     parser.add_argument('--epochs', type=int, default=20, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate for optimizer')
     
     return parser.parse_args()
+
+def get_model(architecture, num_classes):
+    if architecture == "resnet18":
+        model = resnet18(weights=ResNet18_Weights.DEFAULT)
+    elif architecture == "resnet50":
+        model = resnet50(weights=ResNet50_Weights.DEFAULT)
+    else:
+        raise ValueError(f"Unsupported architecture: {architecture}")
+    
+    model.fc = nn.Linear(model.fc.in_features, num_classes)
+    return model
 
 class CustomDataset(Dataset):
     def __init__(self, images, labels, transform=None, duplicate=1, use_diffusion_aug=False, args=None):
@@ -181,8 +193,8 @@ def train_model(train_dataset, test_dataset, model_name, args):
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size)
     
-    model = resnet18(weights=ResNet18_Weights.DEFAULT)
-    model.fc = nn.Linear(model.fc.in_features, 5)
+    num_classes = 5
+    model = get_model(args.architecture, num_classes)
     model = model.to(device)
     
     criterion = nn.CrossEntropyLoss()
@@ -250,7 +262,7 @@ def main():
             "epochs": args.epochs,
             "batch_size": args.batch_size,
             "learning_rate": args.learning_rate,
-            "architecture": "ResNet18",
+            "architecture": args.architecture,
             "dataset": "Caltech256",
             "use_canny": args.use_canny,
             "use_depth": args.use_depth,
