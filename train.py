@@ -178,13 +178,11 @@ def train_model(train_dataset, test_dataset, model_name):
             optimizer.step()
             
             epoch_loss += loss.item()
-            
-            # Calculate training accuracy
+
             _, predicted = torch.max(outputs.data, 1)
             train_total += labels.size(0)
             train_correct += (predicted == labels).sum().item()
         
-        # Evaluation loop
         model.eval()
         test_correct = 0
         test_total = 0
@@ -196,12 +194,10 @@ def train_model(train_dataset, test_dataset, model_name):
                 test_total += labels.size(0)
                 test_correct += (predicted == labels).sum().item()
         
-        # Calculate metrics
         train_accuracy = 100 * train_correct / train_total
         test_accuracy = 100 * test_correct / test_total
         avg_loss = epoch_loss / len(train_loader)
         
-        # Log metrics to wandb
         wandb.log({
             f"{model_name}/train_loss": avg_loss,
             f"{model_name}/train_accuracy": train_accuracy,
@@ -217,32 +213,23 @@ def train_model(train_dataset, test_dataset, model_name):
     return train_losses, test_accuracies
 
 def main():
+    wandb.init(
+        project="caltech256-augmentation",
+        config={
+            "epochs": 20,
+            "batch_size": 32,
+            "learning_rate": 0.001,
+            "architecture": "ResNet18",
+            "dataset": "Caltech256"
+        }
+    )
+    
     augmented_dataset, original_dataset, test_dataset = create_datasets()
     
-    aug_losses, aug_accuracies = train_model(augmented_dataset, test_dataset, "Augmented")
-    orig_losses, orig_accuracies = train_model(original_dataset, test_dataset, "Original")
+    train_model(augmented_dataset, test_dataset, "Augmented")
+    train_model(original_dataset, test_dataset, "Original")
     
-    plt.figure(figsize=(12, 4))
-    
-    plt.subplot(1, 2, 1)
-    plt.plot(aug_losses, label='Augmented')
-    plt.plot(orig_losses, label='Original')
-    plt.title('Training Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend()
-    
-    plt.subplot(1, 2, 2)
-    plt.plot(aug_accuracies, label='Augmented')
-    plt.plot(orig_accuracies, label='Original')
-    plt.title('Test Accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy (%)')
-    plt.legend()
-    
-    plt.tight_layout()
-    plt.savefig('training_results.png')
-    plt.show()
+    wandb.finish()
 
 if __name__ == "__main__":
     main()
