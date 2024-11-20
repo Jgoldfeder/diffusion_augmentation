@@ -14,6 +14,7 @@ from augmentation_models.ControlNetAugmentation import ControlNetAugmentationMan
 from augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
 from augmentation_models.NerfAugmentation import NerfAugmentationManager
 import wandb
+import argparse
 
 torch.manual_seed(42)
 random.seed(42)
@@ -25,16 +26,40 @@ basic_transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Train ResNet18 with various augmentations')
+    parser.add_argument('--use_canny', action='store_true', help='Use ControlNet Canny augmentation')
+    parser.add_argument('--use_depth', action='store_true', help='Use ControlNet Depth augmentation')
+    parser.add_argument('--use_seg', action='store_true', help='Use ControlNet Segmentation augmentation')
+    parser.add_argument('--use_color', action='store_true', help='Use Color ControlNet augmentation')
+    parser.add_argument('--use_nerf', action='store_true', help='Use NeRF augmentation')
+    
+    parser.add_argument('--epochs', type=int, default=20, help='Number of training epochs')
+    parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training')
+    parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate for optimizer')
+    
+    return parser.parse_args()
+
 class CustomDataset(Dataset):
-    def __init__(self, images, labels, transform=None, duplicate=1, use_diffusion_aug=False):
+    def __init__(self, images, labels, transform=None, duplicate=1, use_diffusion_aug=False, args=None):
         self.images = images
         self.labels = labels
         self.transform = transform
-        self.duplicate = duplicate
+        self.args = args
         self.use_diffusion_aug = use_diffusion_aug
         
         if use_diffusion_aug:
             self.augmented_images = self._generate_diffusion_augmentations()
+            self.num_augmentations = sum([
+                self.args.use_canny,
+                self.args.use_depth,
+                self.args.use_seg,
+                self.args.use_color,
+                self.args.use_nerf
+            ])
+            self.duplicate = self.num_augmentations + 1
+        else:
+            self.duplicate = duplicate
     
     def _generate_diffusion_augmentations(self):
         temp_paths = []
@@ -47,42 +72,44 @@ class CustomDataset(Dataset):
             temp_paths.append(temp_path)
         
         print(temp_paths)
-        
-        controlnet_manager = ControlNetAugmentationManager()
-        canny_aug, depth_aug, seg_aug = controlnet_manager.generate_augmentations(temp_paths)
-        
-        color_manager = ColorControlNetAugmentationManager()
-        color_aug = color_manager.generate_augmentations(temp_paths)
-        
-        nerf_manager = NerfAugmentationManager()
-        nerf_aug = nerf_manager.generate_augmentations(temp_paths)
-        
+
+        if self.args.use_canny or self.args.use_depth or self.args.use_seg:
+            controlnet_manager = ControlNetAugmentationManager()
+            canny_aug, depth_aug, seg_aug = controlnet_manager.generate_augmentations(temp_paths)
+        if self.args.use_color:
+            color_manager = ColorControlNetAugmentationManager()
+            color_aug = color_manager.generate_augmentations(temp_paths)
+        if self.args.use_nerf:
+            nerf_manager = NerfAugmentationManager()
+            nerf_aug = nerf_manager.generate_augmentations(temp_paths)
+                
         augmented_images = {}
         for path in temp_paths:
             img_augs = []
-            if path in canny_aug: img_augs.append(canny_aug[path])
-            if path in depth_aug: img_augs.append(depth_aug[path])
-            if path in seg_aug: img_augs.append(seg_aug[path])
-            if path in color_aug: img_augs.append(color_aug[path])
-            if path in nerf_aug: img_augs.append(nerf_aug[path])
+            if self.args.use_canny and path in canny_aug:
+                img_augs.append(canny_aug[path])
+            if self.args.use_depth and path in depth_aug:
+                img_augs.append(depth_aug[path])
+            if self.args.use_seg and path in seg_aug:
+                img_augs.append(seg_aug[path])
+            if self.args.use_color and path in color_aug:
+                img_augs.append(color_aug[path])
+            if self.args.use_nerf and path in nerf_aug:
+                img_augs.append(nerf_aug[path])
             augmented_images[path] = img_augs
-            
+                
         return augmented_images
     
     def __len__(self):
-        if self.use_diffusion_aug:
-            return len(self.images) * 6
         return len(self.images) * self.duplicate
     
     def __getitem__(self, idx):
         if self.use_diffusion_aug:
-            true_idx = idx // 6
-            aug_idx = idx % 6
+            true_idx = idx // self.duplicate
+            aug_idx = idx % self.duplicate
             
             if aug_idx == 0:
                 image = self.images[true_idx]
-                if self.transform:
-                    image = self.transform(image)
             else:
                 if hasattr(self.images[true_idx], 'filename') and self.images[true_idx].filename:
                     img_path = os.path.abspath(self.images[true_idx].filename)
@@ -90,9 +117,9 @@ class CustomDataset(Dataset):
                     img_path = os.path.abspath(f'temp_img_{true_idx}.png')
                 
                 image = self.augmented_images[img_path][aug_idx - 1]
-                if self.transform:
-                    image = self.transform(image)
             
+            if self.transform:
+                image = self.transform(image)
             return image, self.labels[true_idx]
         else:
             true_idx = idx // self.duplicate
@@ -101,7 +128,7 @@ class CustomDataset(Dataset):
                 image = self.transform(image)
             return image, self.labels[true_idx]
 
-def create_datasets():
+def create_datasets(args):
     dataset = Caltech256(root='./torch', download=True)
     
     all_classes = list(set([label for _, label in dataset]))
@@ -141,30 +168,30 @@ def create_datasets():
 
         label += 1
     
-    augmented_dataset = CustomDataset(train_images, train_labels, basic_transform, use_diffusion_aug=True)
-    original_dataset = CustomDataset(train_images, train_labels, basic_transform, duplicate=6)
+    augmented_dataset = CustomDataset(train_images, train_labels, basic_transform, use_diffusion_aug=True, args=args)
+    original_dataset = CustomDataset(train_images, train_labels, basic_transform, 
+                                   duplicate=augmented_dataset.duplicate)
     test_dataset = CustomDataset(test_images, test_labels, basic_transform)
     
     return augmented_dataset, original_dataset, test_dataset
 
-def train_model(train_dataset, test_dataset, model_name):
+def train_model(train_dataset, test_dataset, model_name, args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=32)
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=args.batch_size)
     
     model = resnet18(weights=ResNet18_Weights.DEFAULT)
     model.fc = nn.Linear(model.fc.in_features, 5)
     model = model.to(device)
     
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    epochs = 20
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     
     train_losses = []
     test_accuracies = []
     
-    for epoch in range(epochs):
+    for epoch in range(args.epochs):
         model.train()
         epoch_loss = 0
         train_correct = 0
@@ -207,7 +234,7 @@ def train_model(train_dataset, test_dataset, model_name):
             "epoch": epoch
         })
         
-        print(f'{model_name} - Epoch {epoch+1}/{epochs}, '
+        print(f'{model_name} - Epoch {epoch+1}/{args.epochs}, '
               f'Loss: {avg_loss:.4f}, '
               f'Train Accuracy: {train_accuracy:.2f}%, '
               f'Test Accuracy: {test_accuracy:.2f}%')
@@ -215,21 +242,28 @@ def train_model(train_dataset, test_dataset, model_name):
     return train_losses, test_accuracies
 
 def main():
+    args = parse_args()
+    
     wandb.init(
         project="caltech256-augmentation",
         config={
-            "epochs": 20,
-            "batch_size": 32,
-            "learning_rate": 0.001,
+            "epochs": args.epochs,
+            "batch_size": args.batch_size,
+            "learning_rate": args.learning_rate,
             "architecture": "ResNet18",
-            "dataset": "Caltech256"
+            "dataset": "Caltech256",
+            "use_canny": args.use_canny,
+            "use_depth": args.use_depth,
+            "use_seg": args.use_seg,
+            "use_color": args.use_color,
+            "use_nerf": args.use_nerf
         }
     )
     
-    augmented_dataset, original_dataset, test_dataset = create_datasets()
+    augmented_dataset, original_dataset, test_dataset = create_datasets(args)
     
-    train_model(augmented_dataset, test_dataset, "Augmented")
-    train_model(original_dataset, test_dataset, "Original")
+    train_model(augmented_dataset, test_dataset, "Augmented", args)
+    train_model(original_dataset, test_dataset, "Original", args)
     
     wandb.finish()
 
