@@ -49,7 +49,12 @@ def get_model(architecture, num_classes):
     else:
         raise ValueError(f"Unsupported architecture: {architecture}")
     
+    for param in model.parameters():
+        param.requires_grad = False
+
     model.fc = nn.Linear(model.fc.in_features, num_classes)
+    model.fc.requires_grad = True
+
     return model
 
 class CustomDataset(Dataset):
