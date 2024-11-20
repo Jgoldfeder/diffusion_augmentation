@@ -16,9 +16,9 @@ from augmentation_models.NerfAugmentation import NerfAugmentationManager
 import wandb
 import argparse
 
-torch.manual_seed(42)
-random.seed(42)
-np.random.seed(42)
+# torch.manual_seed(42)
+# random.seed(42)
+# np.random.seed(42)
 
 basic_transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -83,8 +83,6 @@ class CustomDataset(Dataset):
                 img.save(temp_path)
             temp_paths.append(temp_path)
         
-        print(temp_paths)
-
         if self.args.use_canny or self.args.use_depth or self.args.use_seg:
             controlnet_manager = ControlNetAugmentationManager()
             canny_aug, depth_aug, seg_aug = controlnet_manager.generate_augmentations(temp_paths)
@@ -185,23 +183,24 @@ def create_datasets(args):
                                    duplicate=augmented_dataset.duplicate)
     test_dataset = CustomDataset(test_images, test_labels, basic_transform)
     
+    print(f"Dataset sizes:")
+    print(f"  Augmented training set: {len(augmented_dataset)} images")
+    print(f"  Original training set: {len(original_dataset)} images") 
+    print(f"  Test set: {len(test_dataset)} images")
     return augmented_dataset, original_dataset, test_dataset
 
-def train_model(train_dataset, test_dataset, model_name, args):
+def train_model(train_dataset, test_dataset, dataset_type, args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size)
     
-    num_classes = 5
-    model = get_model(args.architecture, num_classes)
+    model = resnet18(weights=ResNet18_Weights.DEFAULT)
+    model.fc = nn.Linear(model.fc.in_features, 5)
     model = model.to(device)
     
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
-    
-    train_losses = []
-    test_accuracies = []
     
     for epoch in range(args.epochs):
         model.train()
@@ -240,18 +239,18 @@ def train_model(train_dataset, test_dataset, model_name, args):
         avg_loss = epoch_loss / len(train_loader)
         
         wandb.log({
-            f"{model_name}/train_loss": avg_loss,
-            f"{model_name}/train_accuracy": train_accuracy,
-            f"{model_name}/test_accuracy": test_accuracy,
+            f"{dataset_type}/train_loss": avg_loss,
+            f"{dataset_type}/train_accuracy": train_accuracy,
+            f"{dataset_type}/test_accuracy": test_accuracy,
             "epoch": epoch
         })
         
-        print(f'{model_name} - Epoch {epoch+1}/{args.epochs}, '
+        print(f'{dataset_type} - Epoch {epoch+1}/{args.epochs}, '
               f'Loss: {avg_loss:.4f}, '
               f'Train Accuracy: {train_accuracy:.2f}%, '
               f'Test Accuracy: {test_accuracy:.2f}%')
     
-    return train_losses, test_accuracies
+    return avg_loss, train_accuracy, test_accuracy
 
 def main():
     args = parse_args()
