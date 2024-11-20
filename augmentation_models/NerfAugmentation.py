@@ -1,7 +1,8 @@
 import sys
 import os
 
-zero123_dir = os.path.join("/home/vaibhav", 'diffusion_augmentation', 'zero123')
+zero123_dir = os.path.join(os.getcwd(), 'zero123')
+print(zero123_dir)
 sys.path.append(zero123_dir)
 
 from zero123.nerf import load_model_from_config, generate_angles

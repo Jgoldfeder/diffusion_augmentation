@@ -110,6 +110,7 @@ def create_datasets():
     class_images = {c: [] for c in selected_classes}
     for img, label in dataset:
         if label in selected_classes:
+            img = img.convert('RGB')
             class_images[label].append(img)
     
     train_images = []

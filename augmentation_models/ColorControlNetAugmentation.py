@@ -5,7 +5,7 @@ import torch
 from typing import Dict
 
 # Add color controlnet to path
-color_controlnet_dir = os.path.join("/home/vaibhav", 'diffusion_augmentation', 'color_controlnet')
+color_controlnet_dir = os.path.join(os.getcwd(), 'color_controlnet')
 sys.path.append(color_controlnet_dir)
 
 # Color ControlNet imports
