@@ -1,7 +1,7 @@
 import torch
 import torchvision
 import torchvision.transforms as transforms
-from torchvision.datasets import Caltech256, Flowers102
+from torchvision.datasets import Caltech256, SUN397
 from torchvision.models import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
 from torch.utils.data import Dataset, DataLoader
 import random
@@ -38,8 +38,8 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=20, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate for optimizer')
-    parser.add_argument('--dataset', type=str, choices=['caltech256', 'flowers102'], 
-                       required=True, help='Dataset to use (caltech256 or flowers102)')
+    parser.add_argument('--dataset', type=str, choices=['caltech256', 'sun397'], 
+                       required=True, help='Dataset to use (caltech256 or sun397)')
     
     return parser.parse_args()
 
@@ -148,13 +148,19 @@ class CustomDataset(Dataset):
 def create_datasets(args):
     if args.dataset == 'caltech256':
         dataset = Caltech256(root='./torch', download=True)
-    else:  # flowers102
-        dataset = Flowers102(root='./torch', download=True)
-    
-    all_classes = list(set([label for _, label in dataset]))
-    num_classes = 102 if args.dataset == 'flowers102' else 256
+    else:  # sun397
+        dataset = SUN397(root='./torch', download=True)    
+    print("LINE 153")
+    all_classes = []
+    index = 0
+    for _, label in dataset:
+        if index % 1000 == 0:
+            print(f"Processed {index} images")
+        all_classes.append(label)
+        index += 1
+    num_classes = 397 if args.dataset == 'sun397' else 256
     selected_classes = random.sample(all_classes, 5)
-    
+    print("LINE 155")
     class_images = {c: [] for c in selected_classes}
     for img, label in dataset:
         if label in selected_classes:

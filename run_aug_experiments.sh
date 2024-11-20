@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DATASETS=("flowers102" "caltech256")
+DATASETS=("sun397" "caltech256")
 AUGMENTATIONS=("--use_canny" "--use_depth" "--use_seg" "--use_color" "--use_nerf")
 EPOCHS=(128)
 BATCH_SIZES=(16)
