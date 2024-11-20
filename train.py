@@ -110,7 +110,6 @@ def create_datasets():
     class_images = {c: [] for c in selected_classes}
     for img, label in dataset:
         if label in selected_classes:
-            img = img.convert('RGB')
             class_images[label].append(img)
     
     train_images = []
@@ -124,6 +123,9 @@ def create_datasets():
         valid_images = []
         for img in class_images[class_idx]:
             if hasattr(img, 'filename') and img.filename and os.path.exists(img.filename):
+                old_filename = img.filename
+                img = img.convert('RGB')
+                img.filename = old_filename
                 valid_images.append(img)
         
         if len(valid_images) < 2:
@@ -133,7 +135,7 @@ def create_datasets():
         train_images.extend(selected_imgs)
         train_labels.extend([label] * 2)
         
-        remaining_imgs = [img for img in class_images[class_idx] if img not in selected_imgs]
+        remaining_imgs = [img.convert('RGB') for img in class_images[class_idx] if img not in selected_imgs]
         test_images.extend(remaining_imgs)
         test_labels.extend([label] * len(remaining_imgs))
 
