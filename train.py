@@ -148,24 +148,34 @@ class CustomDataset(Dataset):
 def create_datasets(args):
     if args.dataset == 'caltech256':
         dataset = Caltech256(root='./torch', download=True)
-    else:  # sun397
-        dataset = SUN397(root='./torch', download=True)    
-    print("LINE 153")
-    all_classes = []
-    index = 0
-    for _, label in dataset:
-        if index % 1000 == 0:
-            print(f"Processed {index} images")
-        all_classes.append(label)
-        index += 1
+        all_classes = []
+        for _, label in dataset:
+            all_classes.append(label)
+    else:
+        dataset = SUN397(root='./torch', download=True) 
+        all_classes = dataset.classes
     num_classes = 397 if args.dataset == 'sun397' else 256
     selected_classes = random.sample(all_classes, 5)
-    print("LINE 155")
-    class_images = {c: [] for c in selected_classes}
-    for img, label in dataset:
-        if label in selected_classes:
-            class_images[label].append(img)
     
+    class_images = {c: [] for c in selected_classes}
+    print("<LOG> Pre-allocating class images")
+    
+    if args.dataset == 'sun397':
+        for class_idx in selected_classes:
+            print(f"<LOG> Processing class {class_idx}")
+            first_letter = class_idx[0]
+            data_path = os.path.join(dataset.root, "SUN397", first_letter, class_idx)
+            print(f"<LOG> Data path: {data_path}")
+            for img_name in os.listdir(data_path):
+                img_path = os.path.join(data_path, img_name)
+                class_images[class_idx].append(img_path)
+    else:
+        for img, label in dataset:
+            if label in selected_classes:
+                class_images[label].append(img)
+            
+    print("<LOG> Finished creating class images")
+
     train_images = []
     train_labels = []
     test_images = []
