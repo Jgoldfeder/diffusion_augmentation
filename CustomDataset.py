@@ -5,9 +5,11 @@ from torchvision.datasets import Caltech256, SUN397
 from torch.utils.data import Dataset
 from PIL import Image
 import os
-from augmentation_models.ControlNetAugmentation import ControlNetAugmentationManager
 from augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
 from augmentation_models.NerfAugmentation import NerfAugmentationManager
+from augmentation_models.DepthAugmentation import DepthAugmentationManager
+from augmentation_models.SegAugmentation import SegmentationAugmentationManager
+from augmentation_models.CannyAugmentation import CannyAugmentationManager
 
 class CustomDataset(Dataset):
     def __init__(self, images, labels, transform=None, duplicate=1, use_diffusion_aug=False, args=None):
@@ -40,9 +42,15 @@ class CustomDataset(Dataset):
                 img.save(temp_path)
             temp_paths.append(temp_path)
         
-        if self.args.use_canny or self.args.use_depth or self.args.use_seg:
-            controlnet_manager = ControlNetAugmentationManager()
-            canny_aug, depth_aug, seg_aug = controlnet_manager.generate_augmentations(temp_paths)
+        if self.args.use_canny:
+            canny_manager = CannyAugmentationManager()
+            canny_aug = canny_manager.generate_augmentations(temp_paths)
+        if self.args.use_depth:
+            depth_manager = DepthAugmentationManager()
+            depth_aug = depth_manager.generate_augmentations(temp_paths)
+        if self.args.use_seg:
+            seg_manager = SegmentationAugmentationManager()
+            seg_aug = seg_manager.generate_augmentations(temp_paths)
         if self.args.use_color:
             color_manager = ColorControlNetAugmentationManager()
             color_aug = color_manager.generate_augmentations(temp_paths)

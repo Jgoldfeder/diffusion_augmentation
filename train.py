@@ -10,9 +10,11 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from torch import nn
 import os
-from augmentation_models.ControlNetAugmentation import ControlNetAugmentationManager
 from augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
 from augmentation_models.NerfAugmentation import NerfAugmentationManager
+from augmentation_models.DepthAugmentation import DepthAugmentationManager
+from augmentation_models.SegAugmentation import SegmentationAugmentationManager
+from augmentation_models.CannyAugmentation import CannyAugmentationManager
 import wandb
 import argparse
 from CustomDataset import CustomDataset

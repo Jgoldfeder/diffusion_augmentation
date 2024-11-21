@@ -77,7 +77,7 @@ class ControlNetAugmentationManager:
                 print(f"<LOG> Image path: {image_path}")
                 class_prompt = image_path.split('/')[-2]
                 if len(class_prompt.split('.')) > 1:
-                    class_prompt = class_prompt.split('.')[0].replace('-', ' ')
+                    class_prompt = class_prompt.split('.')[1].replace('-', ' ')
                 print(f"<LOG> Class prompt: {class_prompt}")
 
                 prompt = [f"{class_prompt}"]

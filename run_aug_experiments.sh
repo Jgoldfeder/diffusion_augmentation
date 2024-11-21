@@ -1,10 +1,10 @@
 #!/bin/bash
 
 DATASETS=("caltech256" "sun397")
-AUGMENTATIONS=("--use_nerf" "--use_color" "--use_depth" "--use_canny" "--use_seg")
+AUGMENTATIONS=("--use_canny" "--use_depth" "--use_seg" "--use_nerf" "--use_color")
 EPOCHS=(128)
 BATCH_SIZES=(16)
-LEARNING_RATE=(0.0003 0.0001)
+LEARNING_RATE=(0.0003)
 
 run_experiment() {
     dataset=$1
@@ -29,7 +29,7 @@ for dataset in "${DATASETS[@]}"; do
                 for learning_rate in "${LEARNING_RATE[@]}"; do
                     for run in {1..3}; do
                         run_experiment "$dataset" "$aug" "$epochs" "$batch_size" "$learning_rate" "$run"
-                        sleep 5
+                        sleep 1
                     done
                 done
             done
