@@ -15,6 +15,7 @@ from augmentation_models.ColorControlNetAugmentation import ColorControlNetAugme
 from augmentation_models.NerfAugmentation import NerfAugmentationManager
 import wandb
 import argparse
+from CustomDataset import CustomDataset
 
 # torch.manual_seed(42)
 # random.seed(42)
@@ -59,92 +60,6 @@ def get_model(architecture, num_classes):
 
     return model
 
-class CustomDataset(Dataset):
-    def __init__(self, images, labels, transform=None, duplicate=1, use_diffusion_aug=False, args=None):
-        self.images = images
-        self.labels = labels
-        self.transform = transform
-        self.args = args
-        self.use_diffusion_aug = use_diffusion_aug
-        
-        if use_diffusion_aug:
-            self.augmented_images = self._generate_diffusion_augmentations()
-            self.num_augmentations = sum([
-                self.args.use_canny,
-                self.args.use_depth,
-                self.args.use_seg,
-                self.args.use_color,
-                self.args.use_nerf
-            ])
-            self.duplicate = self.num_augmentations + 1
-        else:
-            self.duplicate = duplicate
-    
-    def _generate_diffusion_augmentations(self):
-        temp_paths = []
-        for idx, img in enumerate(self.images):
-            if hasattr(img, 'filename') and img.filename:
-                temp_path = os.path.abspath(img.filename)
-            else:
-                temp_path = os.path.abspath(f'temp_img_{idx}.png')
-                img.save(temp_path)
-            temp_paths.append(temp_path)
-        
-        if self.args.use_canny or self.args.use_depth or self.args.use_seg:
-            controlnet_manager = ControlNetAugmentationManager()
-            canny_aug, depth_aug, seg_aug = controlnet_manager.generate_augmentations(temp_paths)
-        if self.args.use_color:
-            color_manager = ColorControlNetAugmentationManager()
-            color_aug = color_manager.generate_augmentations(temp_paths)
-        if self.args.use_nerf:
-            nerf_manager = NerfAugmentationManager()
-            nerf_aug = nerf_manager.generate_augmentations(temp_paths)
-                
-        augmented_images = {}
-        for path in temp_paths:
-            img_augs = []
-            if self.args.use_canny and path in canny_aug:
-                img_augs.append(canny_aug[path])
-            if self.args.use_depth and path in depth_aug:
-                img_augs.append(depth_aug[path])
-            if self.args.use_seg and path in seg_aug:
-                img_augs.append(seg_aug[path])
-            if self.args.use_color and path in color_aug:
-                img_augs.append(color_aug[path])
-            if self.args.use_nerf and path in nerf_aug:
-                img_augs.append(nerf_aug[path])
-            augmented_images[path] = img_augs
-                
-        return augmented_images
-    
-    def __len__(self):
-        return len(self.images) * self.duplicate
-    
-    def __getitem__(self, idx):
-        if self.use_diffusion_aug:
-            true_idx = idx // self.duplicate
-            aug_idx = idx % self.duplicate
-            
-            if aug_idx == 0:
-                image = self.images[true_idx]
-            else:
-                if hasattr(self.images[true_idx], 'filename') and self.images[true_idx].filename:
-                    img_path = os.path.abspath(self.images[true_idx].filename)
-                else:
-                    img_path = os.path.abspath(f'temp_img_{true_idx}.png')
-                
-                image = self.augmented_images[img_path][aug_idx - 1]
-            
-            if self.transform:
-                image = self.transform(image)
-            return image, self.labels[true_idx]
-        else:
-            true_idx = idx // self.duplicate
-            image = self.images[true_idx]
-            if self.transform:
-                image = self.transform(image)
-            return image, self.labels[true_idx]
-
 def create_datasets(args):
     if args.dataset == 'caltech256':
         dataset = Caltech256(root='./torch', download=True)
@@ -156,20 +71,22 @@ def create_datasets(args):
         all_classes = dataset.classes
     num_classes = 397 if args.dataset == 'sun397' else 256
     selected_classes = random.sample(all_classes, 5)
+    print(f"<LOG> Selected classes: {selected_classes}")
     
     class_images = {c: [] for c in selected_classes}
-    print("<LOG> Pre-allocating class images")
     
     if args.dataset == 'sun397':
         for class_idx in selected_classes:
             print(f"<LOG> Processing class {class_idx}")
             first_letter = class_idx[0]
-            data_path = os.path.join(dataset.root, "SUN397", first_letter, class_idx)
+            data_path = os.path.join(os.getcwd(), dataset.root, "SUN397", first_letter, class_idx)
             print(f"<LOG> Data path: {data_path}")
             for img_name in os.listdir(data_path):
                 img_path = os.path.join(data_path, img_name)
-                class_images[class_idx].append(img_path)
-    else:
+                img = Image.open(img_path)
+                img.filename = img_path
+                class_images[class_idx].append(img)
+    elif args.dataset == 'caltech256':
         for img, label in dataset:
             if label in selected_classes:
                 class_images[label].append(img)
@@ -183,7 +100,6 @@ def create_datasets(args):
     
     label = 0
     for class_idx in selected_classes:
-        # Filter for images that exist in the directory
         valid_images = []
         for img in class_images[class_idx]:
             if hasattr(img, 'filename') and img.filename and os.path.exists(img.filename):
@@ -207,9 +123,10 @@ def create_datasets(args):
     
     augmented_dataset = CustomDataset(train_images, train_labels, basic_transform, use_diffusion_aug=True, args=args)
     original_dataset = CustomDataset(train_images, train_labels, basic_transform, 
-                                   duplicate=augmented_dataset.duplicate)
+                                duplicate=augmented_dataset.duplicate)
     test_dataset = CustomDataset(test_images, test_labels, basic_transform)
-    
+
+
     print(f"Dataset sizes:")
     print(f"  Augmented training set: {len(augmented_dataset)} images")
     print(f"  Original training set: {len(original_dataset)} images") 
