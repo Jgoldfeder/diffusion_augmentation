@@ -1,7 +1,7 @@
 #!/bin/bash
 
-DATASETS=("sun397")
-AUGMENTATIONS=("--use_canny" "--use_depth" "--use_seg" "--use_color" "--use_nerf")
+DATASETS=("caltech256" "sun397")
+AUGMENTATIONS=("--use_nerf" "--use_color" "--use_depth" "--use_canny" "--use_seg")
 EPOCHS=(128)
 BATCH_SIZES=(16)
 LEARNING_RATE=(0.0003 0.0001)
