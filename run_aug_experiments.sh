@@ -1,9 +1,16 @@
 #!/bin/bash
 
 DATASETS=("caltech256" "sun397")
-AUGMENTATIONS=("--use_canny" "--use_depth" "--use_seg" "--use_nerf" "--use_color")
-EPOCHS=(128)
-BATCH_SIZES=(16)
+AUGMENTATIONS=(
+    "--use_canny --use_depth --use_seg --use_nerf --use_color"
+    "--use_depth --use_seg --use_nerf --use_color"
+    "--use_canny --use_seg --use_nerf --use_color"
+    "--use_canny --use_depth --use_nerf --use_color"
+    "--use_canny --use_depth --use_seg --use_color"
+    "--use_canny --use_depth --use_seg --use_nerf"
+)
+EPOCHS=(400)
+BATCH_SIZES=(32 128)
 LEARNING_RATE=(0.0003)
 
 run_experiment() {
