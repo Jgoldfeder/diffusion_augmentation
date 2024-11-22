@@ -2,13 +2,15 @@
 
 DATASETS=("caltech256" "sun397")
 AUGMENTATIONS=(
-    "--use_canny --use_depth --use_seg --use_nerf --use_color"
-    "--use_depth --use_seg --use_nerf --use_color"
-    "--use_canny --use_seg --use_nerf --use_color"
-    "--use_canny --use_depth --use_nerf --use_color"
-    "--use_canny --use_depth --use_seg --use_color"
     "--use_canny --use_depth --use_seg --use_nerf"
 )
+
+# "--use_canny --use_depth --use_seg --use_nerf --use_color"
+# "--use_depth --use_seg --use_nerf --use_color"
+# "--use_canny --use_seg --use_nerf --use_color"
+# "--use_canny --use_depth --use_nerf --use_color"
+# "--use_canny --use_depth --use_seg --use_color"
+
 EPOCHS=(400)
 BATCH_SIZES=(32 128)
 LEARNING_RATE=(0.0003)
