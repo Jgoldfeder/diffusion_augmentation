@@ -16,7 +16,8 @@ class CustomDataset(Dataset):
                  duplicate=1, use_diffusion_aug=False, args=None):
         self.images = images
         self.labels = labels
-        self.transform = transform
+        self.basic_transform = basic_transform
+        self.classical_aug_transform = classical_aug_transform
         self.args = args
         self.use_diffusion_aug = use_diffusion_aug
         
@@ -94,14 +95,14 @@ class CustomDataset(Dataset):
                 
                 image = self.augmented_images[img_path][aug_idx - 1]
             
-            if self.transform:
-                image = self.transform(image)
+            if self.basic_transform:
+                image = self.basic_transform(image)
             return image, self.labels[true_idx]
         else:
             true_idx = idx // self.duplicate
             image = self.images[true_idx]
-            if self.transform:
-                image = self.transform(image)
+            if self.basic_transform:
+                image = self.basic_transform(image)
             if self.classical_aug_transform:
                 image = self.classical_aug_transform(image)
             return image, self.labels[true_idx]

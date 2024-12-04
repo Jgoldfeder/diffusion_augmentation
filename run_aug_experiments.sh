@@ -1,23 +1,25 @@
 #!/bin/bash
 
-DATASETS=("caltech256" "sun397")
+DATASETS=("sun397")
 AUGMENTATIONS=(
     "--use_canny --use_depth --use_seg --use_color"
     "--use_canny --use_depth --use_seg"
     "--use_canny --use_depth --use_color"
     "--use_canny --use_seg --use_color"
     "--use_depth --use_seg --use_color"
+    "--use_canny"
+    "--use_depth"
+    "--use_seg"
+    "--use_color"
 )
 
-# "--use_canny --use_depth --use_seg --use_nerf --use_color"
-# "--use_depth --use_seg --use_nerf --use_color"
-# "--use_canny --use_seg --use_nerf --use_color"
-# "--use_canny --use_depth --use_nerf --use_color"
-# "--use_canny --use_depth --use_seg --use_color"
-
-EPOCHS=(400)
-BATCH_SIZES=(32 128)
+EPOCHS=(5)
+BATCH_SIZES=(32)
 LEARNING_RATE=(0.0003)
+
+#FOR LATER:
+#NUM_CLASSES = (5, 10)
+#IMAGES_PER_CLASS = (1, 2)
 
 run_experiment() {
     dataset=$1
@@ -43,7 +45,7 @@ for dataset in "${DATASETS[@]}"; do
                 for learning_rate in "${LEARNING_RATE[@]}"; do
                     for seed in {41..43}; do
                         run_experiment "$dataset" "$aug" "$epochs" "$batch_size" "$learning_rate" "$seed"
-                        sleep 1
+                        sleep 5
                     done
                 done
             done

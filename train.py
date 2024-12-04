@@ -244,7 +244,7 @@ def main():
     augmented_dataset, original_dataset, test_dataset = create_datasets(args)
     
     train_model(augmented_dataset, test_dataset, "Augmented", args)
-    #train_model(original_dataset, test_dataset, "Original", args)
+    train_model(original_dataset, test_dataset, "Original", args)
     
     wandb.finish()
 
