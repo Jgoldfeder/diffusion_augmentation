@@ -2,7 +2,11 @@
 
 DATASETS=("caltech256" "sun397")
 AUGMENTATIONS=(
-    "--use_canny --use_depth --use_seg --use_nerf"
+    "--use_canny --use_depth --use_seg --use_color"
+    "--use_canny --use_depth --use_seg"
+    "--use_canny --use_depth --use_color"
+    "--use_canny --use_seg --use_color"
+    "--use_depth --use_seg --use_color"
 )
 
 # "--use_canny --use_depth --use_seg --use_nerf --use_color"
@@ -22,13 +26,14 @@ run_experiment() {
     batch_size=$4
     learning_rate=$5
 
-    echo "Running experiment: dataset=$dataset, $aug, epochs=$epochs, batch_size=$batch_size, learning_rate=$learning_rate (Run $run)"
+    echo "Running experiment: dataset=$dataset, $aug, epochs=$epochs, batch_size=$batch_size, learning_rate=$learning_rate (Seed $seed)"
     python train.py $aug \
         --dataset $dataset \
         --epochs $epochs \
         --batch_size $batch_size \
         --learning_rate $learning_rate \
-        --architecture resnet50
+        --architecture resnet50 \
+        --seed $seed
 }
 
 for dataset in "${DATASETS[@]}"; do
@@ -36,8 +41,8 @@ for dataset in "${DATASETS[@]}"; do
         for epochs in "${EPOCHS[@]}"; do
             for batch_size in "${BATCH_SIZES[@]}"; do
                 for learning_rate in "${LEARNING_RATE[@]}"; do
-                    for run in {1..3}; do
-                        run_experiment "$dataset" "$aug" "$epochs" "$batch_size" "$learning_rate" "$run"
+                    for seed in {41..43}; do
+                        run_experiment "$dataset" "$aug" "$epochs" "$batch_size" "$learning_rate" "$seed"
                         sleep 1
                     done
                 done
