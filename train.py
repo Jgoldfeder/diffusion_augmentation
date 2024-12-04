@@ -19,9 +19,9 @@ import wandb
 import argparse
 from CustomDataset import CustomDataset
 
-torch.manual_seed(42)
-random.seed(42)
-np.random.seed(42)
+# torch.manual_seed(42)
+# random.seed(42)
+# np.random.seed(42)
 # set a random seed
 
 basic_transform = transforms.Compose([
@@ -91,7 +91,7 @@ def create_datasets(args):
             print(f"<LOG> Data path: {data_path}")
             for img_name in os.listdir(data_path):
                 img_path = os.path.join(data_path, img_name)
-                img = Image.open(img_path)
+                img = Image.open(img_path).convert("RGB").resize((512, 512))
                 img.filename = img_path
                 class_images[class_idx].append(img)
     elif args.dataset == 'caltech256':
@@ -112,7 +112,7 @@ def create_datasets(args):
         for img in class_images[class_idx]:
             if hasattr(img, 'filename') and img.filename and os.path.exists(img.filename):
                 old_filename = img.filename
-                img = img.convert('RGB')
+                #img = img.convert('RGB').resize((512,`512))
                 img.filename = old_filename
                 valid_images.append(img)
         
@@ -120,10 +120,11 @@ def create_datasets(args):
             raise ValueError(f"Not enough valid images found for class {class_idx}. Need at least 2, found {len(valid_images)}")
         
         selected_imgs = random.sample(valid_images, 2)
+        
         train_images.extend(selected_imgs)
         train_labels.extend([label] * 2)
         
-        remaining_imgs = [img.convert('RGB') for img in class_images[class_idx] if img not in selected_imgs]
+        remaining_imgs = [img for img in class_images[class_idx] if img not in selected_imgs]
         test_images.extend(remaining_imgs)
         test_labels.extend([label] * len(remaining_imgs))
 

@@ -43,6 +43,8 @@ class ColorControlNetAugmentationManager:
         model_ckpt = "./models/color_img2img_palette.pt"
         model_sd = torch.load(model_ckpt, map_location="cpu")["module"]
 
+        print("[LOG] model sd loaded")
+
         # assign the weights of the controlnet and adapter separately
         controlnet_sd = {}
         adapter_sd = {}
@@ -52,9 +54,13 @@ class ColorControlNetAugmentationManager:
             if k.startswith("adapter"):
                 adapter_sd[k.replace("adapter.", "")] = model_sd[k]
 
+        print("[LOG] controlnet and adapter dicts created")
+
         controlnet.load_state_dict(controlnet_sd, strict=True)
         if adapter is not None:
             adapter.load_state_dict(adapter_sd, strict=False)
+
+        print("[LOG] Color Control state dict loaded")
 
         pipe = StableDiffusionImg2ImgControlNetPalettePipeline.from_pretrained(
             "runwayml/stable-diffusion-v1-5",
@@ -64,6 +70,8 @@ class ColorControlNetAugmentationManager:
             safety_checker=None,
         ).to(self.color_control_device)
         pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
+
+        print("[LOG] Color Control pipeline created")
 
         color_control['pipe'] = pipe
         color_control['sam_annotator'] = sam_annotator
@@ -84,7 +92,7 @@ class ColorControlNetAugmentationManager:
         augmented_images = {}
         
         for image_path in image_paths:
-            img = Image.open(image_path).convert("RGB")
+            img = Image.open(image_path).convert("RGB").resize((512, 512))
             
             # Extract class name from directory path
             
