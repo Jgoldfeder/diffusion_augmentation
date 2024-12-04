@@ -25,10 +25,24 @@ from CustomDataset import CustomDataset
 # set a random seed
 
 basic_transform = transforms.Compose([
-    transforms.Resize((224, 224)),
+    transforms.Resize((256, 256)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
+
+classical_aug_transform = transforms.Compose([
+    transforms.RandomCrop(size=(224, 224)),  # Randomly crop to 224x224 pixels
+    transforms.ColorJitter(
+        brightness=0.4,  # Adjust brightness (factor range [0.6, 1.4])
+        contrast=0.4,    # Adjust contrast (factor range [0.6, 1.4])
+        saturation=0.4,  # Adjust saturation (factor range [0.6, 1.4])
+        hue=0.2          # Adjust hue (factor range [-0.2, 0.2])
+    ),
+    transforms.RandomHorizontalFlip(p=0.5),  # Random horizontal flip with 50% probability
+    transforms.RandomVerticalFlip(p=0.5),    # Random vertical flip with 50% probability
+    transforms.RandomRotation(degrees=30),   # Random rotation within [-30, 30] degrees
+])
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train ResNet18 with various augmentations')

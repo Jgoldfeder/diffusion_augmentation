@@ -12,7 +12,8 @@ from augmentation_models.SegAugmentation import SegmentationAugmentationManager
 from augmentation_models.CannyAugmentation import CannyAugmentationManager
 
 class CustomDataset(Dataset):
-    def __init__(self, images, labels, transform=None, duplicate=1, use_diffusion_aug=False, args=None):
+    def __init__(self, images, labels, basic_transform=None, classical_aug_transform = None, 
+                 duplicate=1, use_diffusion_aug=False, args=None):
         self.images = images
         self.labels = labels
         self.transform = transform
@@ -101,4 +102,6 @@ class CustomDataset(Dataset):
             image = self.images[true_idx]
             if self.transform:
                 image = self.transform(image)
+            if self.classical_aug_transform:
+                image = self.classical_aug_transform(image)
             return image, self.labels[true_idx]
