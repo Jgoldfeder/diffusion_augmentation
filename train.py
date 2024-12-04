@@ -36,7 +36,7 @@ def parse_args():
     parser.add_argument('--use_depth', action='store_true', help='Use ControlNet Depth augmentation')
     parser.add_argument('--use_seg', action='store_true', help='Use ControlNet Segmentation augmentation')
     parser.add_argument('--use_color', action='store_true', help='Use Color ControlNet augmentation')
-    #parser.add_argument('--use_nerf', action='store_true', help='Use NeRF augmentation')
+    parser.add_argument('--use_nerf', action='store_true', help='Use NeRF augmentation')
     
     parser.add_argument('--architecture', type=str, default='resnet18', help='Model architecture (e.g., resnet18, resnet50)')
     parser.add_argument('--epochs', type=int, default=20, help='Number of training epochs')
@@ -65,9 +65,9 @@ def get_model(architecture, num_classes):
     return model
 
 def create_datasets(args):
-    # torch.manual_seed(args.seed)
-    # random.seed(args.seed)
-    # np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    random.seed(args.seed)
+    np.random.seed(args.seed)
 
     if args.dataset == 'caltech256':
         dataset = Caltech256(root='./torch', download=True)
@@ -218,7 +218,10 @@ def main():
             "use_depth": args.use_depth,
             "use_seg": args.use_seg,
             "use_color": args.use_color,
+            "use_nerf": args.use_nerf,
             "seed": args.seed
+            #"num_classes": args.num_classes,
+            #"images_per_class": args.images_per_class
             #"use_nerf": args.use_nerf
         }
     )
@@ -226,7 +229,7 @@ def main():
     augmented_dataset, original_dataset, test_dataset = create_datasets(args)
     
     train_model(augmented_dataset, test_dataset, "Augmented", args)
-    train_model(original_dataset, test_dataset, "Original", args)
+    #train_model(original_dataset, test_dataset, "Original", args)
     
     wandb.finish()
 
