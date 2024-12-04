@@ -48,7 +48,7 @@ class DepthAugmentationManager:
                 class_prompt = class_prompt.split('.')[1].replace('-', ' ')
             print(f"<LOG> Class prompt: {class_prompt}")
 
-            prompt = [f"{class_prompt}"]
+            prompt = [f"Extremely Realistic, Photorealistic, Clear Image, Real World, {class_prompt}"]
             negative_prompt = ["monochrome, lowres, bad anatomy, worst quality, low quality"]
             generator = [torch.Generator(device=self.control_net_device).manual_seed(2)]
 
