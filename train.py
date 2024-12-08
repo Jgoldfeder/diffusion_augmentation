@@ -77,7 +77,7 @@ def create_datasets(args):
     else:
         dataset = SUN397(root='./torch', download=True) 
         all_classes = dataset.classes
-    num_classes = 397 if args.dataset == 'sun397' else 256
+    num_classes = len(all_classes)
     selected_classes = random.sample(all_classes, 5)
     print(f"<LOG> Selected classes: {selected_classes}")
     
