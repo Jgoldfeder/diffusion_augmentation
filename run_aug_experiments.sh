@@ -1,20 +1,20 @@
 #!/bin/bash
 
-DATASETS=("sun397")
+DATASETS=("caltech256")
 AUGMENTATIONS=(
+    "--use_canny"
+    "--use_depth"
+    "--use_seg"
+    "--use_color"
     "--use_canny --use_depth --use_seg --use_color"
     "--use_canny --use_depth --use_seg"
     "--use_canny --use_depth --use_color"
     "--use_canny --use_seg --use_color"
     "--use_depth --use_seg --use_color"
-    "--use_canny"
-    "--use_depth"
-    "--use_seg"
-    "--use_color"
 )
 
-EPOCHS=(5)
-BATCH_SIZES=(32)
+EPOCHS=(400)
+BATCH_SIZES=(32 128)
 LEARNING_RATE=(0.0003)
 
 #FOR LATER:

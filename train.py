@@ -109,8 +109,12 @@ def create_datasets(args):
                 img.filename = img_path
                 class_images[class_idx].append(img)
     elif args.dataset == 'caltech256':
+        data_path = os.path.join(os.getcwd(), dataset.root, "caltech256", "256_ObjectCategories")
         for img, label in dataset:
             if label in selected_classes:
+                img_path = os.path.join(data_path, img.filename)
+                img = img.convert("RGB")
+                img.filename = img_path
                 class_images[label].append(img)
             
     print("<LOG> Finished creating class images")
