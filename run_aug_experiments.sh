@@ -1,7 +1,8 @@
 #!/bin/bash
 
-DATASETS=("caltech256")
+DATASETS=("sun397")
 AUGMENTATIONS=(
+    "--use_nerf"
     "--use_canny"
     "--use_depth"
     "--use_seg"
