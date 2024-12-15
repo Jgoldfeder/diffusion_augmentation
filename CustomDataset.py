@@ -15,6 +15,27 @@ from image_augmentation_models.SegmentAugmentation import SegmentAugmentationMan
 from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
 
 
+def get_label_remapping(old_labels_set):
+    old_to_new_labels = dict()
+    old_labels_sorted = sorted(list(set(old_labels_set)))
+    for i in range(len(old_labels_sorted)):
+        old_to_new_labels[old_labels_sorted[i]] = i
+    return old_to_new_labels
+
+# use this class so that labels start from 0 and go up, and
+# thus have their original label remapped
+class RemappedDataset(Dataset):
+    def __init__(self, dataset, old_to_new_labels):
+        self.dataset = dataset
+        self.old_to_new_labels = old_to_new_labels
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        img, label = self.dataset[index]
+        return img, self.old_to_new_labels[label]
+
 def split_train_test(dataset, class_to_label, labels, num_ways, num_shots):
     target_classes = random.sample(class_to_label.keys(), num_ways)
     target_labels = [class_to_label[target_class] for target_class in target_classes]
@@ -31,12 +52,14 @@ def split_train_test(dataset, class_to_label, labels, num_ways, num_shots):
         train_indexes.extend(indexes[:num_shots])
         test_indexes.extend(indexes[num_shots:])
 
-    train_dataset = Subset(dataset, train_indexes)
-    test_dataset = Subset(dataset, test_indexes)
+    old_to_new_labels = get_label_remapping(set(target_labels))
+    train_dataset = RemappedDataset(Subset(dataset, train_indexes), old_to_new_labels)
+    test_dataset = RemappedDataset(Subset(dataset, test_indexes), old_to_new_labels)
 
     print(len(train_dataset), len(test_dataset))
 
-    return train_dataset, test_dataset
+    return train_dataset, test_dataset, old_to_new_labels
+
 
 class ClassicalDataset(Dataset):
     def __init__(self, dataset, basic_transform, duplicate_factor=1):
@@ -57,16 +80,6 @@ class ClassicalDataset(Dataset):
         
         self.basic_transform = basic_transform
         self.dataset = []
-
-        # to ensure that the labels begin from 0
-        old_to_new_labels = dict()
-        label_index = 0
-
-        old_to_new_labels = []
-        for _, original_label in base_dataset:
-            old_to_new_labels.append(original_label)
-        old_to_new_labels.sort()
-
 
         img = img.convert('RGB')
         if original_label not in old_to_new_labels:
@@ -99,21 +112,11 @@ class AugmentedDataset(Dataset):
         self.labels = []
         classes = []
 
-        # to ensure that the labels begin from 0
-        old_to_new_labels = dict()
-        curr_labels = sorted(label_to_class.keys())
-        for i in range(len(curr_labels)):
-            old_to_new_labels[curr_labels[i]] = i
-
-        for img, original_label in base_dataset:
+        for img, label in base_dataset:
             img = img.convert('RGB')
-            if original_label not in old_to_new_labels:
-                old_to_new_labels[original_label] = label_index
-                label_index += 1
-            new_label = old_to_new_labels[original_label]
             base_images.append(img)
-            self.labels.append(new_label)
-            classes.append(label_to_class[original_label])
+            self.labels.append(label)
+            classes.append(label_to_class[label])
 
         aug_managers = []
         if self.args.use_canny:
@@ -211,6 +214,12 @@ def create_datasets(args):
     else:
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
+    base_dataset, test_dataset, old_to_new_labels = 
+        split_train_test(dataset, class_to_label, labels, num_ways, num_shots)
+
+    new_label_to_class = [''] * len(old_to_new_labels)
+    for old_label, new_label in old_to_new_labels.items():
+        new_label_to_class[new_label] = label_to_class[old_label]
 
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -218,8 +227,7 @@ def create_datasets(args):
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
-    base_dataset, test_dataset = split_train_test(dataset, class_to_label, labels, num_ways, num_shots)
-    aug_dataset = AugmentedDataset(base_dataset, label_to_class, transform=transform, args=args)
+    aug_dataset = AugmentedDataset(base_dataset, new_label_to_class, transform=transform, args=args)
     classical_dataset = ClassicalDataset(base_dataset, transform, duplicate_factor=len(aug_dataset)//len(base_dataset))
     test_dataset = ClassicalDataset(test_dataset, transform, duplicate_factor=1)
 

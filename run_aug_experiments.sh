@@ -2,7 +2,7 @@
 
 DATASETS=("caltech256")
 AUGMENTATIONS=(
-    "--use_canny"
+    "--use_canny --use_depth --use_seg --use_color --use_nerf"
 )
 
 #  "--use_depth --use_seg --use_color --use_nerf"
