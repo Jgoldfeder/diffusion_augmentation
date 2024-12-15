@@ -10,14 +10,14 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from torch import nn
 import os
-from augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
-from augmentation_models.NerfAugmentation import NerfAugmentationManager
-from augmentation_models.DepthAugmentation import DepthAugmentationManager
-from augmentation_models.SegAugmentation import SegmentationAugmentationManager
-from augmentation_models.CannyAugmentation import CannyAugmentationManager
+from image_augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
+from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
+from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
+from image_augmentation_models.SegmentAugmentation import SegmentAugmentationManager
+from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
 import wandb
 import argparse
-from CustomDataset import CustomDataset
+from CustomDataset import create_datasets
 
 # torch.manual_seed(42)
 # random.seed(42)
@@ -28,19 +28,6 @@ basic_transform = transforms.Compose([
     transforms.Resize((256, 256)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
-
-classical_aug_transform = transforms.Compose([
-    transforms.RandomCrop(size=(224, 224)),  # Randomly crop to 224x224 pixels
-    transforms.ColorJitter(
-        brightness=0.4,  # Adjust brightness (factor range [0.6, 1.4])
-        contrast=0.4,    # Adjust contrast (factor range [0.6, 1.4])
-        saturation=0.4,  # Adjust saturation (factor range [0.6, 1.4])
-        hue=0.2          # Adjust hue (factor range [-0.2, 0.2])
-    ),
-    transforms.RandomHorizontalFlip(p=0.5),  # Random horizontal flip with 50% probability
-    transforms.RandomVerticalFlip(p=0.5),    # Random vertical flip with 50% probability
-    transforms.RandomRotation(degrees=30),   # Random rotation within [-30, 30] degrees
 ])
 
 
@@ -78,7 +65,7 @@ def get_model(architecture, num_classes):
 
     return model
 
-def create_datasets(args):
+def create_datasets_backup(args):
     torch.manual_seed(args.seed)
     random.seed(args.seed)
     np.random.seed(args.seed)
@@ -203,7 +190,7 @@ def train_model(train_dataset, test_dataset, dataset_type, args):
                 _, predicted = torch.max(outputs.data, 1)
                 test_total += labels.size(0)
                 test_correct += (predicted == labels).sum().item()
-        
+            print("HERE IN TESTING")
         train_accuracy = 100 * train_correct / train_total
         test_accuracy = 100 * test_correct / test_total
         avg_loss = epoch_loss / len(train_loader)

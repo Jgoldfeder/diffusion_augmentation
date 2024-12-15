@@ -1,18 +1,20 @@
 #!/bin/bash
 
-DATASETS=("sun397")
+DATASETS=("caltech256")
 AUGMENTATIONS=(
-    "--use_nerf"
     "--use_canny"
-    "--use_depth"
-    "--use_seg"
-    "--use_color"
-    "--use_canny --use_depth --use_seg --use_color"
-    "--use_canny --use_depth --use_seg"
-    "--use_canny --use_depth --use_color"
-    "--use_canny --use_seg --use_color"
-    "--use_depth --use_seg --use_color"
 )
+
+#  "--use_depth --use_seg --use_color --use_nerf"
+#     "--use_nerf"
+#     "--use_canny"
+#     "--use_depth"
+#     "--use_seg"
+#     "--use_color"
+#     "--use_canny --use_depth --use_seg"
+#     "--use_canny --use_depth --use_color"
+#     "--use_canny --use_seg --use_color"
+#     "--use_depth --use_seg --use_color"
 
 EPOCHS=(400)
 BATCH_SIZES=(32 128)

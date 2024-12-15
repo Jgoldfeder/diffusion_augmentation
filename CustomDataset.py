@@ -1,108 +1,264 @@
 import torch
 import torchvision
 import torchvision.transforms as transforms
-from torchvision.datasets import Caltech256, SUN397
-from torch.utils.data import Dataset
+from torchvision.datasets import Caltech256, SUN397, Flowers102, FashionMNIST, ImageFolder
+from torch.utils.data import Dataset, Subset
 from PIL import Image
 import os
-from augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
-from augmentation_models.NerfAugmentation import NerfAugmentationManager
-from augmentation_models.DepthAugmentation import DepthAugmentationManager
-from augmentation_models.SegAugmentation import SegmentationAugmentationManager
-from augmentation_models.CannyAugmentation import CannyAugmentationManager
+import random
+import json
+from collections import defaultdict
+from image_augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
+from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
+from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
+from image_augmentation_models.SegmentAugmentation import SegmentAugmentationManager
+from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
 
-class CustomDataset(Dataset):
-    def __init__(self, images, labels, basic_transform=None, classical_aug_transform = None, 
-                 duplicate=1, use_diffusion_aug=False, args=None):
-        self.images = images
-        self.labels = labels
+
+def split_train_test(dataset, class_to_label, labels, num_ways, num_shots):
+    target_classes = random.sample(class_to_label.keys(), num_ways)
+    target_labels = [class_to_label[target_class] for target_class in target_classes]
+
+    label_to_indexes = defaultdict(list)
+    for index, label in enumerate(labels):
+        if label in target_labels:
+            label_to_indexes[label].append(index)
+
+    train_indexes = []
+    test_indexes = []
+    for label, indexes in label_to_indexes.items():
+        random.shuffle(indexes)
+        train_indexes.extend(indexes[:num_shots])
+        test_indexes.extend(indexes[num_shots:])
+
+    train_dataset = Subset(dataset, train_indexes)
+    test_dataset = Subset(dataset, test_indexes)
+
+    print(len(train_dataset), len(test_dataset))
+
+    return train_dataset, test_dataset
+
+class ClassicalDataset(Dataset):
+    def __init__(self, dataset, basic_transform, duplicate_factor=1):
+        classical_aug_transform = transforms.Compose([
+            transforms.Resize(size=(256, 256)),
+            transforms.RandomCrop(size=(224, 224)),
+            transforms.ColorJitter(
+                brightness=0.4,
+                contrast=0.4,
+                saturation=0.4,
+                hue=0.2 
+            ),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomVerticalFlip(p=0.5), 
+            transforms.RandomRotation(degrees=10),
+            transforms.ToTensor()
+        ])
+        
         self.basic_transform = basic_transform
-        self.classical_aug_transform = classical_aug_transform
-        self.args = args
-        self.use_diffusion_aug = use_diffusion_aug
+        self.dataset = []
+
+        # to ensure that the labels begin from 0
+        old_to_new_labels = dict()
+        label_index = 0
+
+        old_to_new_labels = []
+        for _, original_label in base_dataset:
+            old_to_new_labels.append(original_label)
+        old_to_new_labels.sort()
+
+
+        img = img.convert('RGB')
+        if original_label not in old_to_new_labels:
+            old_to_new_labels[original_label] = label_index
+            label_index += 1
+        new_label = old_to_new_labels[original_label]
+
+        self.labels.append(new_label)
+
+        for img, label in dataset:
+            img = img.convert('RGB')
+            self.dataset.append((self.basic_transform(img), label))
+            for _ in range(duplicate_factor-1):
+                self.dataset.append((classical_aug_transform(img), label))
         
-        if use_diffusion_aug:
-            self.augmented_images = self._generate_diffusion_augmentations()
-            self.num_augmentations = sum([
-                self.args.use_canny,
-                self.args.use_depth,
-                self.args.use_seg,
-                self.args.use_color,
-                self.args.use_nerf
-            ])
-            self.duplicate = self.num_augmentations + 1
-        else:
-            self.duplicate = duplicate
-    
-    def _generate_diffusion_augmentations(self):
-        temp_paths = []
-        for idx, img in enumerate(self.images):
-            if hasattr(img, 'filename') and img.filename:
-                temp_path = os.path.abspath(img.filename)
-            else:
-                temp_path = os.path.abspath(f'temp_img_{idx}.png')
-                img.save(temp_path)
-            temp_paths.append(temp_path)
-        
-        if self.args.use_canny:
-            canny_manager = CannyAugmentationManager()
-            canny_aug = canny_manager.generate_augmentations(temp_paths)
-        if self.args.use_depth:
-            depth_manager = DepthAugmentationManager()
-            depth_aug = depth_manager.generate_augmentations(temp_paths)
-        if self.args.use_seg:
-            seg_manager = SegmentationAugmentationManager()
-            seg_aug = seg_manager.generate_augmentations(temp_paths)
-        if self.args.use_color:
-            color_manager = ColorControlNetAugmentationManager()
-            color_aug = color_manager.generate_augmentations(temp_paths)
-        if self.args.use_nerf:
-            nerf_manager = NerfAugmentationManager()
-            nerf_aug = nerf_manager.generate_augmentations(temp_paths)
-                
-        augmented_images = {}
-        for path in temp_paths:
-            img_augs = []
-            if self.args.use_canny and path in canny_aug:
-                img_augs.append(canny_aug[path])
-            if self.args.use_depth and path in depth_aug:
-                img_augs.append(depth_aug[path])
-            if self.args.use_seg and path in seg_aug:
-                img_augs.append(seg_aug[path])
-            if self.args.use_color and path in color_aug:
-                img_augs.append(color_aug[path])
-            if self.args.use_nerf and path in nerf_aug:
-                img_augs.append(nerf_aug[path])
-            augmented_images[path] = img_augs
-                
-        return augmented_images
-    
     def __len__(self):
-        return len(self.images) * self.duplicate
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        img, label = self.dataset[index]
+        return img, label
+
+
+class AugmentedDataset(Dataset):
+    def __init__(self, base_dataset, label_to_class, transform, args):
+        self.transform = transform
+        self.args = args
+
+        base_images = []
+        self.labels = []
+        classes = []
+
+        # to ensure that the labels begin from 0
+        old_to_new_labels = dict()
+        curr_labels = sorted(label_to_class.keys())
+        for i in range(len(curr_labels)):
+            old_to_new_labels[curr_labels[i]] = i
+
+        for img, original_label in base_dataset:
+            img = img.convert('RGB')
+            if original_label not in old_to_new_labels:
+                old_to_new_labels[original_label] = label_index
+                label_index += 1
+            new_label = old_to_new_labels[original_label]
+            base_images.append(img)
+            self.labels.append(new_label)
+            classes.append(label_to_class[original_label])
+
+        aug_managers = []
+        if self.args.use_canny:
+            aug_managers.append(CannyAugmentationManager)
+        if self.args.use_depth:
+            aug_managers.append(DepthAugmentationManager)
+        if self.args.use_seg:
+            aug_managers.append(SegmentAugmentationManager)
+        if self.args.use_color:
+            aug_managers.append(ColorControlNetAugmentationManager)
+        if self.args.use_nerf:
+            aug_managers.append(NerfAugmentationManager)
+
+        augmented_images = []
+        augmented_labels = []
+        for manager_class in aug_managers:
+            manager = manager_class()
+            augmented_images.extend(manager.generate_augmentations(base_images, classes))
+            augmented_labels.extend(self.labels)
+
+        self.images = base_images + augmented_images
+        self.labels = self.labels + augmented_labels
+
+        # here, we shuffle images and labels together
+        combined = list(zip(self.images, self.labels))
+        random.shuffle(combined)
+        self.images, self.labels = zip(*combined)
+
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, index):
+        img = self.images[index]
+        label = self.labels[index]
+        if self.transform is not None:
+            img = self.transform(img)
+        return img, label
+
+def create_datasets(args):
+    root = './torch'
+
+    # TODO make num_ways and num_shots come from args as well
+    dataset_name = args.dataset
+    num_ways = 5
+    num_shots = 2
+
+    if dataset_name == 'caltech256':
+        dataset = Caltech256(root=root, download=True)
+        class_to_label = dict()
+        label_to_class = dict()
+        for category in dataset.categories:
+            parts = category.split('.')
+            label = int(parts[0]) - 1
+            class_name = parts[1]
+            class_to_label[class_name] = label
+            label_to_class[label] = class_name
+        labels = [label for _, label in dataset]
+    elif dataset_name == 'fashionmnist':
+        dataset = FashionMNIST(root=root, download=True)
+        class_to_label = dataset.class_to_idx
+        label_to_class = {label: class_name for class_name, label in class_to_label.items()}
+        labels = dataset.targets.tolist()
+    elif dataset_name =='flowers102':
+        data_dir = os.path.join(root, 'flower_data')
+        try:
+            dataset = ImageFolder(os.path.join(data_dir, 'train'))
+        except FileNotFoundError:
+            print('Download the dataset from kaggle from the following page using curl:')
+            print('https://www.kaggle.com/datasets/waseemalastal/the-oxford-flowers-102-dataset')
+        with open(os.path.join(data_dir, 'cat_to_name.json'), 'r') as f:
+            label_to_class_as_str = json.load(f)
+        label_to_class = {int(label_str): class_name for label_str, class_name in label_to_class_as_str.items()}
+        class_to_label = {class_name: label for label, class_name in label_to_class.items()}
+        labels = [int(target) for target in dataset.targets]
+    elif dataset_name == 'sun397':
+        dataset = SUN397(root=root, download=True)
+        class_to_label = dataset.class_to_idx
+        label_to_class = {label: class_name for class_name, label in class_to_label.items()}
+        cache_file = os.path.join(root, 'cached_data', 'sun397_labels.json')
+        try:
+            with open(cache_file, 'r') as f:
+                labels = json.load(f)
+            print("Loaded labels from cache file.")
+        except FileNotFoundError:
+            print("This process may take ten minutes, but will also create cache file.")
+            labels = []
+            total = len(dataset)
+            for i, (_, label) in enumerate(dataset):
+                labels.append(label)
+                if i % int(total * 0.1) == 0:
+                    print(f"Completed {i/total*100:.1f}%")
+            with open(cache_file, 'w') as f:
+                json.dump(labels, f)
+    else:
+        raise ValueError(f"Unknown dataset: {dataset_name}")
+
+
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+
+    base_dataset, test_dataset = split_train_test(dataset, class_to_label, labels, num_ways, num_shots)
+    aug_dataset = AugmentedDataset(base_dataset, label_to_class, transform=transform, args=args)
+    classical_dataset = ClassicalDataset(base_dataset, transform, duplicate_factor=len(aug_dataset)//len(base_dataset))
+    test_dataset = ClassicalDataset(test_dataset, transform, duplicate_factor=1)
+
+    print('Dataset sizes:')
+    print(f'Classical dataset: {len(classical_dataset)}')
+    print(f'Augmented dataset: {len(aug_dataset)}')
+    print(f'Test dataset: {len(test_dataset)}')
+
+    return aug_dataset, classical_dataset, test_dataset
+
+if __name__ == '__main__':
+    args = {
+        'use_canny': True,
+        'use_depth': True,
+        'use_seg': True,
+        'use_color': True,
+        'use_nerf': True
+    }
+    # here we make args an object
+    import argparse
+    args = argparse.Namespace(**args)
+    aug_dataset, base_dataset, test_dataset = create_datasets(args)
+    # example_aug_dataset = CustomDataset(base_dataset, label_to_class, None, args=args)
+
+    def save_random_samples(dataset, folder_name="custom_dataset_examples", num_samples=20):
+        # Ensure the target folder exists
+        os.makedirs(folder_name, exist_ok=True)
     
-    def __getitem__(self, idx):
-        if self.use_diffusion_aug:
-            true_idx = idx // self.duplicate
-            aug_idx = idx % self.duplicate
+        # Randomly select samples
+        indices = random.sample(range(len(dataset)), num_samples)
+    
+        for i, idx in enumerate(indices):
+            image, label = dataset[idx]
             
-            if aug_idx == 0:
-                image = self.images[true_idx]
-            else:
-                if hasattr(self.images[true_idx], 'filename') and self.images[true_idx].filename:
-                    img_path = os.path.abspath(self.images[true_idx].filename)
-                else:
-                    img_path = os.path.abspath(f'temp_img_{true_idx}.png')
-                
-                image = self.augmented_images[img_path][aug_idx - 1]
+            file_name = f"{folder_name}/sample_{i}_label_{label}.png"
+            image.save(file_name)
             
-            if self.basic_transform:
-                image = self.basic_transform(image)
-            return image, self.labels[true_idx]
-        else:
-            true_idx = idx // self.duplicate
-            image = self.images[true_idx]
-            if self.basic_transform:
-                image = self.basic_transform(image)
-            if self.classical_aug_transform:
-                image = self.classical_aug_transform(image)
-            return image, self.labels[true_idx]
+            print(f"Saved: {file_name}")
+
+    # print(len(example_aug_dataset))
+
+    # save_random_samples(example_aug_dataset)
