@@ -34,7 +34,7 @@ class RemappedDataset(Dataset):
 
     def __getitem__(self, index):
         img, label = self.dataset[index]
-        return img, self.old_to_new_labels[label]
+        return img.convert('RGB'), self.old_to_new_labels[label]
 
 def split_train_test(dataset, class_to_label, labels, num_ways, num_shots):
     target_classes = random.sample(class_to_label.keys(), num_ways)
@@ -81,16 +81,7 @@ class ClassicalDataset(Dataset):
         self.basic_transform = basic_transform
         self.dataset = []
 
-        img = img.convert('RGB')
-        if original_label not in old_to_new_labels:
-            old_to_new_labels[original_label] = label_index
-            label_index += 1
-        new_label = old_to_new_labels[original_label]
-
-        self.labels.append(new_label)
-
         for img, label in dataset:
-            img = img.convert('RGB')
             self.dataset.append((self.basic_transform(img), label))
             for _ in range(duplicate_factor-1):
                 self.dataset.append((classical_aug_transform(img), label))
@@ -113,7 +104,6 @@ class AugmentedDataset(Dataset):
         classes = []
 
         for img, label in base_dataset:
-            img = img.convert('RGB')
             base_images.append(img)
             self.labels.append(label)
             classes.append(label_to_class[label])
@@ -214,8 +204,7 @@ def create_datasets(args):
     else:
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
-    base_dataset, test_dataset, old_to_new_labels = 
-        split_train_test(dataset, class_to_label, labels, num_ways, num_shots)
+    base_dataset, test_dataset, old_to_new_labels = split_train_test(dataset, class_to_label, labels, num_ways, num_shots)
 
     new_label_to_class = [''] * len(old_to_new_labels)
     for old_label, new_label in old_to_new_labels.items():
