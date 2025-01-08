@@ -51,7 +51,7 @@ def initialize_augmentation_tree(depth=3):
 
 def test_augmentation_tree():
     depth = 4
-    print(f"Testing Augmentation Tree with depth {depth}...")
+    print(f"Testing Augmentation Tree with depth {depth-1}...")
     root = initialize_augmentation_tree(depth)
 
 if __name__ == "__main__":
