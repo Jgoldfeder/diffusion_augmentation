@@ -1,43 +1,58 @@
 import random
 
 class AugmentationNode:
-    def __init__(self, parent_edge_type=None, parent_edge_probability=0.5):
+    def __init__(self, parent_edge_type=None):
         self.parent_edge_type = parent_edge_type
-        self.parent_edge_probability = parent_edge_probability
+        self.left_child_probability = 0.0
+        self.right_child_probability = 0.0
         self.left = None
         self.right = None
 
 def initialize_augmentation_tree(depth=3):
     augmentation_types = ['canny', 'depth', 'seg', 'color', 'nerf', 'classical']
     
-    def create_node(current_depth, parent_edge_type=None):
+    def create_node(current_depth, parent_edge_type=None, is_root=False):
         if current_depth == 0:
             return None
         
+        # For non-leaf nodes, randomly select augmentation type
         if current_depth < depth:
             edge_type = random.choice(augmentation_types)
-            total_prob = random.uniform(0.3, 0.7)
-            left_prob = total_prob
-            right_prob = 1.0 - total_prob
         else:
             edge_type = None
-            left_prob = right_prob = 0.0
         
-        node = AugmentationNode(parent_edge_type=edge_type, parent_edge_probability=left_prob)
+        node = AugmentationNode(parent_edge_type=edge_type)
+        
+        # Create left and right children
         node.left = create_node(current_depth - 1, edge_type)
         node.right = create_node(current_depth - 1, edge_type)
         
+        # Distribute probabilities between children
         if node.left and node.right:
-            node.left.parent_edge_probability = left_prob
-            node.right.parent_edge_probability = right_prob
-        
+            # Randomly assign a portion between 0.3 and 0.7 for left child
+            left_ratio = random.uniform(0.3, 0.7)  # This ensures more balanced splits
+            right_ratio = 1.0 - left_ratio
+            
+            node.left_child_probability = left_ratio
+            node.right_child_probability = right_ratio
+        elif node.left:
+            node.left_child_probability = 1.0
+            node.right_child_probability = 0.0
+        elif node.right:
+            node.left_child_probability = 0.0
+            node.right_child_probability = 1.0
+            
         return node
     
-    root = create_node(depth)
+    # Create root node with is_root=True
+    root = create_node(depth, is_root=True)
     
     def print_tree(node, level=0, direction='root'):
         if node:
-            edge_info = f"(edge: {node.parent_edge_type}, prob: {node.parent_edge_probability:.2f})" if node.parent_edge_type else "(root)"
+            if direction == 'root':
+                edge_info = f"(root, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
+            else:
+                edge_info = f"(edge: {node.parent_edge_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
             print('  ' * level + f"{direction}: {edge_info}")
             if node.left:
                 print_tree(node.left, level + 1, 'L')
