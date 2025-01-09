@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from make_augmenations_from_tree import generate_augmentations_from_tree
 from AugmentationNode import AugmentationNode
 from AugmentationNode import initialize_augmentation_tree
+import os
 
 def create_sample_tree():
     # Create a simple tree with different augmentation types
@@ -23,30 +24,23 @@ def create_sample_tree():
     return root
 
 def visualize_augmentations(original_images, augmented_images):
-    num_images = len(augmented_images)
-    plt.figure(figsize=(15, 5))
+    # Create output directory if it doesn't exist
+    output_dir = "sample_tree_augmentations"
+    os.makedirs(output_dir, exist_ok=True)
     
-    # Plot original images
+    # Save original images
     for idx, img in enumerate(original_images):
-        plt.subplot(2, 6, idx + 1)
-        plt.imshow(img)
-        plt.title(f'Original {idx+1}')
-        plt.axis('off')
+        img.save(os.path.join(output_dir, f'original_{idx+1}.png'))
     
-    # Plot some augmented images
-    for idx, img in enumerate(augmented_images[:10]):  # Show first 10 augmentations
-        plt.subplot(2, 6, idx + 7)
-        plt.imshow(img)
-        plt.title(f'Aug {idx+1}')
-        plt.axis('off')
-    
-    plt.tight_layout()
-    plt.show()
+    # Save augmented images
+    for idx, img in enumerate(augmented_images):
+        img.save(os.path.join(output_dir, f'augmented_{idx+1}.png'))
 
 def main():
     sample_paths = ["torch/caltech256/256_ObjectCategories/001.ak47/001_0001.jpg",
                      "torch/caltech256/256_ObjectCategories/001.ak47/001_0002.jpg"]
     sample_images = [Image.open(path) for path in sample_paths]
+    print(sample_images)
 
     # Create augmentation tree
     aug_tree = initialize_augmentation_tree(depth=4)

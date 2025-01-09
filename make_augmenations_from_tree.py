@@ -17,8 +17,7 @@ classical_aug_transform = transforms.Compose([
             ),
             transforms.RandomHorizontalFlip(p=0.5),  # Random horizontal flip with 50% probability
             transforms.RandomVerticalFlip(p=0.5),    # Random vertical flip with 50% probability
-            transforms.RandomRotation(degrees=30),   # Random rotation within [-30, 30] degrees
-            transforms.ToTensor()
+            transforms.RandomRotation(degrees=30)   # Random rotation within [-30, 30] degrees
         ])
 
 def generate_augmentations_from_tree(root: AugmentationNode, images: list, classes: list) -> list:
@@ -31,6 +30,7 @@ def generate_augmentations_from_tree(root: AugmentationNode, images: list, class
     for image, class_name in zip(images, classes):
         #run through the tree 5 times and compose augmentations based on the given tree
         curr_image = image
+        print("image type: ", type(curr_image))
         augmentations.append(curr_image)
         for i in range(5):
             print(f"Generating augmentation {i+1} for class {class_name}")
@@ -42,16 +42,20 @@ def generate_augmentations_from_tree(root: AugmentationNode, images: list, class
                 else:
                     curr_node = curr_node.right
 
+                print("curr_image: ", curr_image)
+                print("curr image type: ", type(curr_image))
+
+
                 if curr_node.parent_edge_type == "segment":
-                    curr_image = segment_aug_manager.generate_augmentations([curr_image], [class_name])
+                    curr_image = segment_aug_manager.generate_augmentations([curr_image], [class_name])[0]
                 elif curr_node.parent_edge_type == "color":
-                    curr_image = color_aug_manager.generate_augmentations([curr_image], [class_name])
+                    curr_image = color_aug_manager.generate_augmentations([curr_image], [class_name])[0]
                 elif curr_node.parent_edge_type == "canny":
-                    curr_image = canny_aug_manager.generate_augmentations([curr_image], [class_name])
+                    curr_image = canny_aug_manager.generate_augmentations([curr_image], [class_name])[0]
                 elif curr_node.parent_edge_type == "nerf":
-                    curr_image = nerf_aug_manager.generate_augmentations([curr_image], [class_name])
+                    curr_image = nerf_aug_manager.generate_augmentations([curr_image], [class_name])[0]
                 elif curr_node.parent_edge_type == "depth":
-                    curr_image = depth_aug_manager.generate_augmentations([curr_image], [class_name])
+                    curr_image = depth_aug_manager.generate_augmentations([curr_image], [class_name])[0]
                 elif curr_node.parent_edge_type == "classical":
                     curr_image = classical_aug_transform(curr_image)
 
