@@ -60,6 +60,43 @@ def split_train_test(dataset, class_to_label, labels, num_ways, num_shots):
 
     return train_dataset, test_dataset, old_to_new_labels
 
+def split_train_val(dataset, split_ratio=0.5):
+    """
+    Split a dataset into train and validation sets while maintaining class distribution
+    Args:
+        dataset: RemappedDataset object
+        split_ratio: Proportion of data to use for training (default 0.5 for 50/50 split)
+    """
+    # Get all labels
+    labels = [dataset[i][1] for i in range(len(dataset))]
+    
+    # Group indices by label
+    label_to_indices = defaultdict(list)
+    for idx, label in enumerate(labels):
+        label_to_indices[label].append(idx)
+    
+    train_indices = []
+    val_indices = []
+    
+    # Split each class according to ratio
+    for label in label_to_indices:
+        indices = label_to_indices[label]
+        random.shuffle(indices)
+        split_point = int(len(indices) * split_ratio)
+        train_indices.extend(indices[:split_point])
+        val_indices.extend(indices[split_point:])
+
+    old_to_new_labels = get_label_remapping(set(labels))
+    train_dataset = RemappedDataset(Subset(dataset, train_indices), old_to_new_labels)
+    val_dataset = RemappedDataset(Subset(dataset, val_indices), old_to_new_labels)
+
+    #assert that the train and val sets have the same class distribution
+    train_labels = [train_dataset[i][1] for i in range(len(train_dataset))]
+    val_labels = [val_dataset[i][1] for i in range(len(val_dataset))]
+    assert len(set(train_labels)) == len(set(val_labels)), "Train and validation sets have different class distributions"
+
+    return train_dataset, val_dataset
+
 
 class ClassicalDataset(Dataset):
     def __init__(self, dataset, basic_transform, duplicate_factor=1):
@@ -145,6 +182,22 @@ class AugmentedDataset(Dataset):
         if self.transform is not None:
             img = self.transform(img)
         return img, label
+
+class TreeAugmentedDataset(Dataset):
+    def __init__(self, base_dataset, label_to_class, transform):
+        self.transform = transform
+
+        self.dataset = []
+        for img, label in base_dataset:
+            self.dataset.append((self.transform(img), label))
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        img, label = self.dataset[index]
+        return img, label
+
 
 def create_datasets(args):
     root = './torch'
