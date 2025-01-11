@@ -8,9 +8,9 @@ class AugmentationNode:
         self.left = None
         self.right = None
 
+augmentation_types = ['canny', 'depth', 'seg', 'color', 'nerf', 'classical', 'none']
+
 def initialize_augmentation_tree(depth=3):
-    augmentation_types = ['canny', 'depth', 'seg', 'color', 'nerf', 'classical']
-    
     def create_node(current_depth, parent_edge_type=None, is_root=False):
         if current_depth == 0:
             return None
