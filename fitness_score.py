@@ -109,8 +109,17 @@ def fitness_score(individual) -> float:
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
     for epoch in range(1):
-        for images, labels in train_loader:
+        for batch in train_loader:
+            print(batch)
+            images = batch[0]
+            labels = batch[1]
+            
+            print(f"Images shape: {images.shape}")
+            print(f"Labels shape: {labels.shape if hasattr(labels, 'shape') else 'No shape'}")
+            print(f"Labels content: {labels}")
+            
             images = images.to("cuda")
+            labels = labels.to("cuda")
             optimizer.zero_grad()
             outputs = model(images)
             loss = criterion(outputs, labels)

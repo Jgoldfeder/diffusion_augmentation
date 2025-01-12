@@ -22,7 +22,7 @@ classical_aug_transform = transforms.Compose([
 
 def generate_augmentations_from_tree(root: AugmentationNode, dataset, class_to_label_map) -> list:
     augmentations = []
-    classes = []
+    labels = []
     segment_aug_manager = SegmentAugmentationManager()
     color_aug_manager = ColorControlNetAugmentationManager()
     canny_aug_manager = CannyAugmentationManager()
@@ -31,10 +31,11 @@ def generate_augmentations_from_tree(root: AugmentationNode, dataset, class_to_l
     for entry in dataset:
         #run through the tree 5 times and compose augmentations based on the given tree
         curr_image = entry[0]
-        class_name = class_to_label_map[entry[1]]
+        label = entry[1]
+        class_name = class_to_label_map[label]
         print(class_to_label_map)
         augmentations.append(curr_image)
-        classes.append(class_name)
+        labels.append(label)
 
         for i in range(5):
             print(f"Generating augmentation {i+1} for class {class_name}")
@@ -61,9 +62,11 @@ def generate_augmentations_from_tree(root: AugmentationNode, dataset, class_to_l
 
             #add the final image to the list
             augmentations.append(curr_image)
-            classes.append(class_name)
+            labels.append(label)
 
     # Convert lists to a list of tuples (image, class) for DataLoader compatibility
-    combined_dataset = list(zip(augmentations, classes))
+    print(f"Augmentations: {augmentations}")
+    print(f"Labels: {labels}")
+    combined_dataset = list(zip(augmentations, labels))
     
     return combined_dataset
