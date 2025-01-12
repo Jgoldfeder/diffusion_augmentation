@@ -2,40 +2,41 @@ import pygad
 import random
 import numpy as np
 
+import AugmentationNode
+
 # Problem parameters
-target_string = "aaaa"
-letters = ['x', 'b', 'c', 'd']
-tree_depth = 4  # Number of nodes in the tree
+tree_depth = 3
 
-def tree_to_string(individual):
-    """
-    Converts a tree represented by an individual into a string.
-    The tree is encoded as a linear sequence of [char, prob1, prob2, ...].
-    """
-    string = ""
-    current_node = 0  # Start at the root node
-
-    for _ in range(tree_depth):
-        # Get the character at the current node
-        char_index = current_node * 3
-        char = letters[int(individual[char_index])]
-
-        # Get the probabilities
-        prob1 = individual[char_index + 1]
-        prob2 = individual[char_index + 2]
-
-        # Add the character to the output string
-        string += char
-
-        # Determine the next node based on the probabilities
-        if prob1 > prob2:
-            next_node = (current_node + 1) % tree_depth
+def print_tree(node, level=0, direction='root'):
+    if node:
+        if direction == 'root':
+            edge_info = f"(root, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
         else:
-            next_node = (current_node + 2) % tree_depth
+            edge_info = f"(edge: {node.parent_edge_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
+        print('  ' * level + f"{direction}: {edge_info}")
+        if node.left:
+            print_tree(node.left, level + 1, 'L')
+        if node.right:
+            print_tree(node.right, level + 1, 'R')
 
-        current_node = next_node
-
-    return string
+def genome_to_tree(genome):
+    root_node = AugmentationNode.AugmentationNode(AugmentationNode.augmentation_types[int(genome[0])])
+    root_node.left_child_probability = genome[1]
+    root_node.right_child_probability = genome[2]
+    queue = [root_node]
+    for i in range(3, len(genome), 6):
+        node = queue.pop(0)
+        new_node_left = AugmentationNode.AugmentationNode(AugmentationNode.augmentation_types[int(genome[i])])
+        new_node_left.left_child_probability = genome[i + 1]
+        new_node_left.right_child_probability = genome[i + 2]
+        new_node_right = AugmentationNode.AugmentationNode(AugmentationNode.augmentation_types[int(genome[i + 3])])
+        new_node_right.left_child_probability = genome[i + 4]
+        new_node_right.right_child_probability = genome[i + 5]
+        node.left = new_node_left
+        node.right = new_node_right
+        queue.append(node.left)
+        queue.append(node.right)
+    return root_node
 
 def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     """Calculates the fitness of an individual."""
@@ -43,23 +44,23 @@ def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     # create dataset from augmentation tree
     # train NN on dataset for a few epochs
     # get the associated loss value and assign this as fitness
-    generated_string = tree_to_string(augmentation_tree_genome)
-    # Fitness is higher the closer the generated string is to the target
-    fitness = -sum(abs(ord(g) - ord(t)) for g, t in zip(generated_string, target_string))
+
+    print_tree(genome_to_tree(augmentation_tree_genome))
+    fitness = -5
     return fitness
 
 def gene_space():
     """Defines the gene space for the GA."""
     gene_space = []
-    for i in range(tree_depth):
-        gene_space.extend([{"low": 0.0, "high": 1.0}, {"low": 0.0, "high": 1.0}, [0, 1, 2, 3]])
+    for i in range(2 ** tree_depth - 1):
+        gene_space.extend([[i for i in range(len(AugmentationNode.augmentation_types))], {"low": 0.0, "high": 1.0}, {"low": 0.0, "high": 1.0}])
     return gene_space
 
 # GA parameters
 num_generations = 2
-num_parents_mating = 4
-sol_per_pop = 10
-num_genes = tree_depth * 3  # 3 elements (char, float1, float2) per node
+num_parents_mating = 2
+sol_per_pop = 5
+num_genes = 3 * (2 ** tree_depth - 1)
 
 # Initialize GA
 fitness_progress = []  # To store fitness values for each generation
@@ -95,4 +96,3 @@ print(f"Fitness progression saved to {fitness_file}")
 solution, solution_fitness, solution_idx = ga_instance.best_solution()
 print(f"Best solution: {solution}")
 print(f"Fitness: {solution_fitness}")
-print(f"Generated string: {tree_to_string(solution)}")
