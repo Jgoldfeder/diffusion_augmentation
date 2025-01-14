@@ -59,6 +59,8 @@ def generate_augmentations_from_tree(root: AugmentationNode, dataset, class_to_l
                     curr_image = depth_aug_manager.generate_augmentations([curr_image], [class_name])[0]
                 elif curr_node.parent_edge_type == "classical":
                     curr_image = classical_aug_transform(curr_image)
+                elif curr_node.parent_edge_type == "none":
+                    curr_image = curr_image # do nothing explicitly
 
             #add the final image to the list
             augmentations.append(curr_image)

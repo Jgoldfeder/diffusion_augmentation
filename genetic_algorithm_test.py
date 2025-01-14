@@ -3,6 +3,7 @@ import random
 import numpy as np
 
 import AugmentationNode
+import fitness_score
 
 # Problem parameters
 tree_depth = 3
@@ -40,13 +41,8 @@ def genome_to_tree(genome):
 
 def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     """Calculates the fitness of an individual."""
-    # instantiate augmentation tree from genome
-    # create dataset from augmentation tree
-    # train NN on dataset for a few epochs
-    # get the associated loss value and assign this as fitness
-
-    print_tree(genome_to_tree(augmentation_tree_genome))
-    fitness = -5
+    augmentation_tree = genome_to_tree(augmentation_tree_genome)
+    fitness = fitness_score.fitness_score(augmentation_tree)
     return fitness
 
 def gene_space():
