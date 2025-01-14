@@ -108,7 +108,7 @@ def fitness_score(individual) -> float:
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
-    for epoch in range(1):
+    for epoch in range(5):
         for batch in train_loader:
             print(batch)
             images = batch[0]
