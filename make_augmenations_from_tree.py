@@ -8,6 +8,7 @@ import torchvision.transforms as transforms
 import random
 
 classical_aug_transform = transforms.Compose([
+            transforms.Resize(size=(256, 256)), # NOTE should this resize be here? Otherwise errors on some classes, ex. kangaroo-101 there is an image of size (300, 182)
             transforms.RandomCrop(size=(224, 224)),  # Randomly crop to 224x224 pixels
             transforms.ColorJitter(
                 brightness=0.4,  # Adjust brightness (factor range [0.6, 1.4])
