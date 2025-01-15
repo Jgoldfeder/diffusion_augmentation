@@ -42,7 +42,8 @@ def genome_to_tree(genome):
 def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     """Calculates the fitness of an individual."""
     augmentation_tree = genome_to_tree(augmentation_tree_genome)
-    fitness = fitness_score.fitness_score(augmentation_tree)
+    loss = fitness_score.fitness_score(augmentation_tree)
+    fitness = -1 * loss
     return fitness
 
 def gene_space():
@@ -53,9 +54,9 @@ def gene_space():
     return gene_space
 
 # GA parameters
-num_generations = 2
-num_parents_mating = 2
-sol_per_pop = 5
+num_generations = 20
+num_parents_mating = 4
+sol_per_pop = 10
 num_genes = 3 * (2 ** tree_depth - 1)
 
 # Initialize GA
@@ -91,4 +92,5 @@ print(f"Fitness progression saved to {fitness_file}")
 # Output the results
 solution, solution_fitness, solution_idx = ga_instance.best_solution()
 print(f"Best solution: {solution}")
+print_tree(genome_to_tree(solution))
 print(f"Fitness: {solution_fitness}")
