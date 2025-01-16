@@ -149,7 +149,8 @@ def fitness_score(individual) -> float:
     #calculate the average of the two validation losses
     return (val_loss_1 + val_loss_2) / 2
 
-#initialize some random tree and run the fitness score
-individual = initialize_augmentation_tree(depth=4)
-fitness_score(individual)
-print(fitness_score(individual))
+if __name__ == '__main__':
+    #initialize some random tree and run the fitness score
+    individual = initialize_augmentation_tree(depth=4)
+    fitness_score(individual)
+    print(fitness_score(individual))

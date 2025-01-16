@@ -6,7 +6,7 @@ import AugmentationNode
 import fitness_score
 
 # Problem parameters
-tree_depth = 3
+tree_depth = 4
 
 def print_tree(node, level=0, direction='root'):
     if node:
@@ -23,16 +23,16 @@ def print_tree(node, level=0, direction='root'):
 def genome_to_tree(genome):
     root_node = AugmentationNode.AugmentationNode(AugmentationNode.augmentation_types[int(genome[0])])
     root_node.left_child_probability = genome[1]
-    root_node.right_child_probability = genome[2]
+    root_node.right_child_probability = 1 - genome[1]
     queue = [root_node]
-    for i in range(3, len(genome), 6):
+    for i in range(2, len(genome), 4):
         node = queue.pop(0)
         new_node_left = AugmentationNode.AugmentationNode(AugmentationNode.augmentation_types[int(genome[i])])
         new_node_left.left_child_probability = genome[i + 1]
-        new_node_left.right_child_probability = genome[i + 2]
-        new_node_right = AugmentationNode.AugmentationNode(AugmentationNode.augmentation_types[int(genome[i + 3])])
-        new_node_right.left_child_probability = genome[i + 4]
-        new_node_right.right_child_probability = genome[i + 5]
+        new_node_left.right_child_probability = 1 - genome[i + 1]
+        new_node_right = AugmentationNode.AugmentationNode(AugmentationNode.augmentation_types[int(genome[i + 2])])
+        new_node_right.left_child_probability = genome[i + 3]
+        new_node_right.right_child_probability = 1 - genome[i + 3]
         node.left = new_node_left
         node.right = new_node_right
         queue.append(node.left)
@@ -41,29 +41,35 @@ def genome_to_tree(genome):
 
 def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     """Calculates the fitness of an individual."""
-    augmentation_tree = genome_to_tree(augmentation_tree_genome)
-    loss = fitness_score.fitness_score(augmentation_tree)
-    fitness = -1 * loss
-    return fitness
+    # augmentation_tree = genome_to_tree(augmentation_tree_genome)
+    # loss = fitness_score.fitness_score(augmentation_tree)
+    # fitness = -1 * loss
+    # print_tree(genome_to_tree(augmentation_tree_genome))
+    print('fitness function called')
+    return random.random()
 
 def gene_space():
     """Defines the gene space for the GA."""
     gene_space = []
+    # TODO make it just one parameter instead of two so that probability always adds to 1
     for i in range(2 ** tree_depth - 1):
-        gene_space.extend([[i for i in range(len(AugmentationNode.augmentation_types))], {"low": 0.0, "high": 1.0}, {"low": 0.0, "high": 1.0}])
+        gene_space.extend([[i for i in range(len(AugmentationNode.augmentation_types))], {"low": 0.0, "high": 1.0}])
     return gene_space
 
 # GA parameters
-num_generations = 20
+# TODO make sure that num generations * sol_per_pop is the number of times fitness function is called
+num_generations = 3
 num_parents_mating = 4
-sol_per_pop = 10
-num_genes = 3 * (2 ** tree_depth - 1)
+keep_elitism = 0
+sol_per_pop = 4
+num_genes = 2 * (2 ** tree_depth - 1)
 
 # Initialize GA
 fitness_progress = []  # To store fitness values for each generation
 
 def on_generation(ga_instance):
     """Callback executed at the end of each generation."""
+    print('Finished evolution generation')
     fitness_progress.append(ga_instance.best_solution()[1])  # Save best fitness of generation
 
 ga_instance = pygad.GA(
@@ -71,6 +77,7 @@ ga_instance = pygad.GA(
     num_parents_mating=num_parents_mating,
     fitness_func=fitness_function,
     sol_per_pop=sol_per_pop,
+    keep_elitism=keep_elitism,
     num_genes=num_genes,
     gene_space=gene_space(),
     mutation_percent_genes=10,
