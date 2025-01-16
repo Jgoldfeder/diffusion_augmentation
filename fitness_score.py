@@ -17,6 +17,8 @@ transform = transforms.Compose([
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
+device = "cpu"
+
 def create_datasets():
     root = './torch'
 
@@ -87,51 +89,32 @@ def create_datasets():
 
     return train_dataset, val_dataset, test_dataset, new_label_to_class
 
-def fitness_score(individual) -> float:
-    
-    #first create the dataset
-    train_dataset, val_dataset, test_dataset, label_to_class = create_datasets()
-    val_dataset = TreeAugmentedDataset(val_dataset, label_to_class, transform)
-    #split the base into train and val 50/50 but keep the same class distribution
 
+def create_augmented_val_datasets(train_dataset, val_dataset, label_to_class):
+    val_dataset = TreeAugmentedDataset(val_dataset, label_to_class, transform)
     #then generate the augmentations on the train set
     augmented_dataset = generate_augmentations_from_tree(individual, train_dataset, label_to_class)
     augmented_dataset = TreeAugmentedDataset(augmented_dataset, label_to_class, transform)
+    return augmented_dataset, val_dataset
 
-    #then train the model on the train set
-    model = resnet18(weights=ResNet18_Weights.DEFAULT)
-    model.fc = nn.Linear(model.fc.in_features, 256)
-    model.to("cuda")
-
-    #train for 1 epoch and calculate validation loss after one epoch
-    train_loader = DataLoader(augmented_dataset, batch_size=32, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    criterion = nn.CrossEntropyLoss()
+def get_val_loss(model, train_loader, val_loader, optimizer, criterion, device):
     for epoch in range(5):
         for batch in train_loader:
-            print(batch)
             images = batch[0]
             labels = batch[1]
-            
-            print(f"Images shape: {images.shape}")
-            print(f"Labels shape: {labels.shape if hasattr(labels, 'shape') else 'No shape'}")
-            print(f"Labels content: {labels}")
-            
-            images = images.to("cuda")
-            labels = labels.to("cuda")
+            images = images.to(device)
+            labels = labels.to(device)
             optimizer.zero_grad()
             outputs = model(images)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
 
-        #calculate validation loss
         with torch.no_grad():
             val_loss = 0
             for images, labels in val_loader:
-                images = images.to("cuda")
-                labels = labels.to("cuda")
+                images = images.to(device)
+                labels = labels.to(device)
                 outputs = model(images)
                 loss = criterion(outputs, labels)
                 val_loss += loss.item()
@@ -140,6 +123,31 @@ def fitness_score(individual) -> float:
         print(f"Epoch {epoch+1}, Validation Loss: {val_loss:.4f}")
 
     return val_loss
+
+def fitness_score(individual) -> float:
+    
+    #first create the dataset
+    train_dataset, val_dataset, test_dataset, label_to_class = create_datasets()
+
+    augmented_dataset_1, val_dataset_1 = create_augmented_val_datasets(train_dataset, val_dataset, label_to_class)
+    model = resnet18(weights=ResNet18_Weights.DEFAULT)
+    model.fc = nn.Linear(model.fc.in_features, 256)
+    model.to(device)
+    train_loader = DataLoader(augmented_dataset_1, batch_size=32, shuffle=True)
+    val_loader = DataLoader(val_dataset_1, batch_size=32, shuffle=False)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    criterion = nn.CrossEntropyLoss()
+
+    val_loss_1 = get_val_loss(model, train_loader, val_loader, optimizer, criterion, device)
+
+    #swap the train and val datasets and do the same thing
+    augmented_dataset_2, val_dataset_2 = create_augmented_val_datasets(val_dataset, train_dataset, label_to_class)
+    train_loader = DataLoader(augmented_dataset_2, batch_size=32, shuffle=True)
+    val_loader = DataLoader(val_dataset_2, batch_size=32, shuffle=False)
+    val_loss_2 = get_val_loss(model, train_loader, val_loader, optimizer, criterion, device)
+
+    #calculate the average of the two validation losses
+    return (val_loss_1 + val_loss_2) / 2
 
 #initialize some random tree and run the fitness score
 individual = initialize_augmentation_tree(depth=4)
