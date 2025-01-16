@@ -4,9 +4,21 @@ import numpy as np
 
 import AugmentationNode
 import fitness_score
+from image_augmentation_models.SegmentAugmentation import SegmentAugmentationManager
+from image_augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
+from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
+from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
+from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
 
 # Problem parameters
 tree_depth = 4
+
+segment_aug_manager = SegmentAugmentationManager()
+color_aug_manager = ColorControlNetAugmentationManager()
+canny_aug_manager = CannyAugmentationManager()
+nerf_aug_manager = NerfAugmentationManager()
+depth_aug_manager = DepthAugmentationManager()
+aug_managers = [segment_aug_manager, color_aug_manager, canny_aug_manager, nerf_aug_manager, depth_aug_manager]
 
 def print_tree(node, level=0, direction='root'):
     if node:
@@ -41,12 +53,12 @@ def genome_to_tree(genome):
 
 def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     """Calculates the fitness of an individual."""
-    # augmentation_tree = genome_to_tree(augmentation_tree_genome)
-    # loss = fitness_score.fitness_score(augmentation_tree)
-    # fitness = -1 * loss
-    # print_tree(genome_to_tree(augmentation_tree_genome))
+    augmentation_tree = genome_to_tree(augmentation_tree_genome)
+    loss = fitness_score.fitness_score(augmentation_tree, aug_managers)
+    fitness = -1 * loss
+    print_tree(augmentation_tree)
     print('fitness function called')
-    return random.random()
+    return fitness
 
 def gene_space():
     """Defines the gene space for the GA."""

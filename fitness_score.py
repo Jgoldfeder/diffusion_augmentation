@@ -8,8 +8,13 @@ import torch
 from torchvision.models import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
 from torch import nn
 from make_augmenations_from_tree import generate_augmentations_from_tree
-from AugmentationNode import initialize_augmentation_tree
+from AugmentationNode import initialize_augmentation_tree, print_tree
 from CustomDataset import TreeAugmentedDataset
+from image_augmentation_models.SegmentAugmentation import SegmentAugmentationManager
+from image_augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
+from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
+from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
+from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
 
 transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -90,10 +95,10 @@ def create_datasets():
     return train_dataset, val_dataset, test_dataset, new_label_to_class
 
 
-def create_augmented_val_datasets(train_dataset, val_dataset, label_to_class):
+def create_augmented_val_datasets(individual, train_dataset, val_dataset, label_to_class, aug_managers):
     val_dataset = TreeAugmentedDataset(val_dataset, label_to_class, transform)
     #then generate the augmentations on the train set
-    augmented_dataset = generate_augmentations_from_tree(individual, train_dataset, label_to_class)
+    augmented_dataset = generate_augmentations_from_tree(individual, train_dataset, label_to_class, aug_managers)
     augmented_dataset = TreeAugmentedDataset(augmented_dataset, label_to_class, transform)
     return augmented_dataset, val_dataset
 
@@ -124,24 +129,34 @@ def get_val_loss(model, train_loader, val_loader, optimizer, criterion, device):
 
     return val_loss
 
-def fitness_score(individual) -> float:
-    
-    #first create the dataset
-    train_dataset, val_dataset, test_dataset, label_to_class = create_datasets()
+def fitness_score(individual, aug_managers) -> float:
 
-    augmented_dataset_1, val_dataset_1 = create_augmented_val_datasets(train_dataset, val_dataset, label_to_class)
+    print("[LOG] Calculating fitness score for individual: \n")
+    print_tree(individual)
+
     model = resnet18(weights=ResNet18_Weights.DEFAULT)
     model.fc = nn.Linear(model.fc.in_features, 256)
     model.to(device)
-    train_loader = DataLoader(augmented_dataset_1, batch_size=32, shuffle=True)
-    val_loader = DataLoader(val_dataset_1, batch_size=32, shuffle=False)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
 
+    #first create the dataset
+    train_dataset, val_dataset, test_dataset, label_to_class = create_datasets()
+
+    augmented_dataset_1, val_dataset_1 = create_augmented_val_datasets(individual, train_dataset, val_dataset, label_to_class, aug_managers)
+    train_loader = DataLoader(augmented_dataset_1, batch_size=32, shuffle=True)
+    val_loader = DataLoader(val_dataset_1, batch_size=32, shuffle=False)
     val_loss_1 = get_val_loss(model, train_loader, val_loader, optimizer, criterion, device)
 
+    #reinitialize the model
+    model = resnet18(weights=ResNet18_Weights.DEFAULT)
+    model.fc = nn.Linear(model.fc.in_features, 256)
+    model.to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    criterion = nn.CrossEntropyLoss()
+
     #swap the train and val datasets and do the same thing
-    augmented_dataset_2, val_dataset_2 = create_augmented_val_datasets(val_dataset, train_dataset, label_to_class)
+    augmented_dataset_2, val_dataset_2 = create_augmented_val_datasets(individual, val_dataset, train_dataset, label_to_class, aug_managers)
     train_loader = DataLoader(augmented_dataset_2, batch_size=32, shuffle=True)
     val_loader = DataLoader(val_dataset_2, batch_size=32, shuffle=False)
     val_loss_2 = get_val_loss(model, train_loader, val_loader, optimizer, criterion, device)
@@ -152,5 +167,5 @@ def fitness_score(individual) -> float:
 if __name__ == '__main__':
     #initialize some random tree and run the fitness score
     individual = initialize_augmentation_tree(depth=4)
-    fitness_score(individual)
-    print(fitness_score(individual))
+    aug_managers = [SegmentAugmentationManager(), ColorControlNetAugmentationManager(), CannyAugmentationManager(), NerfAugmentationManager(), DepthAugmentationManager()]
+    print(fitness_score(individual, aug_managers))
