@@ -1,9 +1,9 @@
 import AugmentationNode
-from image_augmentation_models.SegmentAugmentation import SegmentAugmentationManager
-from image_augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
-from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
-from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
-from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
+# from image_augmentation_models.SegmentAugmentation import SegmentAugmentationManager
+# from image_augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
+# from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
+# from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
+# from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
 import torchvision.transforms as transforms
 import random
 
@@ -21,20 +21,22 @@ classical_aug_transform = transforms.Compose([
             transforms.RandomRotation(degrees=30)   # Random rotation within [-30, 30] degrees
         ])
 
-def generate_augmentations_from_tree(root: AugmentationNode, dataset, class_to_label_map) -> list:
+def generate_augmentations_from_tree(root: AugmentationNode, dataset, class_to_label_map, aug_managers) -> list:
     augmentations = []
     labels = []
-    segment_aug_manager = SegmentAugmentationManager()
-    color_aug_manager = ColorControlNetAugmentationManager()
-    canny_aug_manager = CannyAugmentationManager()
-    nerf_aug_manager = NerfAugmentationManager()
-    depth_aug_manager = DepthAugmentationManager()
+
+    segment_aug_manager = aug_managers[0]
+    color_aug_manager = aug_managers[1]
+    canny_aug_manager = aug_managers[2]
+    nerf_aug_manager = aug_managers[3]
+    depth_aug_manager = aug_managers[4]
+
     for entry in dataset:
         #run through the tree 5 times and compose augmentations based on the given tree
         curr_image = entry[0]
         label = entry[1]
         class_name = class_to_label_map[label]
-        print(class_to_label_map)
+        #print(class_to_label_map)
         augmentations.append(curr_image)
         labels.append(label)
 
