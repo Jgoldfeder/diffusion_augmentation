@@ -1,0 +1,10 @@
+Finished evolution generation
+Num times fitness function called: 40
+Finished evolution generation
+Num times fitness function called: 20
+Finished evolution generation
+Num times fitness function called: 20
+Finished evolution generation
+Num times fitness function called: 20
+Finished evolution generation
+Num times fitness function called: 20

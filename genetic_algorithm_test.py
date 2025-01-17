@@ -1,3 +1,4 @@
+num_times_fitness_called = 0
 import pygad
 import random
 import numpy as np
@@ -39,29 +40,31 @@ def genome_to_tree(genome):
         queue.append(node.right)
     return root_node
 
+
 def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     """Calculates the fitness of an individual."""
     # augmentation_tree = genome_to_tree(augmentation_tree_genome)
     # loss = fitness_score.fitness_score(augmentation_tree)
     # fitness = -1 * loss
     # print_tree(genome_to_tree(augmentation_tree_genome))
-    print('fitness function called')
+    # print('fitness function called')
+    global num_times_fitness_called
+    num_times_fitness_called += 1
     return random.random()
 
 def gene_space():
     """Defines the gene space for the GA."""
     gene_space = []
-    # TODO make it just one parameter instead of two so that probability always adds to 1
     for i in range(2 ** tree_depth - 1):
         gene_space.extend([[i for i in range(len(AugmentationNode.augmentation_types))], {"low": 0.0, "high": 1.0}])
     return gene_space
 
 # GA parameters
 # TODO make sure that num generations * sol_per_pop is the number of times fitness function is called
-num_generations = 3
-num_parents_mating = 4
+num_generations = 5
+num_parents_mating = 20
 keep_elitism = 0
-sol_per_pop = 4
+sol_per_pop = 30
 num_genes = 2 * (2 ** tree_depth - 1)
 
 # Initialize GA
@@ -69,7 +72,10 @@ fitness_progress = []  # To store fitness values for each generation
 
 def on_generation(ga_instance):
     """Callback executed at the end of each generation."""
+    global num_times_fitness_called
     print('Finished evolution generation')
+    print('Num times fitness function called:', num_times_fitness_called)
+    num_times_fitness_called = 0
     fitness_progress.append(ga_instance.best_solution()[1])  # Save best fitness of generation
 
 ga_instance = pygad.GA(
@@ -94,10 +100,10 @@ with open(fitness_file, "w") as file:
     for gen, fitness in enumerate(fitness_progress):
         file.write(f"{gen},{fitness}\n")
 
-print(f"Fitness progression saved to {fitness_file}")
+# print(f"Fitness progression saved to {fitness_file}")
 
-# Output the results
-solution, solution_fitness, solution_idx = ga_instance.best_solution()
-print(f"Best solution: {solution}")
-print_tree(genome_to_tree(solution))
-print(f"Fitness: {solution_fitness}")
+# # Output the results
+# solution, solution_fitness, solution_idx = ga_instance.best_solution()
+# print(f"Best solution: {solution}")
+# print_tree(genome_to_tree(solution))
+# print(f"Fitness: {solution_fitness}")
