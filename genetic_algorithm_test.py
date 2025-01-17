@@ -1,6 +1,8 @@
 import pygad
 import random
 import numpy as np
+import wandb
+import argparse
 
 import AugmentationNode
 import fitness_score
@@ -95,37 +97,72 @@ def on_generation(ga_instance):
     num_generations_finished += 1
     num_times_fitness_called = 0
 
+    best_solution = ga_instance.best_solution()
+    best_tree = genome_to_tree(best_solution[0])
+    best_fitness = best_solution[1]
+
     print(f'Best tree for generation {num_generations_finished}:')
-    print_tree(genome_to_tree(ga_instance.best_solution()[0]))
-    fitness_progress.append(ga_instance.best_solution()[1])
+    print_tree(best_tree)
+    fitness_progress.append(best_fitness)
 
-ga_instance = pygad.GA(
-    num_generations=num_generations,
-    num_parents_mating=num_parents_mating,
-    fitness_func=fitness_function,
-    sol_per_pop=sol_per_pop,
-    keep_elitism=keep_elitism,
-    keep_parents=keep_parents,
-    num_genes=num_genes,
-    gene_space=gene_space(),
-    mutation_percent_genes=10,
-    on_generation=on_generation
-)
+    # Log metrics to wandb
+    wandb.log({
+        "generation": num_generations_finished,
+        "best_fitness": best_fitness,
+        "population_fitness_mean": np.mean(ga_instance.last_generation_fitness),
+        "population_fitness_std": np.std(ga_instance.last_generation_fitness)
+    })
 
-# Run the GA
-ga_instance.run()
+def parse_args():
+    parser = argparse.ArgumentParser(description='Run genetic algorithm for augmentation tree optimization')
+    parser.add_argument('--num_generations', type=int, default=3, help='Number of generations')
+    parser.add_argument('--sol_per_pop', type=int, default=10, help='Solutions per population')
+    parser.add_argument('--num_parents_mating', type=int, default=4, help='Number of parents for mating')
+    parser.add_argument('--keep_elitism', type=int, default=1, help='Number of elites to keep')
+    parser.add_argument('--keep_parents', type=int, default=4, help='Number of parents to keep')
+    parser.add_argument('--mutation_percent', type=int, default=10, help='Mutation percentage')
+    return parser.parse_args()
 
-# Save fitness progression to a file
-fitness_file = "fitness_progression.csv"
-with open(fitness_file, "w") as file:
-    file.write("Generation,Fitness\n")
-    for gen, fitness in enumerate(fitness_progress):
-        file.write(f"{gen},{fitness}\n")
+def main():
+    args = parse_args()
+    
+    wandb.init(
+        project="genetic-augmentation-optimization",
+        config={
+            "num_generations": args.num_generations,
+            "sol_per_pop": args.sol_per_pop,
+            "num_parents_mating": args.num_parents_mating,
+            "keep_elitism": args.keep_elitism,
+            "keep_parents": args.keep_parents,
+            "mutation_percent": args.mutation_percent,
+            "tree_depth": tree_depth
+        }
+    )
 
-# print(f"Fitness progression saved to {fitness_file}")
+    ga_instance = pygad.GA(
+        num_generations=args.num_generations,
+        num_parents_mating=args.num_parents_mating,
+        fitness_func=fitness_function,
+        sol_per_pop=args.sol_per_pop,
+        keep_elitism=args.keep_elitism,
+        keep_parents=args.keep_parents,
+        num_genes=num_genes,
+        gene_space=gene_space(),
+        mutation_percent_genes=args.mutation_percent,
+        on_generation=on_generation
+    )
 
-# # Output the results
-# solution, solution_fitness, solution_idx = ga_instance.best_solution()
-# print(f"Best solution: {solution}")
-# print_tree(genome_to_tree(solution))
-# print(f"Fitness: {solution_fitness}")
+    # Run the GA
+    ga_instance.run()
+
+    # Save fitness progression to a file
+    fitness_file = "fitness_progression.csv"
+    with open(fitness_file, "w") as file:
+        file.write("Generation,Fitness\n")
+        for gen, fitness in enumerate(fitness_progress):
+            file.write(f"{gen},{fitness}\n")
+
+    wandb.finish()
+
+if __name__ == "__main__":
+    main()
