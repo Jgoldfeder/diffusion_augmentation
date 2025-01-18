@@ -66,7 +66,7 @@ def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     print('fitness:', fitness)
     global num_times_fitness_called
     num_times_fitness_called += 1
-    return random.random()
+    return fitness
 
 def gene_space():
     """Defines the gene space for the GA."""
