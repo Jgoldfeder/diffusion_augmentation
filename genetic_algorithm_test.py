@@ -3,6 +3,7 @@ import random
 import numpy as np
 import wandb
 import argparse
+import time
 
 import AugmentationNode
 import fitness_score
@@ -54,6 +55,7 @@ def genome_to_tree(genome):
         queue.append(node.right)
     return root_node
 
+start_time = int(time.time())
 
 num_times_fitness_called = 0
 def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
@@ -61,11 +63,15 @@ def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     augmentation_tree = genome_to_tree(augmentation_tree_genome)
     loss = fitness_score.fitness_score(augmentation_tree, aug_managers)
     fitness = -1 * loss
+
     print('fitness function called')
     print_tree(augmentation_tree)
     print('fitness:', fitness)
+    print('Time since start (seconds):', int(time.time() - start_time))
+
     global num_times_fitness_called
     num_times_fitness_called += 1
+
     return fitness
 
 def gene_space():
@@ -104,6 +110,7 @@ def on_generation(ga_instance):
     print(f'Best tree for generation {num_generations_finished}:')
     print_tree(best_tree)
     fitness_progress.append(best_fitness)
+    print('Time since start (seconds):', int(time.time() - start_time))
 
     # Log metrics to wandb
     wandb.log({
