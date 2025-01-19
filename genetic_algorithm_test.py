@@ -13,6 +13,8 @@ from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
 from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
 from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
 
+from fitness_score import create_datasets
+
 segment_aug_manager = SegmentAugmentationManager()
 color_aug_manager = ColorControlNetAugmentationManager()
 canny_aug_manager = CannyAugmentationManager()
@@ -56,12 +58,13 @@ def genome_to_tree(genome):
     return root_node
 
 start_time = int(time.time())
+train_dataset, val_dataset, test_dataset, label_to_class = create_datasets()
 
 num_times_fitness_called = 0
 def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     """Calculates the fitness of an individual."""
     augmentation_tree = genome_to_tree(augmentation_tree_genome)
-    loss = fitness_score.fitness_score(augmentation_tree, aug_managers)
+    loss = fitness_score.fitness_score(augmentation_tree, train_dataset, val_dataset, aug_managers, label_to_class)
     fitness = -1 * loss
 
     print('fitness function called')
@@ -78,7 +81,7 @@ def gene_space():
     """Defines the gene space for the GA."""
     gene_space = []
     for i in range(2 ** tree_depth - 1):
-        gene_space.extend([[i for i in range(len(AugmentationNode.augmentation_types))], {"low": 0.0, "high": 1.0}])
+        gene_space.extend([[i for i in range(len(AugmentationNode.augmentation_types))], {"low": 0.3, "high": 0.7}])
     return gene_space
 
 # GA parameters

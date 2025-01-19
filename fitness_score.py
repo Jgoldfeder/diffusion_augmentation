@@ -129,7 +129,7 @@ def get_val_loss(model, train_loader, val_loader, optimizer, criterion, device):
 
     return val_loss
 
-def fitness_score(individual, aug_managers) -> float:
+def fitness_score(individual, train_dataset, val_dataset, aug_managers, label_to_class) -> float:
 
     print("[LOG] Calculating fitness score for individual: \n")
     print_tree(individual)
@@ -139,9 +139,6 @@ def fitness_score(individual, aug_managers) -> float:
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
-
-    #first create the dataset
-    train_dataset, val_dataset, test_dataset, label_to_class = create_datasets()
 
     augmented_dataset_1, val_dataset_1 = create_augmented_val_datasets(individual, train_dataset, val_dataset, label_to_class, aug_managers)
     train_loader = DataLoader(augmented_dataset_1, batch_size=32, shuffle=True)
