@@ -5,7 +5,7 @@ from torchvision.datasets import Caltech256, FashionMNIST, ImageFolder, SUN397
 from torch.utils.data import DataLoader
 from CustomDataset import split_train_test, split_train_val
 import torch
-from torchvision.models import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
+from torchvision.models import resnet18, ResNet18_Weights
 from torch import nn
 from make_augmenations_from_tree import generate_augmentations_from_tree
 from AugmentationNode import initialize_augmentation_tree, print_tree
@@ -87,8 +87,6 @@ def create_datasets():
     new_label_to_class = [''] * len(old_to_new_labels)
     for old_label, new_label in old_to_new_labels.items():
         new_label_to_class[new_label] = label_to_class[old_label]
-
-    
 
     train_dataset, val_dataset = split_train_val(base_dataset)
 
