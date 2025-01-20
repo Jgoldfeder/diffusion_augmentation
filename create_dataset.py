@@ -1,4 +1,5 @@
 import random
+import os
 from collections import defaultdict
 
 from torchvision.datasets import Caltech256
