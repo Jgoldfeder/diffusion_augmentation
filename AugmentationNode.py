@@ -22,7 +22,7 @@ def print_tree(node, level=0, direction='root'):
             if node.right:
                 print_tree(node.right, level + 1, 'R')
 
-def initialize_augmentation_tree(depth=3):
+def initialize_augmentation_tree(depth=4):
     def create_node(current_depth, parent_edge_type=None, is_root=False):
         if current_depth == 0:
             return None

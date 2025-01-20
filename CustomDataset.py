@@ -38,6 +38,7 @@ class RemappedDataset(Dataset):
 
 def split_train_test(dataset, class_to_label, labels, num_ways, num_shots):
     target_classes = random.sample(class_to_label.keys(), num_ways)
+    print("[LOG] Selected classes: ", target_classes)
     target_labels = [class_to_label[target_class] for target_class in target_classes]
 
     label_to_indexes = defaultdict(list)

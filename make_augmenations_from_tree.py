@@ -6,6 +6,16 @@ import AugmentationNode
 # from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
 import torchvision.transforms as transforms
 import random
+from PIL import Image
+import torch
+
+from image_augmentation_models.SegmentAugmentation import SegmentAugmentationManager
+from image_augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
+from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
+from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
+from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
+
+from AugmentationNode import print_tree
 
 classical_aug_transform = transforms.Compose([
             transforms.Resize(size=(256, 256)), # NOTE should this resize be here? Otherwise errors on some classes, ex. kangaroo-101 there is an image of size (300, 182)
@@ -75,3 +85,39 @@ def generate_augmentations_from_tree(root: AugmentationNode, dataset, class_to_l
     combined_dataset = list(zip(augmentations, labels))
     
     return combined_dataset
+
+
+def test_make_augmentations():
+    #initialize all the augmentation managers
+    segment_aug_manager = SegmentAugmentationManager()
+    color_aug_manager = ColorControlNetAugmentationManager()
+    canny_aug_manager = CannyAugmentationManager()
+    nerf_aug_manager = NerfAugmentationManager()
+    depth_aug_manager = DepthAugmentationManager()
+
+    aug_managers = [segment_aug_manager, color_aug_manager, canny_aug_manager, nerf_aug_manager, depth_aug_manager]
+
+    tree = AugmentationNode.initialize_augmentation_tree()
+    print_tree(tree)
+
+    #create a sample dataset
+    sample_dataset = [(Image.open("torch/caltech256/256_ObjectCategories/001.ak47/001_0001.jpg"), 0)]
+    class_to_label_map = {0: "ak47"}
+
+    augmented_dataset = generate_augmentations_from_tree(tree, sample_dataset, class_to_label_map, aug_managers)
+
+    #save all the images to a folder
+    import os
+    if not os.path.exists("test_augmented_images"):
+        os.makedirs("test_augmented_images")
+    for i, (image, label) in enumerate(augmented_dataset):
+
+        image.save(f"test_augmented_images/augmented_{i}.jpg")
+
+    print(f"Saved {len(augmented_dataset)} augmented images to augmented_images/")
+
+if __name__ == '__main__':
+    test_generateda_augmentations()
+   
+
+    
