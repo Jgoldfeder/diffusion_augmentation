@@ -58,6 +58,24 @@ def create_list_from_dataset(dataset, new_to_old_labels, label_to_class):
           dataset_list.append((img, label, class_name))
      return dataset_list
 
+def save_to_dir(dataset, dataset_name, num_shots, seed, train=True):
+    file_path = os.path.join('few_shot_datasets', 
+                            dataset_name, 
+                            str(num_shots), 
+                            str(seed), 
+                            'train' if train else 'test')
+    
+    os.makedirs(file_path, exist_ok=True)
+
+    #dataset is a list of tuples (image, label, class_name)
+    for img, label, class_name in dataset:
+        folder_name = f"{label}_{class_name}" #folder name is {label}_{class_name}
+        os.makedirs(os.path.join(file_path, folder_name), exist_ok=True)
+
+        #use number of images in folder to name the image
+        img_count = len(os.listdir(os.path.join(file_path, folder_name)))
+        img.save(os.path.join(file_path, folder_name, f"{img_count}.png"))
+
 if __name__ == '__main__':
 	print('main func called')
 	# read in caltech 256 dataset
@@ -83,22 +101,4 @@ if __name__ == '__main__':
 	new_to_old_labels = {v: k for k, v in old_to_new_labels.items()}
 	dataset_list = create_list_from_dataset(train_dataset, new_to_old_labels, label_to_class)
 
-	breakpoint()
-     
-def save_to_dir(dataset, dataset_name, num_shots, seed, train=True):
-    file_path = os.path.join('few_shot_datasets', 
-                            dataset_name, 
-                            num_shots, 
-                            seed, 
-                            'train' if train else 'test')
-    
-    os.makedirs(file_path, exist_ok=True)
-
-    #dataset is a list of tuples (image, label, class_name)
-    for img, label, class_name in dataset:
-        folder_name = f"{label}_{class_name}" #folder name is {label}_{class_name}
-        os.makedirs(os.path.join(file_path, folder_name), exist_ok=True)
-
-        #use number of images in folder to name the image
-        img_count = len(os.listdir(os.path.join(file_path, folder_name)))
-        img.save(os.path.join(file_path, folder_name, f"{img_count}.png"))
+	save_to_dir(dataset_list, dataset_name, num_shots, seed, train=True)
