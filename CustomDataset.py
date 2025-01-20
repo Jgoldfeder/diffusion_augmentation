@@ -111,12 +111,13 @@ class FewShotDataset(Dataset): #dataset containing images from predefined struct
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
 
-        for file in os.listdir(os.path.join(file_path, self.dataset_type)):
-            if file.endswith('.png'):
-                img = Image.open(os.path.join(file_path, self.dataset_type, file))
-                self.images.append(img)
-                self.labels.append(int(file.split('_')[0]))
-                self.class_names.append(file.split('_')[1:])
+        for class_name in os.listdir(os.path.join(file_path, self.dataset_type)):
+            for img in os.listdir(os.path.join(file_path, self.dataset_type, class_name)):
+                if img.endswith('.png'):
+                    img = Image.open(os.path.join(file_path, self.dataset_type, class_name, img))
+                    self.images.append(img)
+                    self.labels.append(int(class_name.split('_')[0]))
+                    self.class_names.append(class_name.split('_')[1])
 
     def __len__(self):
         return len(self.images)
