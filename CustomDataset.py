@@ -124,6 +124,8 @@ class FewShotDataset(Dataset): #dataset containing images from predefined struct
 
     def __getitem__(self, index):
         img = self.images[index]
+        if self.dataset_type == "test":
+            img = self.transform(img)
         label = self.labels[index]
         class_names = self.class_names[index]
         return img, label, class_names
