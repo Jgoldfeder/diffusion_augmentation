@@ -61,8 +61,8 @@ def create_list_from_dataset(dataset, new_to_old_labels, label_to_class):
 def save_to_dir(dataset, dataset_name, num_shots, seed, train=True):
     file_path = os.path.join('few_shot_datasets', 
                             dataset_name, 
-                            str(num_shots), 
-                            str(seed), 
+                            f"{num_shots}_shot", 
+                            f"seed_{seed}", 
                             'train' if train else 'test')
     
     os.makedirs(file_path, exist_ok=True)
