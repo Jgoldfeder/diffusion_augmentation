@@ -16,7 +16,7 @@ from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
 from fitness_score import create_datasets
 from make_augmenations_from_tree import generate_augmentations_from_tree
 from torch.utils.data import DataLoader
-from torchvision.models import resnet18, ResNet18_Weights
+from torchvision.models import resnet50, ResNet50_Weights
 from torchvision import transforms
 from torch import nn
 import torch
@@ -95,7 +95,9 @@ def compute_test_accuracy(device):
     test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
     #train the model
-    model = resnet18(weights=ResNet18_Weights.DEFAULT)
+    model = resnet50(weights=ResNet50_Weights.DEFAULT)
+    for param in model.parameters():
+        param.requires_grad = False
     model.fc = nn.Linear(model.fc.in_features, 256)
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)

@@ -5,7 +5,7 @@ from torchvision.datasets import Caltech256, FashionMNIST, ImageFolder, SUN397
 from torch.utils.data import DataLoader
 from CustomDataset import split_train_test, split_train_val
 import torch
-from torchvision.models import resnet18, ResNet18_Weights
+from torchvision.models import resnet50, ResNet50_Weights
 from torch import nn
 from make_augmenations_from_tree import generate_augmentations_from_tree
 from AugmentationNode import initialize_augmentation_tree, print_tree
@@ -132,9 +132,10 @@ def fitness_score(individual, train_dataset, val_dataset, aug_managers, label_to
     print("[LOG] Calculating fitness score for individual: \n")
     print_tree(individual)
 
-    # TODO might want to freeze all weights but fc layer
-    model = resnet18(weights=ResNet18_Weights.DEFAULT)
-    model.fc = nn.Linear(model.fc.in_features, 256)
+    model = resnet50(weights=ResNet50_Weights.DEFAULT)
+    model.fc = nn.Linear(model.fc.in_features, 5)
+    for param in model.parameters():
+        param.requires_grad = False
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
@@ -145,8 +146,10 @@ def fitness_score(individual, train_dataset, val_dataset, aug_managers, label_to
     val_loss_1 = get_val_loss(model, train_loader, val_loader, optimizer, criterion, device)
 
     #reinitialize the model
-    model = resnet18(weights=ResNet18_Weights.DEFAULT)
-    model.fc = nn.Linear(model.fc.in_features, 256)
+    model = resnet50(weights=ResNet50_Weights.DEFAULT)
+    model.fc = nn.Linear(model.fc.in_features, 5)
+    for param in model.parameters():
+        param.requires_grad = False
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
