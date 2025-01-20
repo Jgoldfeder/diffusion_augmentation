@@ -81,7 +81,7 @@ if __name__ == '__main__':
 	# read in caltech 256 dataset
 
 	dataset_name = 'caltech256'
-	seed = 42
+	seed = 43
 	num_ways = 5 # will always be 5
 	num_shots = 2
 
