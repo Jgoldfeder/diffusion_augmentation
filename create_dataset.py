@@ -50,15 +50,13 @@ def split_train_test(dataset, class_to_label, labels, num_ways, num_shots, seed)
 
     return train_dataset, test_dataset, old_to_new_labels
 
-def create_list_from_dataset(dataset, old_to_new_labels, label_to_class):
+def create_list_from_dataset(dataset, label_to_class):
      dataset_list = []
      for i in range(len(dataset)):
           img, label = dataset[i]
           class_name = label_to_class[label]
-          new_label = old_to_new_labels[label]
-          dataset_list.append((img, new_label, class_name))
+          dataset_list.append((img, label, class_name))
      return dataset_list
-
 
 if __name__ == '__main__':
 	print('main func called')
@@ -83,7 +81,7 @@ if __name__ == '__main__':
 
 	train_dataset, test_dataset, old_to_new_labels = split_train_test(dataset, class_to_label, labels, num_ways, num_shots, seed=seed)
 
-	dataset_list = create_list_from_dataset(train_dataset, old_to_new_labels, label_to_class)
+	dataset_list = create_list_from_dataset(train_dataset, label_to_class)
 
 	breakpoint()
      
