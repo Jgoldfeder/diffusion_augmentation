@@ -133,9 +133,9 @@ def fitness_score(individual, train_dataset, val_dataset, aug_managers, label_to
     print_tree(individual)
 
     model = resnet50(weights=ResNet50_Weights.DEFAULT)
-    model.fc = nn.Linear(model.fc.in_features, 5)
     for param in model.parameters():
         param.requires_grad = False
+    model.fc = nn.Linear(model.fc.in_features, 5)
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
@@ -147,9 +147,9 @@ def fitness_score(individual, train_dataset, val_dataset, aug_managers, label_to
 
     #reinitialize the model
     model = resnet50(weights=ResNet50_Weights.DEFAULT)
-    model.fc = nn.Linear(model.fc.in_features, 5)
     for param in model.parameters():
         param.requires_grad = False
+    model.fc = nn.Linear(model.fc.in_features, 5)
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
