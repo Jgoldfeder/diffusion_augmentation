@@ -99,6 +99,36 @@ def split_train_val(dataset, split_ratio=0.5):
     return train_dataset, val_dataset
 
 
+class FewShotDataset(Dataset): #dataset containing images from predefined structure
+    def __init__(self, file_path, dataset_type="train"):
+        self.images = []
+        self.labels = []
+        self.class_names = []
+        self.dataset_type = dataset_type
+        self.transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+
+        with open(file_path, 'r') as f:
+            for file in os.listdir(file_path):
+                if file.endswith('.png'):
+                    img = Image.open(os.path.join(file_path, file))
+                    self.images.append(img)
+                    self.labels.append(int(file.split('_')[0]))
+                    self.class_names.append(file.split('_')[1:])
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, index):
+        img = self.images[index]
+        img = self.transform(img)
+        label = self.labels[index]
+        class_names = self.class_names[index]
+        return img, label, class_names
+
 class ClassicalDataset(Dataset):
     def __init__(self, dataset, basic_transform, duplicate_factor=1):
         classical_aug_transform = transforms.Compose([
@@ -119,17 +149,17 @@ class ClassicalDataset(Dataset):
         self.basic_transform = basic_transform
         self.dataset = []
 
-        for img, label in dataset:
-            self.dataset.append((self.basic_transform(img), label))
+        for img, label, class_name in dataset:
+            self.dataset.append((self.basic_transform(img), label, class_name))
             for _ in range(duplicate_factor-1):
-                self.dataset.append((classical_aug_transform(img), label))
+                self.dataset.append((classical_aug_transform(img), label, class_name))
         
     def __len__(self):
         return len(self.dataset)
 
     def __getitem__(self, index):
-        img, label = self.dataset[index]
-        return img, label
+        img, label, class_name = self.dataset[index]
+        return img, label, class_name
 
 
 class AugmentedDataset(Dataset):
