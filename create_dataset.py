@@ -50,6 +50,16 @@ def split_train_test(dataset, class_to_label, labels, num_ways, num_shots, seed)
 
     return train_dataset, test_dataset, old_to_new_labels
 
+def create_list_from_dataset(dataset, old_to_new_labels, label_to_class):
+     dataset_list = []
+     for i in range(len(dataset)):
+          img, label = dataset[i]
+          class_name = label_to_class[label]
+          new_label = old_to_new_labels[label]
+          dataset_list.append((img, new_label, class_name))
+     return dataset_list
+
+
 if __name__ == '__main__':
 	print('main func called')
 	# read in caltech 256 dataset
@@ -73,17 +83,10 @@ if __name__ == '__main__':
 
 	train_dataset, test_dataset, old_to_new_labels = split_train_test(dataset, class_to_label, labels, num_ways, num_shots, seed=seed)
 
+	dataset_list = create_list_from_dataset(train_dataset, old_to_new_labels, label_to_class)
+
 	breakpoint()
      
-def create_list_from_dataset(dataset, old_to_new_labels, label_to_class):
-     dataset_list = []
-     for i in range(len(dataset)):
-          img, label = dataset[i]
-          class_name = label_to_class[label]
-          new_label = old_to_new_labels[label]
-          dataset_list.append((img, new_label, class_name))
-     return dataset_list
-
 def save_to_dir(dataset, dataset_name, num_shots, seed, train=True):
     file_path = os.path.join('few_shot_datasets', 
                             dataset_name, 
