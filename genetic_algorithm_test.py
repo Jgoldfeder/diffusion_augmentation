@@ -16,22 +16,21 @@ from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
 from fitness_score import create_datasets
 from make_augmenations_from_tree import generate_augmentations_from_tree
 from torch.utils.data import DataLoader
-
 from torchvision.models import resnet18, ResNet18_Weights
 from torchvision import transforms
 from torch import nn
 import torch
 
-from CustomDataset  import TreeAugmentedDataset
+from CustomDataset  import TreeAugmentedDataset, ClassicalDataset
 
 random.seed(42)
 
-segment_aug_manager = SegmentAugmentationManager()
-color_aug_manager = ColorControlNetAugmentationManager()
-canny_aug_manager = CannyAugmentationManager()
-nerf_aug_manager = NerfAugmentationManager()
-depth_aug_manager = DepthAugmentationManager()
-aug_managers = [segment_aug_manager, color_aug_manager, canny_aug_manager, nerf_aug_manager, depth_aug_manager]
+# segment_aug_manager = SegmentAugmentationManager()
+# color_aug_manager = ColorControlNetAugmentationManager()
+# canny_aug_manager = CannyAugmentationManager()
+# nerf_aug_manager = NerfAugmentationManager()
+# depth_aug_manager = DepthAugmentationManager()
+# aug_managers = [segment_aug_manager, color_aug_manager, canny_aug_manager, nerf_aug_manager, depth_aug_manager]
 
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -77,17 +76,22 @@ def genome_to_tree(genome):
 
 start_time = int(time.time())
 
-def compute_test_accuracy(augmentation_tree, device):
+def compute_test_accuracy(device):
     global train_dataset, val_dataset, test_dataset, label_to_class, aug_managers
     #combine the train and val datasets
     print('[LOG] Computing test accuracy on combined train and val datasets')
     combined_dataset = torch.utils.data.ConcatDataset([train_dataset, val_dataset])
-    augmented_dataset = generate_augmentations_from_tree(augmentation_tree, combined_dataset, label_to_class, aug_managers)
-    augmented_dataset = TreeAugmentedDataset(augmented_dataset, label_to_class, transform)
+
+    #classical augmentation
+    classical_dataset = ClassicalDataset(combined_dataset, transform, duplicate_factor=6)
+
+    #augmented_dataset = generate_augmentations_from_tree(augmentation_tree, combined_dataset, label_to_class, aug_managers)
+    #augmented_dataset = TreeAugmentedDataset(augmented_dataset, label_to_class, transform)
     #convert the test dataset to a TreeAugmentedDataset
     test_dataset = TreeAugmentedDataset(test_dataset, label_to_class, transform)
 
-    train_loader = DataLoader(augmented_dataset, batch_size=32, shuffle=True)
+    #train_loader = DataLoader(augmented_dataset, batch_size=32, shuffle=True)
+    train_loader = DataLoader(classical_dataset, batch_size=32, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
     #train the model
@@ -245,21 +249,23 @@ def main():
         }
     )
 
-    ga_instance = pygad.GA(
-        num_generations=args.num_generations,
-        num_parents_mating=args.num_parents_mating,
-        fitness_func=fitness_function,
-        sol_per_pop=args.sol_per_pop,
-        keep_elitism=args.keep_elitism,
-        keep_parents=args.keep_parents,
-        num_genes=num_genes,
-        gene_space=gene_space(),
-        mutation_percent_genes=args.mutation_percent,
-        on_generation=on_generation
-    )
+    # ga_instance = pygad.GA(
+    #     num_generations=args.num_generations,
+    #     num_parents_mating=args.num_parents_mating,
+    #     fitness_func=fitness_function,
+    #     sol_per_pop=args.sol_per_pop,
+    #     keep_elitism=args.keep_elitism,
+    #     keep_parents=args.keep_parents,
+    #     num_genes=num_genes,
+    #     gene_space=gene_space(),
+    #     mutation_percent_genes=args.mutation_percent,
+    #     on_generation=on_generation
+    # )
 
     # Run the GA
-    ga_instance.run()
+    # ga_instance.run()
+
+    compute_test_accuracy("cuda")
 
     # Save fitness progression to a file
     fitness_file = "fitness_progression.csv"
