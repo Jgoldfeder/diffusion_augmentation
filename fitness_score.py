@@ -101,7 +101,7 @@ def create_augmented_val_datasets(individual, train_dataset, val_dataset, label_
     return augmented_dataset, val_dataset
 
 def get_val_loss(model, train_loader, val_loader, optimizer, criterion, device):
-    for epoch in range(5):
+    for epoch in range(20):
         for batch in train_loader:
             images = batch[0]
             labels = batch[1]
@@ -132,6 +132,7 @@ def fitness_score(individual, train_dataset, val_dataset, aug_managers, label_to
     print("[LOG] Calculating fitness score for individual: \n")
     print_tree(individual)
 
+    # TODO might want to freeze all weights but fc layer
     model = resnet18(weights=ResNet18_Weights.DEFAULT)
     model.fc = nn.Linear(model.fc.in_features, 256)
     model.to(device)
@@ -163,4 +164,6 @@ if __name__ == '__main__':
     #initialize some random tree and run the fitness score
     individual = initialize_augmentation_tree(depth=4)
     aug_managers = [SegmentAugmentationManager(), ColorControlNetAugmentationManager(), CannyAugmentationManager(), NerfAugmentationManager(), DepthAugmentationManager()]
-    print(fitness_score(individual, aug_managers))
+    train_dataset, val_dataset, test_dataset, new_label_to_class = create_datasets()
+    for i in range(5):
+        print(fitness_score(individual, train_dataset, val_dataset, aug_managers, new_label_to_class))
