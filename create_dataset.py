@@ -99,6 +99,9 @@ if __name__ == '__main__':
 
 	train_dataset, test_dataset, old_to_new_labels = split_train_test(dataset, class_to_label, labels, num_ways, num_shots, seed=seed)
 	new_to_old_labels = {v: k for k, v in old_to_new_labels.items()}
-	dataset_list = create_list_from_dataset(train_dataset, new_to_old_labels, label_to_class)
 
-	save_to_dir(dataset_list, dataset_name, num_shots, seed, train=True)
+	train_dataset_list = create_list_from_dataset(train_dataset, new_to_old_labels, label_to_class)
+	test_dataset_list = create_list_from_dataset(test_dataset, new_to_old_labels, label_to_class)
+
+	save_to_dir(train_dataset_list, dataset_name, num_shots, seed, train=True)
+	save_to_dir(test_dataset_list, dataset_name, num_shots, seed, train=False)
