@@ -31,29 +31,27 @@ classical_aug_transform = transforms.Compose([
             transforms.RandomRotation(degrees=30)   # Random rotation within [-30, 30] degrees
         ])
 
-def generate_augmentations_from_tree(root: AugmentationNode, dataset, class_to_label_map, aug_managers) -> list:
+def generate_augmentations_from_tree(root: AugmentationNode, dataset, aug_managers, transform) -> list:
     augmentations = []
     labels = []
-
+    class_names = []
     segment_aug_manager = aug_managers[0]
     color_aug_manager = aug_managers[1]
     canny_aug_manager = aug_managers[2]
     nerf_aug_manager = aug_managers[3]
     depth_aug_manager = aug_managers[4]
 
-    for entry in dataset:
+    for image, label, class_name in dataset:
         #run through the tree 5 times and compose augmentations based on the given tree
-        curr_image = entry[0]
-        label = entry[1]
-        class_name = class_to_label_map[label]
-        #print(class_to_label_map)
-        augmentations.append(curr_image)
+        augmentations.append(transform(image))
         labels.append(label)
+        class_names.append(class_name)
 
         for i in range(5):
             print(f"Generating augmentation {i+1} for class {class_name}")
             #start from the root and traverse the tree down randomly based on the left and right probabilities
             curr_node = root
+            curr_image = image
             while curr_node.left and curr_node.right:
                 if random.random() < curr_node.left_child_probability:
                     curr_node = curr_node.left
@@ -76,15 +74,13 @@ def generate_augmentations_from_tree(root: AugmentationNode, dataset, class_to_l
                     curr_image = curr_image # do nothing explicitly
 
             #add the final image to the list
-            augmentations.append(curr_image)
+            augmentations.append(transform(curr_image))
             labels.append(label)
+            class_names.append(class_name)
 
-    # Convert lists to a list of tuples (image, class) for DataLoader compatibility
-    print(f"Augmentations: {augmentations}")
-    print(f"Labels: {labels}")
-    combined_dataset = list(zip(augmentations, labels))
-    
-    return combined_dataset
+    #return a list of tuples (image, label, class_name)
+    dataset = list(zip(augmentations, labels, class_names))
+    return dataset
 
 
 def test_make_augmentations():

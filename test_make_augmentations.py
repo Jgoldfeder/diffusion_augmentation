@@ -6,22 +6,18 @@ from make_augmenations_from_tree import generate_augmentations_from_tree
 from AugmentationNode import AugmentationNode
 from AugmentationNode import initialize_augmentation_tree
 import os
+from CustomDataset import FewShotDataset
+from torch.utils.data import DataLoader
+from torchvision.models import resnet50, ResNet50_Weights
+from torch import nn
+from torchvision import transforms
 
-def create_sample_tree():
-    # Create a simple tree with different augmentation types
-    root = AugmentationNode(left_child_probability=0.6)
-    
-    # Left branch
-    root.left = AugmentationNode(parent_edge_type="classical", left_child_probability=0.5)
-    root.left.left = AugmentationNode(parent_edge_type="color")
-    root.left.right = AugmentationNode(parent_edge_type="canny")
-    
-    # Right branch
-    root.right = AugmentationNode(parent_edge_type="segment", left_child_probability=0.7)
-    root.right.left = AugmentationNode(parent_edge_type="depth")
-    root.right.right = AugmentationNode(parent_edge_type="nerf")
-    
-    return root
+from image_augmentation_models.SegmentAugmentation import SegmentAugmentationManager
+from image_augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
+from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
+from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
+from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
+
 
 def visualize_augmentations(original_images, augmented_images):
     # Create output directory if it doesn't exist
@@ -37,24 +33,81 @@ def visualize_augmentations(original_images, augmented_images):
         img.save(os.path.join(output_dir, f'augmented_{idx+1}.png'))
 
 def main():
-    sample_paths = ["torch/caltech256/256_ObjectCategories/001.ak47/001_0001.jpg",
-                     "torch/caltech256/256_ObjectCategories/001.ak47/001_0002.jpg"]
-    sample_images = [Image.open(path) for path in sample_paths]
-    print(sample_images)
+    dataset_path = "few_shot_datasets/caltech256/2_shot/seed_41"
+    train_dataset = FewShotDataset(dataset_path, dataset_type='train')
+    test_dataset = FewShotDataset(dataset_path, dataset_type='test')
 
-    # Create augmentation tree
+    segment_aug_manager = SegmentAugmentationManager()
+    color_aug_manager = ColorControlNetAugmentationManager()
+    canny_aug_manager = CannyAugmentationManager()
+    nerf_aug_manager = NerfAugmentationManager()
+    depth_aug_manager = DepthAugmentationManager()
+
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+
+    aug_managers = [segment_aug_manager, color_aug_manager, canny_aug_manager, nerf_aug_manager, depth_aug_manager]
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     aug_tree = initialize_augmentation_tree(depth=4)
+    augmented_dataset = generate_augmentations_from_tree(aug_tree, train_dataset, aug_managers, transform)
 
-    # Generate augmentations
-    augmented_images = generate_augmentations_from_tree(aug_tree, sample_images, ["ak47", "ak47"])
-    
-    # Visualize results
-    visualize_augmentations(sample_images, augmented_images)
-    
-    # Print some statistics
-    print(f"Number of original images: {len(sample_images)}")
-    print(f"Number of augmented images: {len(augmented_images)}")
-    print(f"Expected number of augmentations: {len(sample_images) * (1 + 5)}")  # Original + 5 augmentations per image
+    train_loader = DataLoader(augmented_dataset, batch_size=32, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+
+    #train the model
+    model = resnet50(weights=ResNet50_Weights.DEFAULT)
+    for param in model.parameters():
+        param.requires_grad = False
+    model.fc = nn.Linear(model.fc.in_features, 5)
+    model.to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    criterion = nn.CrossEntropyLoss()
+
+    for epoch in range(400):
+        model.train()
+        epoch_loss = 0
+        train_correct = 0
+        train_total = 0
+        
+        for images, labels, class_names in train_loader:
+            images, labels = images.to(device), labels.to(device)
+            
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            
+            epoch_loss += loss.item()
+
+            _, predicted = torch.max(outputs.data, 1)
+            train_total += labels.size(0)
+            train_correct += (predicted == labels).sum().item()
+        
+        model.eval()
+        test_correct = 0
+        test_total = 0
+        with torch.no_grad():
+            for images, labels, class_names in test_loader:
+                images, labels = images.to(device), labels.to(device)
+                outputs = model(images)
+                _, predicted = torch.max(outputs.data, 1)
+                test_total += labels.size(0)
+                test_correct += (predicted == labels).sum().item()
+        train_accuracy = 100 * train_correct / train_total
+        test_accuracy = 100 * test_correct / test_total
+        avg_loss = epoch_loss / len(train_loader)
+        
+        print(f'Epoch {epoch+1}/{400}, '
+              f'Loss: {avg_loss:.4f}, '
+              f'Train Accuracy: {train_accuracy:.2f}%, '
+              f'Test Accuracy: {test_accuracy:.2f}%')
+
 
 if __name__ == "__main__":
     main()

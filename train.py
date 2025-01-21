@@ -40,7 +40,7 @@ def parse_args():
     parser.add_argument('--use_nerf', action='store_true', help='Use NeRF augmentation')
     
     parser.add_argument('--architecture', type=str, default='resnet18', help='Model architecture (e.g., resnet18, resnet50)')
-    parser.add_argument('--epochs', type=int, default=20, help='Number of training epochs')
+    parser.add_argument('--epochs', type=int, default=400, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate for optimizer')
     parser.add_argument('--dataset', type=str, choices=['caltech256', 'sun397'], 
@@ -190,7 +190,7 @@ def train_model(train_dataset, test_dataset, dataset_type, args):
                 _, predicted = torch.max(outputs.data, 1)
                 test_total += labels.size(0)
                 test_correct += (predicted == labels).sum().item()
-            print("HERE IN TESTING")
+            #print("HERE IN TESTING")
         train_accuracy = 100 * train_correct / train_total
         test_accuracy = 100 * test_correct / test_total
         avg_loss = epoch_loss / len(train_loader)
@@ -234,7 +234,7 @@ def main():
     
     augmented_dataset, original_dataset, test_dataset = create_datasets(args)
     
-    train_model(augmented_dataset, test_dataset, "Augmented", args)
+    #train_model(augmented_dataset, test_dataset, "Augmented", args)
     train_model(original_dataset, test_dataset, "Original", args)
     
     wandb.finish()

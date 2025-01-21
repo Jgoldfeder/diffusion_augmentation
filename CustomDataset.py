@@ -216,7 +216,7 @@ class AugmentedDataset(Dataset):
         return img, label
 
 class TreeAugmentedDataset(Dataset):
-    def __init__(self, base_dataset, label_to_class, transform):
+    def __init__(self, base_dataset, transform):
         self.transform = transform
 
         self.dataset = []
