@@ -80,6 +80,62 @@ def genome_to_tree(genome):
         queue.append(node.right)
     return root_node
 
+def string_to_genome(tree_string):
+    # Dictionary to map augmentation names to indices
+    aug_type_to_index = {
+        'canny': 0,
+        'depth': 1, 
+        'seg': 2,
+        'color': 3,
+        'nerf': 4,
+        'classical': 5,
+        'none': 6
+    }
+    lines = [line.strip() for line in tree_string.strip().split('\n') if line.strip()]
+    tree_map = {}
+    for line in lines:
+        level = (len(line) - len(line.lstrip())) // 2
+        position = line.lstrip().split(':')[0]
+        tree_map[(level, position)] = line
+
+    genome = []
+    max_level = max(level for level, _ in tree_map.keys())
+    
+    root_line = tree_map[(0, 'root')]
+    left_prob = float(root_line.split('L_prob:')[1].split(',')[0].strip())
+    genome.extend([aug_type_to_index['none'], left_prob])
+    
+    current_positions = ['root']
+    for level in range(max_level):
+        next_positions = []
+        for pos in current_positions:
+            if pos == 'root':
+                left_pos = 'L'
+                right_pos = 'R'
+            else:
+                left_pos = pos + 'L'
+                right_pos = pos + 'R'
+                
+            # Get left child
+            if (level + 1, left_pos) in tree_map:
+                left_line = tree_map[(level + 1, left_pos)]
+                aug_type = left_line.split('edge:')[1].split(',')[0].strip()
+                left_prob = float(left_line.split('L_prob:')[1].split(',')[0].strip())
+                genome.extend([aug_type_to_index[aug_type], left_prob])
+                next_positions.append(left_pos)
+            
+            # Get right child
+            if (level + 1, right_pos) in tree_map:
+                right_line = tree_map[(level + 1, right_pos)]
+                aug_type = right_line.split('edge:')[1].split(',')[0].strip()
+                left_prob = float(right_line.split('L_prob:')[1].split(',')[0].strip())
+                genome.extend([aug_type_to_index[aug_type], left_prob])
+                next_positions.append(right_pos)
+        
+        current_positions = next_positions
+    
+    return genome
+
 start_time = int(time.time())
 
 def compute_test_accuracy(augmentation_tree, device):
@@ -280,4 +336,27 @@ if __name__ == "__main__":
     best_genome = [6, .3, 5, .41, 3, .3, 1, .66, 1, .33, 2, .52, 5, .3, 2, .37, 5, .3, 3, .3, 5, .41, 5, .46, 3, .35, 3, .3, 2, .3]
     best_tree = genome_to_tree(best_genome)
     print_tree(best_tree)
+
+
+    tree_string = """root: (root, L_prob: 0.30, R_prob: 0.70)
+  L: (edge: classical, L_prob: 0.41, R_prob: 0.59)
+    L: (edge: depth, L_prob: 0.66, R_prob: 0.34)
+      L: (edge: seg, L_prob: 0.37, R_prob: 0.63)
+      R: (edge: classical, L_prob: 0.30, R_prob: 0.70)
+    R: (edge: depth, L_prob: 0.33, R_prob: 0.67)
+      L: (edge: color, L_prob: 0.30, R_prob: 0.70)
+      R: (edge: classical, L_prob: 0.41, R_prob: 0.59)
+  R: (edge: color, L_prob: 0.30, R_prob: 0.70)
+    L: (edge: seg, L_prob: 0.52, R_prob: 0.48)
+      L: (edge: classical, L_prob: 0.46, R_prob: 0.54)
+      R: (edge: color, L_prob: 0.35, R_prob: 0.65)
+    R: (edge: classical, L_prob: 0.30, R_prob: 0.70)
+      L: (edge: color, L_prob: 0.30, R_prob: 0.70)
+      R: (edge: seg, L_prob: 0.30, R_prob: 0.70)"""
+
+    genome = string_to_genome(tree_string)
+    print(genome)
+    tree = genome_to_tree(genome)
+    print_tree(tree)
+
     compute_test_accuracy(best_tree, 'cuda')
