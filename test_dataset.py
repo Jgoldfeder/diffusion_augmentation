@@ -1,4 +1,5 @@
 import torchvision.transforms as transforms
+import argparse
 
 from CustomDataset import FewShotDataset, ClassicalDataset
 
@@ -7,12 +8,36 @@ from torchvision.models import resnet50, ResNet50_Weights
 from torchvision import transforms
 from torch import nn
 import torch
-
+import wandb
 
 if __name__ == '__main__':
+    # Add argument parsing
+    parser = argparse.ArgumentParser(description='Few-shot learning training script')
+    parser.add_argument('--seed', type=int, default=41, help='Random seed')
+    parser.add_argument('--shots', type=int, default=2, help='Number of shots')
+    parser.add_argument('--dataset', type=str, default='caltech256', help='Dataset name')
+    parser.add_argument('--ways', type=int, default=5, help='Number of ways')
+    args = parser.parse_args()
+
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    train_dataset = FewShotDataset('few_shot_datasets/caltech256/2_shot/seed_41', dataset_type='train')
-    test_dataset = FewShotDataset('few_shot_datasets/caltech256/2_shot/seed_41', dataset_type='test')
+
+    wandb.init(
+        project="classical-augmentation-experiments",
+        config={
+            "seed": args.seed,
+            "shots": args.shots,
+            "dataset": args.dataset,
+            "ways": args.ways,
+            "learning_rate": 0.001,
+            "batch_size": 32,
+            "model": "resnet50",
+        }
+    )
+    
+    # Update dataset paths to use arguments
+    base_path = f'few_shot_datasets/{args.dataset}/{args.shots}_shot/seed_{args.seed}'
+    train_dataset = FewShotDataset(base_path, dataset_type='train')
+    test_dataset = FewShotDataset(base_path, dataset_type='test')
 
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -31,7 +56,7 @@ if __name__ == '__main__':
     model = resnet50(weights=ResNet50_Weights.DEFAULT)
     for param in model.parameters():
         param.requires_grad = False
-    model.fc = nn.Linear(model.fc.in_features, 256)
+    model.fc = nn.Linear(model.fc.in_features, args.ways)
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
@@ -75,3 +100,12 @@ if __name__ == '__main__':
               f'Loss: {avg_loss:.4f}, '
               f'Train Accuracy: {train_accuracy:.2f}%, '
               f'Test Accuracy: {test_accuracy:.2f}%')
+
+        wandb.log({
+            "epoch": epoch + 1,
+            "loss": avg_loss,
+            "train_accuracy": train_accuracy,
+            "test_accuracy": test_accuracy
+        })
+
+    wandb.finish()

@@ -81,11 +81,11 @@ if __name__ == '__main__':
 	# read in caltech 256 dataset
 
 	dataset_name = 'caltech256'
-	seed = 43
+	seed = 50
 	num_ways = 5 # will always be 5
 	num_shots = 2
 
-	dataset = Caltech256(root='./torch')
+	dataset = Caltech256(root='./torch', download=True)
 
 	class_to_label = dict()
 	label_to_class = dict()
