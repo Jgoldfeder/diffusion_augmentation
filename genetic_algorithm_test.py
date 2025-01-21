@@ -4,6 +4,9 @@ import numpy as np
 import wandb
 import argparse
 import time
+import os
+
+from PIL import Image
 
 import AugmentationNode
 import fitness_score
@@ -14,6 +17,7 @@ from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
 from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
 
 from fitness_score import create_datasets
+import get_base_model
 from make_augmenations_from_tree import generate_augmentations_from_tree
 from torch.utils.data import DataLoader
 from torchvision.models import resnet50, ResNet50_Weights
@@ -21,16 +25,17 @@ from torchvision import transforms
 from torch import nn
 import torch
 
-from CustomDataset  import TreeAugmentedDataset, ClassicalDataset
+from CustomDataset  import TreeAugmentedDataset, ClassicalDataset, ValDataset, split_into_two, FewShotDataset
 
-random.seed(42)
+seed = 41
+random.seed(seed)
 
-# segment_aug_manager = SegmentAugmentationManager()
-# color_aug_manager = ColorControlNetAugmentationManager()
-# canny_aug_manager = CannyAugmentationManager()
-# nerf_aug_manager = NerfAugmentationManager()
-# depth_aug_manager = DepthAugmentationManager()
-# aug_managers = [segment_aug_manager, color_aug_manager, canny_aug_manager, nerf_aug_manager, depth_aug_manager]
+segment_aug_manager = SegmentAugmentationManager()
+color_aug_manager = ColorControlNetAugmentationManager()
+canny_aug_manager = CannyAugmentationManager()
+nerf_aug_manager = NerfAugmentationManager()
+depth_aug_manager = DepthAugmentationManager()
+aug_managers = [segment_aug_manager, color_aug_manager, canny_aug_manager, nerf_aug_manager, depth_aug_manager]
 
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -38,10 +43,11 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-train_dataset, val_dataset, test_dataset, label_to_class = create_datasets()
+train_dataset, val_dataset, test_dataset = create_datasets()
 
 # Problem parameters
 tree_depth = 4
+num_genes = 2 * (2 ** tree_depth - 1)
 
 def print_tree(node, level=0, direction='root'):
     if node:
@@ -76,32 +82,39 @@ def genome_to_tree(genome):
 
 start_time = int(time.time())
 
-def compute_test_accuracy(device):
-    global train_dataset, val_dataset, test_dataset, label_to_class, aug_managers
-    #combine the train and val datasets
+def compute_test_accuracy(augmentation_tree, device):
     print('[LOG] Computing test accuracy on combined train and val datasets')
-    combined_dataset = torch.utils.data.ConcatDataset([train_dataset, val_dataset])
+    print('For both classical augs and the best aug tree')
 
-    #classical augmentation
-    classical_dataset = ClassicalDataset(combined_dataset, transform, duplicate_factor=6)
+    dataset_path = f"few_shot_datasets/caltech256/2_shot/seed_{seed}"
+    train_dataset = FewShotDataset(dataset_path, dataset_type='train')
+    test_dataset = FewShotDataset(dataset_path, dataset_type='test')
 
-    #augmented_dataset = generate_augmentations_from_tree(augmentation_tree, combined_dataset, label_to_class, aug_managers)
-    #augmented_dataset = TreeAugmentedDataset(augmented_dataset, label_to_class, transform)
-    #convert the test dataset to a TreeAugmentedDataset
-    test_dataset = TreeAugmentedDataset(test_dataset, label_to_class, transform)
+    # classical_dataset = ClassicalDataset(train_dataset, transform, duplicate_factor=6)
+    augmented_dataset = generate_augmentations_from_tree(augmentation_tree, train_dataset, aug_managers, transform)
 
-    #train_loader = DataLoader(augmented_dataset, batch_size=32, shuffle=True)
-    train_loader = DataLoader(classical_dataset, batch_size=32, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+    output_dir = 'sample_tree_augmentations'
+    for idx, (img, label, class_name) in enumerate(augmented_dataset):
+        # Generate the filename using the specified format
+        file_name = f"{class_name}_{label}_{idx}.png"  # Use .png or desired image format
+        file_path = os.path.join(output_dir, file_name)
+        
+        # Convert the tensor image to a PIL image if necessary
+        if isinstance(img, torch.Tensor):
+            img = img * torch.tensor([0.229, 0.224, 0.225]).view(-1, 1, 1) + torch.tensor([0.485, 0.456, 0.406]).view(-1, 1, 1) # remove normalization
+            img = transforms.ToPILImage()(img)  # Convert to PIL Image
+        
+        # Save the image to the specified folder
+        img.save(file_path)
 
-    #train the model
-    model = resnet50(weights=ResNet50_Weights.DEFAULT)
-    for param in model.parameters():
-        param.requires_grad = False
-    model.fc = nn.Linear(model.fc.in_features, 256)
+
+    model = get_base_model.get_resnet50(num_outputs=5)
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
+
+    train_loader = DataLoader(augmented_dataset, batch_size=32, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
     for epoch in range(400):
         model.train()
@@ -109,7 +122,7 @@ def compute_test_accuracy(device):
         train_correct = 0
         train_total = 0
         
-        for images, labels in train_loader:
+        for images, labels, class_names in train_loader:
             images, labels = images.to(device), labels.to(device)
             
             optimizer.zero_grad()
@@ -128,7 +141,7 @@ def compute_test_accuracy(device):
         test_correct = 0
         test_total = 0
         with torch.no_grad():
-            for images, labels in test_loader:
+            for images, labels, class_names in test_loader:
                 images, labels = images.to(device), labels.to(device)
                 outputs = model(images)
                 _, predicted = torch.max(outputs.data, 1)
@@ -138,23 +151,25 @@ def compute_test_accuracy(device):
         test_accuracy = 100 * test_correct / test_total
         avg_loss = epoch_loss / len(train_loader)
         
+        print(f'Epoch {epoch+1}/{400}, '
+              f'Loss: {avg_loss:.4f}, '
+              f'Train Accuracy: {train_accuracy:.2f}%, '
+              f'Test Accuracy: {test_accuracy:.2f}%')
+
         wandb.log({
             "train_loss": avg_loss,
             "train_accuracy": train_accuracy,
             "test_accuracy": test_accuracy,
             "epoch": epoch
         })
-        print(f'Epoch {epoch+1}/{400}, '
-              f'Loss: {avg_loss:.4f}, '
-              f'Train Accuracy: {train_accuracy:.2f}%, '
-              f'Test Accuracy: {test_accuracy:.2f}%')
+
     return test_accuracy
 
 num_times_fitness_called = 0
 def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     """Calculates the fitness of an individual."""
     augmentation_tree = genome_to_tree(augmentation_tree_genome)
-    loss = fitness_score.fitness_score(augmentation_tree, train_dataset, val_dataset, aug_managers, label_to_class)
+    loss = fitness_score.fitness_score(augmentation_tree, train_dataset, val_dataset, aug_managers)
     fitness = -1 * loss
 
     print('fitness function called')
@@ -167,26 +182,12 @@ def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
 
     return fitness
 
-# def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
-#     global num_times_fitness_called
-#     num_times_fitness_called += 1
-#     return random.random()
-
 def gene_space():
     """Defines the gene space for the GA."""
     gene_space = []
     for i in range(2 ** tree_depth - 1):
         gene_space.extend([[i for i in range(len(AugmentationNode.augmentation_types))], {"low": 0.3, "high": 0.7}])
     return gene_space
-
-# GA parameters
-# TODO make sure that num generations * sol_per_pop is the number of times fitness function is called
-num_generations = 10
-num_parents_mating = 4
-keep_elitism = 1
-keep_parents = 4
-sol_per_pop = 10
-num_genes = 2 * (2 ** tree_depth - 1)
 
 # Initialize GA
 fitness_progress = []  # To store fitness values for each generation
@@ -218,12 +219,14 @@ def on_generation(ga_instance):
         "population_fitness_std": np.std(ga_instance.last_generation_fitness)
     })
 
-    if num_generations_finished == num_generations:
-        best_tree_accuracy = compute_test_accuracy(best_tree, "cuda")
-        print('Best tree accuracy:', best_tree_accuracy)
-        wandb.log({
-            "best_tree_accuracy": best_tree_accuracy
-        })
+def on_stop(ga_instance, last_gen_fitness_values):
+    best_solution = ga_instance.best_solution()
+    best_tree = genome_to_tree(best_solution[0])
+    best_tree_accuracy = compute_test_accuracy(best_tree, "cuda")
+    print('Best tree accuracy:', best_tree_accuracy)
+    wandb.log({
+        "best_tree_accuracy": best_tree_accuracy
+    })
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Run genetic algorithm for augmentation tree optimization')
@@ -251,32 +254,27 @@ def main():
         }
     )
 
-    # ga_instance = pygad.GA(
-    #     num_generations=args.num_generations,
-    #     num_parents_mating=args.num_parents_mating,
-    #     fitness_func=fitness_function,
-    #     sol_per_pop=args.sol_per_pop,
-    #     keep_elitism=args.keep_elitism,
-    #     keep_parents=args.keep_parents,
-    #     num_genes=num_genes,
-    #     gene_space=gene_space(),
-    #     mutation_percent_genes=args.mutation_percent,
-    #     on_generation=on_generation
-    # )
+    ga_instance = pygad.GA(
+        num_generations=args.num_generations,
+        num_parents_mating=args.num_parents_mating,
+        fitness_func=fitness_function,
+        sol_per_pop=args.sol_per_pop,
+        keep_elitism=args.keep_elitism,
+        keep_parents=args.keep_parents,
+        num_genes=num_genes,
+        gene_space=gene_space(),
+        mutation_percent_genes=args.mutation_percent,
+        on_generation=on_generation,
+        on_stop=on_stop
+    )
 
     # Run the GA
-    # ga_instance.run()
+    ga_instance.run()
 
     compute_test_accuracy("cuda")
-
-    # Save fitness progression to a file
-    fitness_file = "fitness_progression.csv"
-    with open(fitness_file, "w") as file:
-        file.write("Generation,Fitness\n")
-        for gen, fitness in enumerate(fitness_progress):
-            file.write(f"{gen},{fitness}\n")
 
     wandb.finish()
 
 if __name__ == "__main__":
     main()
+    # compute_test_accuracy(AugmentationNode.initialize_augmentation_tree(), 'cuda')

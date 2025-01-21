@@ -6,5 +6,4 @@ def get_resnet50(num_outputs):
     for param in model.parameters():
         param.requires_grad = False
     model.fc = nn.Linear(model.fc.in_features, num_outputs)
-
     return model

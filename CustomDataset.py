@@ -98,6 +98,57 @@ def split_train_val(dataset, split_ratio=0.5):
 
     return train_dataset, val_dataset
 
+class ValDataset(Dataset):
+    def __init__(self, orig_dataset, transform):
+        self.dataset = orig_dataset
+        self.transform = transform
+    
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        img, label, class_name = self.dataset[index]
+        return self.transform(img), label
+
+
+class SplitDataset(Dataset):
+    def __init__(self, dataset_list):
+        self.images = []
+        self.labels = []
+        self.class_names = []
+        for img, label, class_name in dataset_list:
+            self.images.append(img)
+            self.labels.append(label)
+            self.class_names.append(class_name)
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, index):
+        return self.images[index], self.labels[index], self.class_names[index]
+
+def split_into_two(dataset):
+    images_0 = []
+    labels_0 = []
+    class_names_0 = []
+    images_1 = []
+    labels_1 = []
+    class_names_1 = []
+
+    for img, label, class_name in dataset:
+        if labels_0.count(label) < labels_1.count(label):
+            images_0.append(img)
+            labels_0.append(label)
+            class_names_0.append(class_name)
+        else:
+            images_1.append(img)
+            labels_1.append(label)
+            class_names_1.append(class_name)
+
+    split_0 = [(images_0[i], labels_0[i], class_names_0[i]) for i in range(len(labels_0))]
+    split_1 = [(images_1[i], labels_1[i], class_names_1[i]) for i in range(len(labels_1))]
+    return SplitDataset(split_0), SplitDataset(split_1)
+
 
 class FewShotDataset(Dataset): #dataset containing images from predefined structure
     def __init__(self, file_path, dataset_type="train"):
