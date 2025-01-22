@@ -27,8 +27,9 @@ import torch
 
 from CustomDataset  import TreeAugmentedDataset, ClassicalDataset, ValDataset, split_into_two, FewShotDataset
 
-seed = 42
-random.seed(seed)
+seed = -1
+dataset = ''
+# NOTE these whill be set later by parser args
 
 segment_aug_manager = SegmentAugmentationManager()
 color_aug_manager = ColorControlNetAugmentationManager()
@@ -43,7 +44,7 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-train_dataset, val_dataset, test_dataset = create_datasets(seed)
+train_dataset, val_dataset, test_dataset = None, None, None
 
 # Problem parameters
 tree_depth = 4
@@ -142,7 +143,7 @@ def compute_test_accuracy(augmentation_tree, device):
     print('[LOG] Computing test accuracy on combined train and val datasets')
     print('For both classical augs and the best aug tree')
 
-    dataset_path = f"few_shot_datasets/caltech256/2_shot/seed_{seed}"
+    dataset_path = f"few_shot_datasets/{dataset}/2_shot/seed_{seed}"
     train_dataset = FewShotDataset(dataset_path, dataset_type='train')
     test_dataset = FewShotDataset(dataset_path, dataset_type='test')
 
@@ -292,6 +293,8 @@ def parse_args():
     parser.add_argument('--keep_elitism', type=int, default=1, help='Number of elites to keep')
     parser.add_argument('--keep_parents', type=int, default=4, help='Number of parents to keep')
     parser.add_argument('--mutation_percent', type=int, default=10, help='Mutation percentage')
+    parser.add_argument('--dataset', type=str, required=True, help='Dataset to use')
+    parser.add_argument('--seed', type=int, required=True, help='Random seed for reproducibility')
     return parser.parse_args()
 
 def main():
@@ -306,9 +309,20 @@ def main():
             "keep_elitism": args.keep_elitism,
             "keep_parents": args.keep_parents,
             "mutation_percent": args.mutation_percent,
-            "tree_depth": tree_depth
+            "tree_depth": tree_depth,
+            "dataset": args.dataset,
+            "seed": args.seed
         }
     )
+
+    random.seed(args.seed)
+
+    global seed, dataset, train_dataset, val_dataset, test_dataset
+
+    dataset = args.dataset
+    seed = args.seed
+
+    train_dataset, val_dataset, test_dataset = create_datasets(dataset, seed)
 
     ga_instance = pygad.GA(
         num_generations=args.num_generations,

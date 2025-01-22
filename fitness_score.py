@@ -1,11 +1,6 @@
-import os
-import json
-
 import torchvision.transforms as transforms
-from torchvision.datasets import Caltech256, FashionMNIST, ImageFolder, SUN397
 from torch.utils.data import DataLoader
 import torch
-from torchvision.models import resnet50, ResNet50_Weights
 from torch import nn
 
 import get_base_model
@@ -26,8 +21,8 @@ transform = transforms.Compose([
 
 device = "cpu"
 
-def create_datasets(seed):
-    dataset_path = f"few_shot_datasets/caltech256/2_shot/seed_{seed}"
+def create_datasets(dataset, seed):
+    dataset_path = f"few_shot_datasets/{dataset}/2_shot/seed_{seed}"
     train_dataset = FewShotDataset(dataset_path, dataset_type='train')
     test_dataset = FewShotDataset(dataset_path, dataset_type='test')
 
