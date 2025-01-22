@@ -8,9 +8,8 @@ from image_augmentation_models.ControlNetAugmentation import ControlNetAugmentat
 
 class DepthAugmentationManager(ControlNetAugmentationManager):
 	def __init__(self, control_net_device="cuda"):
-		super().__init__(control_net_device)
+		super().__init__("lllyasviel/sd-controlnet-depth", control_net_device)
 		self.midas = MidasDetector.from_pretrained("lllyasviel/Annotators")
-		self.controlnet_model = "lllyasviel/sd-controlnet-depth"
 
 	def preprocess_image(self, original_image):
 		img = super().preprocess_image(original_image)

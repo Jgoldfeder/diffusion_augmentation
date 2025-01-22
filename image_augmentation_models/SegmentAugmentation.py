@@ -8,9 +8,8 @@ from image_augmentation_models.ControlNetAugmentation import ControlNetAugmentat
 
 class SegmentAugmentationManager(ControlNetAugmentationManager):
 	def __init__(self, control_net_device="cuda"):
-		super().__init__(control_net_device)
+		super().__init__("lllyasviel/sd-controlnet-seg", control_net_device)
 		self.sam = SamDetector.from_pretrained("ybelkada/segment-anything", subfolder="checkpoints")
-		self.controlnet_model = "lllyasviel/sd-controlnet-seg"
 
 	def preprocess_image(self, original_image):
 		img = super().preprocess_image(original_image)

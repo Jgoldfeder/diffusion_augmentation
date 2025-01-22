@@ -1,8 +1,7 @@
 if __name__ == '__main__':
 	import os
-	import random
-
-	from torchvision.datasets import Caltech256
+	import time
+	from PIL import Image
 
 	from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
 	from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
@@ -15,24 +14,26 @@ if __name__ == '__main__':
 		for i, img in enumerate(images):
 			img.save(os.path.join(folder, f"{i}.png"))
 
-	# curr_am = CannyAugmentationManager()
-	# curr_am = DepthAugmentationManager()
-	# curr_am = SegmentAugmentationManager()
-	# curr_am = ColorControlNetAugmentationManager()
-	curr_am = NerfAugmentationManager()
+	aug_managers = {
+		'canny': CannyAugmentationManager(),
+		'depth': DepthAugmentationManager(),
+		'segment': SegmentAugmentationManager(),
+		'color': ColorControlNetAugmentationManager(),
+		'nerf': NerfAugmentationManager()
+	}
 
-	dataset = Caltech256(root='./torch', download=True)
+	img_path = './test_images/original.png'
+	img = Image.open(img_path)
+	sample_images = [img]
+	sample_classes = ['tent']
 
-	sample_indices = random.sample(range(len(dataset)), 3)
-	sample_images = []
-	sample_classes = []
-	for idx in sample_indices:
-		image, label = dataset[idx]
-		sample_images.append(image)
-		sample_classes.append(f"person standing in outdoors with rainbow")  # Use class_{label} for naming
-
-	# aug_images = curr_am.generate_augmentations(sample_images, sample_classes)
-	aug_images = curr_am.generate_augmentations(sample_images)
+	aug_images = []
+	for name, curr_am in aug_managers.items():
+		print(f"Testing {name}")
+		start_time = time.time()
+		aug_images.extend(curr_am.generate_augmentations(sample_images, sample_classes))
+		end_time = time.time()
+		print(f"Took {end_time - start_time} seconds")
 
 	save_images("orig_images", sample_images)
 	save_images("aug_images", aug_images)
