@@ -26,8 +26,8 @@ transform = transforms.Compose([
 
 device = "cpu"
 
-def create_datasets():
-    dataset_path = "few_shot_datasets/caltech256/2_shot/seed_41"
+def create_datasets(seed):
+    dataset_path = f"few_shot_datasets/caltech256/2_shot/seed_{seed}"
     train_dataset = FewShotDataset(dataset_path, dataset_type='train')
     test_dataset = FewShotDataset(dataset_path, dataset_type='test')
 
@@ -92,6 +92,6 @@ if __name__ == '__main__':
     #initialize some random tree and run the fitness score
     individual = initialize_augmentation_tree(depth=4)
     aug_managers = [SegmentAugmentationManager(), ColorControlNetAugmentationManager(), CannyAugmentationManager(), NerfAugmentationManager(), DepthAugmentationManager()]
-    train_dataset, val_dataset, test_dataset, new_label_to_class = create_datasets()
+    train_dataset, val_dataset, test_dataset, new_label_to_class = create_datasets(42)
     for i in range(5):
         print(fitness_score(individual, train_dataset, val_dataset, aug_managers, new_label_to_class))

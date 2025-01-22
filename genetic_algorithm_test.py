@@ -27,7 +27,7 @@ import torch
 
 from CustomDataset  import TreeAugmentedDataset, ClassicalDataset, ValDataset, split_into_two, FewShotDataset
 
-seed = 41
+seed = 42
 random.seed(seed)
 
 segment_aug_manager = SegmentAugmentationManager()
@@ -43,7 +43,7 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-train_dataset, val_dataset, test_dataset = create_datasets()
+train_dataset, val_dataset, test_dataset = create_datasets(seed)
 
 # Problem parameters
 tree_depth = 4
@@ -212,12 +212,12 @@ def compute_test_accuracy(augmentation_tree, device):
               f'Train Accuracy: {train_accuracy:.2f}%, '
               f'Test Accuracy: {test_accuracy:.2f}%')
 
-        # wandb.log({
-        #     "train_loss": avg_loss,
-        #     "train_accuracy": train_accuracy,
-        #     "test_accuracy": test_accuracy,
-        #     "epoch": epoch
-        # })
+        wandb.log({
+            "train_loss": avg_loss,
+            "train_accuracy": train_accuracy,
+            "test_accuracy": test_accuracy,
+            "epoch": epoch
+        })
 
     return test_accuracy
 
@@ -332,31 +332,5 @@ def main():
     wandb.finish()
 
 if __name__ == "__main__":
-    # main()
-    best_genome = [6, .3, 5, .41, 3, .3, 1, .66, 1, .33, 2, .52, 5, .3, 2, .37, 5, .3, 3, .3, 5, .41, 5, .46, 3, .35, 3, .3, 2, .3]
-    best_tree = genome_to_tree(best_genome)
-    print_tree(best_tree)
-
-
-    tree_string = """root: (root, L_prob: 0.30, R_prob: 0.70)
-  L: (edge: classical, L_prob: 0.41, R_prob: 0.59)
-    L: (edge: depth, L_prob: 0.66, R_prob: 0.34)
-      L: (edge: seg, L_prob: 0.37, R_prob: 0.63)
-      R: (edge: classical, L_prob: 0.30, R_prob: 0.70)
-    R: (edge: depth, L_prob: 0.33, R_prob: 0.67)
-      L: (edge: color, L_prob: 0.30, R_prob: 0.70)
-      R: (edge: classical, L_prob: 0.41, R_prob: 0.59)
-  R: (edge: color, L_prob: 0.30, R_prob: 0.70)
-    L: (edge: seg, L_prob: 0.52, R_prob: 0.48)
-      L: (edge: classical, L_prob: 0.46, R_prob: 0.54)
-      R: (edge: color, L_prob: 0.35, R_prob: 0.65)
-    R: (edge: classical, L_prob: 0.30, R_prob: 0.70)
-      L: (edge: color, L_prob: 0.30, R_prob: 0.70)
-      R: (edge: seg, L_prob: 0.30, R_prob: 0.70)"""
-
-    genome = string_to_genome(tree_string)
-    print(genome)
-    tree = genome_to_tree(genome)
-    print_tree(tree)
-
-    compute_test_accuracy(best_tree, 'cuda')
+    main()
+    # compute_test_accuracy(AugmentationNode.initialize_augmentation_tree(tree_depth), 'cuda')
