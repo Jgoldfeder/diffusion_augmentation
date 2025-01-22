@@ -7,34 +7,42 @@ import AugmentationNode
 class GeneticAlgorithm:
     def __init__( 
         self,
-        population_size: int,
         tree_depth: int,
+        num_aug_types: int,
         fitness_func: Callable,
+        population_size: int = 10,
+        generations: int = 10,
         mutation_rate: float = 0.1,
         elite_size: int = 2,
-        generations: int = 10
     ):
-        self.population_size = population_size
         self.tree_depth = tree_depth
+        self.num_nodes = 2 ** (tree_depth - 1)
+        self.genome_size = 2 * self.num_nodes
+        
         self.fitness_func = fitness_func
+        self.population_size = population_size
+        self.generations = generations
         self.mutation_rate = mutation_rate
         self.elite_size = elite_size
-        self.generations = generations
-        self.best_fitness = float('-inf')
-        self.best_genome = None
+
+        self.best_fitnesses = []
+        self.best_genomes = []
+
+        self.num_aug_types = num_aug_types
+        self.min_probability = 0.3
+        self.max_probability = 0.7
 
     def initialize_population(self) -> List[np.ndarray]:
         """Create initial random population with alternating integers and probabilities"""
         population = []
-        num_nodes = 2 ** self.tree_depth - 1
         for _ in range(self.population_size):
-            genome = np.zeros(num_nodes)
+            genome = np.zeros(self.genome_size)
             # Alternate between integers (0-6) and probabilities (0.3-0.7)
-            for i in range(num_nodes):
+            for i in range(self.genome_size):
                 if i % 2 == 0:  # Even indices for integers
-                    genome[i] = np.random.randint(0, 7)
+                    genome[i] = np.random.randint(0, self.num_aug_types)
                 else:  # Odd indices for probabilities
-                    genome[i] = np.random.uniform(0.3, 0.7)
+                    genome[i] = np.random.uniform(self.min_probability, self.max_probability)
             population.append(genome)
         return population
 
@@ -44,6 +52,7 @@ class GeneticAlgorithm:
 
     def select_parent(self, population: List[np.ndarray], fitnesses: List[float]) -> np.ndarray:
         """Tournament selection"""
+        # NOTE might want to change this implementation to just use the top num_parents individuals
         tournament_size = 3
         tournament_indices = random.sample(range(len(population)), tournament_size)
         tournament_fitnesses = [fitnesses[i] for i in tournament_indices]
@@ -64,28 +73,27 @@ class GeneticAlgorithm:
         for i in range(self.genome_size):
             if np.random.random() < self.mutation_rate:
                 if i % 2 == 0:  # Even indices for integers
-                    mutated[i] = np.random.randint(0, 7)
+                    mutated[i] = np.random.randint(0, self.num_aug_types)
                 else:  # Odd indices for probabilities
-                    delta = np.random.normal(0, 0.1)  # Small random change
-                    mutated[i] = np.clip(mutated[i] + delta, 0.3, 0.7)
+                    # NOTE do we want gaussian nudging or uniform random selection 
+                    # delta = np.random.normal(0, 0.1)  # Small random change
+                    # mutated[i] = np.clip(mutated[i] + delta, 0.3, 0.7)
+                    mutated[i] = np.random.uniform(self.min_probability, self.max_probability)
         
         return mutated
 
-    def evolve(self, generations: int) -> Tuple[np.ndarray, float]:
+    def evolve(self) -> Tuple[np.ndarray, float]:
         """Run the genetic algorithm"""
         population = self.initialize_population()
-        best_fitness = float('-inf')
-        best_genome = None
 
-        for gen in range(generations):
+        for gen in range(self.generations):
             # Evaluate current population
             fitnesses = self.evaluate_population(population)
             
             # Keep track of best solution
             current_best_idx = np.argmax(fitnesses)
-            if fitnesses[current_best_idx] > best_fitness:
-                best_fitness = fitnesses[current_best_idx]
-                best_genome = population[current_best_idx]
+            self.best_fitnesses.append(fitnesses[current_best_idx])
+            self.best_genomes.append(population[current_best_idx])
 
             # Create new population
             new_population = []
@@ -99,6 +107,7 @@ class GeneticAlgorithm:
             while len(new_population) < self.population_size:
                 parent1 = self.select_parent(population, fitnesses)
                 parent2 = self.select_parent(population, fitnesses)
+                # TODO put crossover back into this step
                 child1, child2 = self.crossover(parent1, parent2)
                 child1 = self.mutate(child1)
                 child2 = self.mutate(child2)
@@ -107,10 +116,11 @@ class GeneticAlgorithm:
             # Trim population to exact size
             population = new_population[:self.population_size]
 
-            if (gen + 1) % 10 == 0:
-                print(f"Generation {gen + 1}: Best Fitness = {best_fitness}")
+            print(f"End of generation {gen + 1}")
+            print(f"Best Genome = {self.best_genomes[-1]}")
+            print(f"Best Fitness = {self.best_fitnesses[-1]}")
 
-        return best_genome, best_fitness
+        return self.best_genomes[-1], self.best_fitnesses[-1]
 
 
 def tree_to_genome(node):
@@ -163,15 +173,7 @@ def genome_to_tree(genome):
 
 # Example usage:
 def example_fitness_function(genome: np.ndarray) -> float:
-    """
-    Example fitness function - replace with your own.
-    Assumes first 3 genes are integers (0-6) and next 2 are probabilities (0.3-0.7)
-    """
-    integers = genome[:3]
-    probabilities = genome[3:]
-    
-    # Example: maximize sum of integers and average of probabilities
-    return np.sum(integers) + np.mean(probabilities)
+    return np.sum(genome)
 
 def test_tree_genome_conversion():
     tree = initialize_augmentation_tree()
@@ -183,4 +185,14 @@ def test_tree_genome_conversion():
 
 
 if __name__ == "__main__":
-    test_tree_genome_conversion()
+    ga_instance = GeneticAlgorithm(
+        tree_depth=3,
+        num_aug_types=100,
+        fitness_func=example_fitness_function,
+        population_size=100,
+        generations=100,
+        mutation_rate=0.1,
+        elite_size=10
+    )
+
+    ga_instance.evolve()
