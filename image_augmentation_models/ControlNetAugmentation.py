@@ -1,10 +1,5 @@
-import os
-import cv2
-import numpy as np
 import torch
-from PIL import Image
 from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, UniPCMultistepScheduler
-from controlnet_aux import CannyDetector
 
 class ControlNetAugmentationManager:
 	def __init__(self, control_net_device="cuda"):
