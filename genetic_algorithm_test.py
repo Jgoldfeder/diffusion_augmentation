@@ -327,8 +327,6 @@ def main():
     # Run the GA
     ga_instance.run()
 
-    compute_test_accuracy("cuda")
-
     wandb.finish()
 
 if __name__ == "__main__":
