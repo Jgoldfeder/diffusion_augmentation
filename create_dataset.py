@@ -1,9 +1,12 @@
 import random
 import os
 from collections import defaultdict
+import json
+import torch
 
-from torchvision.datasets import Caltech256
+from torchvision.datasets import Caltech256, ImageFolder
 from torch.utils.data import Dataset, Subset
+
 
 class RemappedDataset(Dataset):
     def __init__(self, dataset, old_to_new_labels):
@@ -77,31 +80,47 @@ def save_to_dir(dataset, dataset_name, num_shots, seed, train=True):
         img.save(os.path.join(file_path, folder_name, f"{img_count}.png"))
 
 if __name__ == '__main__':
-	print('main func called')
-	# read in caltech 256 dataset
+    print('main func called')
 
-	dataset_name = 'caltech256'
-	seed = 50
-	num_ways = 5 # will always be 5
-	num_shots = 2
+    dataset_name = 'flowers102'
+    seed = 43
+    num_ways = 5
+    num_shots = 2
+    
+    if dataset_name == 'caltech256':
+        dataset = Caltech256(root='./torch', download=True)
+        class_to_label = dict()
+        label_to_class = dict()
+        for category in dataset.categories:
+            parts = category.split('.')
+            label = int(parts[0]) - 1
+            class_name = parts[1]
+            class_to_label[class_name] = label
+            label_to_class[label] = class_name
+        labels = [label for _, label in dataset]
+    elif dataset_name == 'flowers102':
+        root = './torch'
+        data_dir = os.path.join(root, 'flower_data')
+        #try:
+        train_dataset = ImageFolder(os.path.join(data_dir, 'train'))
+        validation_dataset = ImageFolder(os.path.join(data_dir, 'valid'))
+        dataset = torch.utils.data.ConcatDataset([train_dataset, validation_dataset])
+        with open(os.path.join(data_dir, 'cat_to_name.json'), 'r') as f:
+            label_to_class_as_str = json.load(f)
+        label_to_class = {int(label_str): class_name for label_str, class_name in label_to_class_as_str.items()}
+        class_to_label = {class_name: label for label, class_name in label_to_class.items()}
+        labels = [int(target) for target in train_dataset.targets]
+        # except FileNotFoundError:
+        #     print('Download the dataset from kaggle from the following page using curl:')
+        #     print('https://www.kaggle.com/datasets/waseemalastal/the-oxford-flowers-102-dataset')
+        #     exit(1)
 
-	dataset = Caltech256(root='./torch', download=True)
+    train_dataset, test_dataset, old_to_new_labels = split_train_test(dataset, class_to_label, labels, num_ways, num_shots, seed=seed)
+    new_to_old_labels = {v: k for k, v in old_to_new_labels.items()}
 
-	class_to_label = dict()
-	label_to_class = dict()
-	for category in dataset.categories:
-		parts = category.split('.')
-		label = int(parts[0]) - 1
-		class_name = parts[1]
-		class_to_label[class_name] = label
-		label_to_class[label] = class_name
-	labels = [label for _, label in dataset]
+    train_dataset_list = create_list_from_dataset(train_dataset, new_to_old_labels, label_to_class)
+    test_dataset_list = create_list_from_dataset(test_dataset, new_to_old_labels, label_to_class)
 
-	train_dataset, test_dataset, old_to_new_labels = split_train_test(dataset, class_to_label, labels, num_ways, num_shots, seed=seed)
-	new_to_old_labels = {v: k for k, v in old_to_new_labels.items()}
+    save_to_dir(train_dataset_list, dataset_name, num_shots, seed, train=True)
+    save_to_dir(test_dataset_list, dataset_name, num_shots, seed, train=False)
 
-	train_dataset_list = create_list_from_dataset(train_dataset, new_to_old_labels, label_to_class)
-	test_dataset_list = create_list_from_dataset(test_dataset, new_to_old_labels, label_to_class)
-
-	save_to_dir(train_dataset_list, dataset_name, num_shots, seed, train=True)
-	save_to_dir(test_dataset_list, dataset_name, num_shots, seed, train=False)
