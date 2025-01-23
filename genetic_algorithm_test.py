@@ -62,6 +62,20 @@ def print_tree(node, level=0, direction='root'):
         if node.right:
             print_tree(node.right, level + 1, 'R')
 
+def tree_to_string(node, level=0, direction='root'):
+    tree_str = ''
+    if node:
+        if direction == 'root':
+            edge_info = f"(root, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
+        else:
+            edge_info = f"(edge: {node.parent_edge_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
+        tree_str += '  ' * level + f"{direction}: {edge_info}" + '\n'
+        if node.left:
+            tree_str += tree_to_string(node.left, level + 1, 'L')
+        if node.right:
+            tree_str += tree_to_string(node.right, level + 1, 'R')
+    return tree_str
+
 def genome_to_tree(genome):
     root_node = AugmentationNode.AugmentationNode(AugmentationNode.augmentation_types[int(genome[0])])
     root_node.left_child_probability = genome[1]
@@ -267,6 +281,18 @@ def on_generation(ga_instance):
     print_tree(best_tree)
     fitness_progress.append(best_fitness)
     print('Time since start (seconds):', int(time.time() - start_time))
+
+    folder_name = "genetic_runs"
+    os.makedirs(folder_name, exist_ok=True)
+    file_name = f"{dataset}_seed_{seed}.txt"
+    file_path = os.path.join(folder_name, file_name)
+    with open(file_path, "a") as file:
+        file.write('Best tree:')
+        file.write(str(best_solution[0]) + '\n')
+        file.write(str(best_fitness) + '\n')
+        file.write(tree_to_string(best_tree) + "\n")
+        file.write(f'{num_generations_finished} generations finished\n')
+        file.write('\n\n')
 
     # Log metrics to wandb
     wandb.log({

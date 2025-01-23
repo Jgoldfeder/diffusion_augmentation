@@ -1,0 +1,150 @@
+Best tree:[2.         0.32476746 3.         0.53226241 0.         0.56464792
+ 1.         0.51097733 6.         0.54081861 4.         0.45085658
+ 5.         0.53053052 6.         0.5758626  4.         0.31742474
+ 3.         0.40562725 6.         0.6141286  5.         0.31272694
+ 5.         0.30665384 2.         0.38012688 2.         0.54690512]
+0.9895905434276969
+root: (root, L_prob: 0.32, R_prob: 0.68)
+  L: (edge: color, L_prob: 0.53, R_prob: 0.47)
+    L: (edge: depth, L_prob: 0.51, R_prob: 0.49)
+      L: (edge: none, L_prob: 0.58, R_prob: 0.42)
+      R: (edge: nerf, L_prob: 0.32, R_prob: 0.68)
+    R: (edge: none, L_prob: 0.54, R_prob: 0.46)
+      L: (edge: color, L_prob: 0.41, R_prob: 0.59)
+      R: (edge: none, L_prob: 0.61, R_prob: 0.39)
+  R: (edge: canny, L_prob: 0.56, R_prob: 0.44)
+    L: (edge: nerf, L_prob: 0.45, R_prob: 0.55)
+      L: (edge: classical, L_prob: 0.31, R_prob: 0.69)
+      R: (edge: classical, L_prob: 0.31, R_prob: 0.69)
+    R: (edge: classical, L_prob: 0.53, R_prob: 0.47)
+      L: (edge: seg, L_prob: 0.38, R_prob: 0.62)
+      R: (edge: seg, L_prob: 0.55, R_prob: 0.45)
+
+1 generations finished
+
+
+Best tree:[2.         0.32476746 6.         0.3        0.         0.56464792
+ 6.         0.3        6.         0.54081861 4.         0.45085658
+ 5.         0.53053052 6.         0.5758626  4.         0.31742474
+ 3.         0.3        6.         0.6141286  5.         0.31272694
+ 5.         0.30665384 2.         0.38012688 2.         0.54690512]
+0.990585919078345
+root: (root, L_prob: 0.32, R_prob: 0.68)
+  L: (edge: none, L_prob: 0.30, R_prob: 0.70)
+    L: (edge: none, L_prob: 0.30, R_prob: 0.70)
+      L: (edge: none, L_prob: 0.58, R_prob: 0.42)
+      R: (edge: nerf, L_prob: 0.32, R_prob: 0.68)
+    R: (edge: none, L_prob: 0.54, R_prob: 0.46)
+      L: (edge: color, L_prob: 0.30, R_prob: 0.70)
+      R: (edge: none, L_prob: 0.61, R_prob: 0.39)
+  R: (edge: canny, L_prob: 0.56, R_prob: 0.44)
+    L: (edge: nerf, L_prob: 0.45, R_prob: 0.55)
+      L: (edge: classical, L_prob: 0.31, R_prob: 0.69)
+      R: (edge: classical, L_prob: 0.31, R_prob: 0.69)
+    R: (edge: classical, L_prob: 0.53, R_prob: 0.47)
+      L: (edge: seg, L_prob: 0.38, R_prob: 0.62)
+      R: (edge: seg, L_prob: 0.55, R_prob: 0.45)
+
+2 generations finished
+
+
+Best tree:[0.         0.41077695 0.         0.50932996 4.         0.62952796
+ 3.         0.3        6.         0.46432762 4.         0.38910716
+ 2.         0.59436218 1.         0.34794328 4.         0.3
+ 3.         0.3        4.         0.36032406 6.         0.48893057
+ 0.         0.47561519 2.         0.32654998 1.         0.57718503]
+0.9980330203627096
+root: (root, L_prob: 0.41, R_prob: 0.59)
+  L: (edge: canny, L_prob: 0.51, R_prob: 0.49)
+    L: (edge: color, L_prob: 0.30, R_prob: 0.70)
+      L: (edge: depth, L_prob: 0.35, R_prob: 0.65)
+      R: (edge: nerf, L_prob: 0.30, R_prob: 0.70)
+    R: (edge: none, L_prob: 0.46, R_prob: 0.54)
+      L: (edge: color, L_prob: 0.30, R_prob: 0.70)
+      R: (edge: nerf, L_prob: 0.36, R_prob: 0.64)
+  R: (edge: nerf, L_prob: 0.63, R_prob: 0.37)
+    L: (edge: nerf, L_prob: 0.39, R_prob: 0.61)
+      L: (edge: none, L_prob: 0.49, R_prob: 0.51)
+      R: (edge: canny, L_prob: 0.48, R_prob: 0.52)
+    R: (edge: seg, L_prob: 0.59, R_prob: 0.41)
+      L: (edge: seg, L_prob: 0.33, R_prob: 0.67)
+      R: (edge: depth, L_prob: 0.58, R_prob: 0.42)
+
+3 generations finished
+
+
+Best tree:[2.         0.65100522 3.         0.64868512 0.         0.56601988
+ 1.         0.47345807 6.         0.66551908 4.         0.60797564
+ 5.         0.47985349 6.         0.56743341 4.         0.51184424
+ 3.         0.4636616  6.         0.47718229 5.         0.53292605
+ 5.         0.32309184 2.         0.40638638 2.         0.66974755]
+0.9895905434276969
+root: (root, L_prob: 0.65, R_prob: 0.35)
+  L: (edge: color, L_prob: 0.65, R_prob: 0.35)
+    L: (edge: depth, L_prob: 0.47, R_prob: 0.53)
+      L: (edge: none, L_prob: 0.57, R_prob: 0.43)
+      R: (edge: nerf, L_prob: 0.51, R_prob: 0.49)
+    R: (edge: none, L_prob: 0.67, R_prob: 0.33)
+      L: (edge: color, L_prob: 0.46, R_prob: 0.54)
+      R: (edge: none, L_prob: 0.48, R_prob: 0.52)
+  R: (edge: canny, L_prob: 0.57, R_prob: 0.43)
+    L: (edge: nerf, L_prob: 0.61, R_prob: 0.39)
+      L: (edge: classical, L_prob: 0.53, R_prob: 0.47)
+      R: (edge: classical, L_prob: 0.32, R_prob: 0.68)
+    R: (edge: classical, L_prob: 0.48, R_prob: 0.52)
+      L: (edge: seg, L_prob: 0.41, R_prob: 0.59)
+      R: (edge: seg, L_prob: 0.67, R_prob: 0.33)
+
+1 generations finished
+
+
+Best tree:[2.         0.65100522 6.         0.3        0.         0.56601988
+ 6.         0.3        6.         0.66551908 4.         0.60797564
+ 5.         0.47985349 6.         0.56743341 4.         0.51184424
+ 3.         0.3        6.         0.47718229 5.         0.53292605
+ 5.         0.32309184 2.         0.40638638 2.         0.66974755]
+0.990585919078345
+root: (root, L_prob: 0.65, R_prob: 0.35)
+  L: (edge: none, L_prob: 0.30, R_prob: 0.70)
+    L: (edge: none, L_prob: 0.30, R_prob: 0.70)
+      L: (edge: none, L_prob: 0.57, R_prob: 0.43)
+      R: (edge: nerf, L_prob: 0.51, R_prob: 0.49)
+    R: (edge: none, L_prob: 0.67, R_prob: 0.33)
+      L: (edge: color, L_prob: 0.30, R_prob: 0.70)
+      R: (edge: none, L_prob: 0.48, R_prob: 0.52)
+  R: (edge: canny, L_prob: 0.57, R_prob: 0.43)
+    L: (edge: nerf, L_prob: 0.61, R_prob: 0.39)
+      L: (edge: classical, L_prob: 0.53, R_prob: 0.47)
+      R: (edge: classical, L_prob: 0.32, R_prob: 0.68)
+    R: (edge: classical, L_prob: 0.48, R_prob: 0.52)
+      L: (edge: seg, L_prob: 0.41, R_prob: 0.59)
+      R: (edge: seg, L_prob: 0.67, R_prob: 0.33)
+
+2 generations finished
+
+
+Best tree:[0.         0.34373659 0.         0.38466405 1.         0.48832269
+ 3.         0.55223611 6.         0.32444752 4.         0.5195848
+ 3.         0.36551619 5.         0.56363253 4.         0.3
+ 3.         0.3        4.         0.57273061 6.         0.31751997
+ 0.         0.37455805 2.         0.3        1.         0.63757697]
+0.9980330203627096
+root: (root, L_prob: 0.34, R_prob: 0.66)
+  L: (edge: canny, L_prob: 0.38, R_prob: 0.62)
+    L: (edge: color, L_prob: 0.55, R_prob: 0.45)
+      L: (edge: classical, L_prob: 0.56, R_prob: 0.44)
+      R: (edge: nerf, L_prob: 0.30, R_prob: 0.70)
+    R: (edge: none, L_prob: 0.32, R_prob: 0.68)
+      L: (edge: color, L_prob: 0.30, R_prob: 0.70)
+      R: (edge: nerf, L_prob: 0.57, R_prob: 0.43)
+  R: (edge: depth, L_prob: 0.49, R_prob: 0.51)
+    L: (edge: nerf, L_prob: 0.52, R_prob: 0.48)
+      L: (edge: none, L_prob: 0.32, R_prob: 0.68)
+      R: (edge: canny, L_prob: 0.37, R_prob: 0.63)
+    R: (edge: color, L_prob: 0.37, R_prob: 0.63)
+      L: (edge: seg, L_prob: 0.30, R_prob: 0.70)
+      R: (edge: depth, L_prob: 0.64, R_prob: 0.36)
+
+3 generations finished
+
+
