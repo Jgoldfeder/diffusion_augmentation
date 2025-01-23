@@ -9,6 +9,7 @@ import os
 from PIL import Image
 
 import AugmentationNode
+from AugmentationNode import print_tree
 import fitness_score
 from image_augmentation_models.SegmentAugmentation import SegmentAugmentationManager
 from image_augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
@@ -27,8 +28,8 @@ import torch
 
 from CustomDataset  import TreeAugmentedDataset, ClassicalDataset, ValDataset, split_into_two, FewShotDataset
 
-seed = -1
-dataset = ''
+seed = 47
+dataset = 'flowers102'
 # NOTE these whill be set later by parser args
 
 segment_aug_manager = SegmentAugmentationManager()
@@ -49,18 +50,6 @@ train_dataset, val_dataset, test_dataset = None, None, None
 # Problem parameters
 tree_depth = 4
 num_genes = 2 * (2 ** tree_depth - 1)
-
-def print_tree(node, level=0, direction='root'):
-    if node:
-        if direction == 'root':
-            edge_info = f"(root, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
-        else:
-            edge_info = f"(edge: {node.parent_edge_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
-        print('  ' * level + f"{direction}: {edge_info}")
-        if node.left:
-            print_tree(node.left, level + 1, 'L')
-        if node.right:
-            print_tree(node.right, level + 1, 'R')
 
 def tree_to_string(node, level=0, direction='root'):
     tree_str = ''
