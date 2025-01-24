@@ -3,6 +3,7 @@ import os
 from collections import defaultdict
 import json
 import torch
+import argparse
 
 from torchvision.datasets import Caltech256, ImageFolder
 from torch.utils.data import Dataset, Subset
@@ -80,12 +81,24 @@ def save_to_dir(dataset, dataset_name, num_shots, seed, train=True):
         img.save(os.path.join(file_path, folder_name, f"{img_count}.png"))
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Create few-shot dataset splits')
+    parser.add_argument('--dataset', type=str, default='caltech256', choices=['caltech256', 'flowers102'],
+                        help='Dataset to use (default: caltech256)')
+    parser.add_argument('--seed', type=int, default=41,
+                        help='Random seed (default: 41)')
+    parser.add_argument('--num_ways', type=int, default=5,
+                        help='Number of ways/classes (default: 5)')
+    parser.add_argument('--num_shots', type=int, default=5,
+                        help='Number of shots/examples per class (default: 5)')
+    
+    args = parser.parse_args()
+    
     print('main func called')
-
-    dataset_name = 'flowers102'
-    seed = 43
-    num_ways = 5
-    num_shots = 2
+    
+    dataset_name = args.dataset
+    seed = args.seed
+    num_ways = args.num_ways
+    num_shots = args.num_shots
     
     if dataset_name == 'caltech256':
         dataset = Caltech256(root='./torch', download=True)

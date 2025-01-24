@@ -11,16 +11,16 @@ class AugmentationNode:
 augmentation_types = ['canny', 'depth', 'seg', 'color', 'nerf', 'classical', 'none']
 
 def print_tree(node, level=0, direction='root'):
-        if node:
-            if direction == 'root':
-                edge_info = f"(root, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
-            else:
-                edge_info = f"(edge: {node.parent_edge_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
-            print('  ' * level + f"{direction}: {edge_info}")
-            if node.left:
-                print_tree(node.left, level + 1, 'L')
-            if node.right:
-                print_tree(node.right, level + 1, 'R')
+    if node:
+        if direction == 'root':
+            edge_info = f"(root, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
+        else:
+            edge_info = f"(edge: {node.parent_edge_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
+        print('  ' * level + f"{direction}: {edge_info}")
+        if node.left:
+            print_tree(node.left, level + 1, 'L')
+        if node.right:
+            print_tree(node.right, level + 1, 'R')
 
 def initialize_augmentation_tree(depth=4):
     def create_node(current_depth, parent_edge_type=None, is_root=False):
