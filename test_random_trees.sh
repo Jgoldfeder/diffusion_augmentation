@@ -10,15 +10,19 @@ caltech_seeds=(42 43 48)
 
 for shot in "${shots[@]}"; do
     for seed in "${caltech_seeds[@]}"; do
-        echo "Running test for caltech256, ${shot}-shot, seed $seed"
-        python test_random_tree.py --dataset caltech256 --seed $seed --num_ways 5 --num_shots $shot
+        for run in {1..3}; do
+            echo "Running test for caltech256, ${shot}-shot, seed $seed, run $run"
+            python test_random_tree.py --dataset caltech256 --seed $seed --num_ways 5 --num_shots $shot
+        done
     done
 done
 
 for shot in "${shots[@]}"; do
     for seed in "${flowers102_seeds[@]}"; do
-        echo "Running test for flowers102, ${shot}-shot, seed $seed"
-        python test_random_tree.py --dataset flowers102 --seed $seed --num_ways 5 --num_shots $shot
+        for run in {1..3}; do
+            echo "Running test for flowers102, ${shot}-shot, seed $seed, run $run"
+            python test_random_tree.py --dataset flowers102 --seed $seed --num_ways 5 --num_shots $shot
+        done
     done
 done
 

@@ -9,6 +9,9 @@ from torchvision import transforms
 from torch import nn
 import torch
 import wandb
+import os
+
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 if __name__ == '__main__':
     # Add argument parsing
@@ -19,7 +22,8 @@ if __name__ == '__main__':
     parser.add_argument('--ways', type=int, default=5, help='Number of ways')
     args = parser.parse_args()
 
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
 
     wandb.init(
         project="classical-augmentation-experiments",
@@ -57,7 +61,8 @@ if __name__ == '__main__':
     for param in model.parameters():
         param.requires_grad = False
     model.fc = nn.Linear(model.fc.in_features, args.ways)
-    model.to(device)
+    model = model.to(device)
+    
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
 
@@ -68,7 +73,8 @@ if __name__ == '__main__':
         train_total = 0
         
         for images, labels, class_names in train_loader:
-            images, labels = images.to(device), labels.to(device)
+            images = images.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
             
             optimizer.zero_grad()
             outputs = model(images)

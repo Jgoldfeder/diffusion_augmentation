@@ -1,4 +1,5 @@
 import random
+import time
 import numpy as np
 import wandb
 import argparse
@@ -150,17 +151,18 @@ def main():
             "num_ways": args.num_ways
         }
     )
+
+    # Initialize random seed for tree generation with current time
+    random.seed(time.time())
     
     tree = AugmentationNode.initialize_augmentation_tree(depth=4)
     print(tree_to_string(tree))
     wandb.log({"tree": tree_to_string(tree)})
 
-    # Set random seeds for reproducibility
+    # Now set the seeds for the rest of the training process
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     random.seed(args.seed)
-    
-    
     
     # Compute accuracy with the provided arguments
     test_accuracy = compute_test_accuracy(tree, "cuda", args)
