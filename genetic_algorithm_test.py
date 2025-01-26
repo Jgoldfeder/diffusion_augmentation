@@ -262,7 +262,7 @@ def on_generation(ga_instance):
     num_generations_finished += 1
     num_times_fitness_called = 0
 
-    best_solution = ga_instance.best_solution()
+    best_solution = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)
     best_tree = genome_to_tree(best_solution[0])
     best_fitness = best_solution[1]
 
@@ -292,7 +292,7 @@ def on_generation(ga_instance):
     })
 
 def on_stop(ga_instance, last_gen_fitness_values):
-    best_solution = ga_instance.best_solution()
+    best_solution = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)
     best_tree = genome_to_tree(best_solution[0])
     best_tree_accuracy = compute_test_accuracy(best_tree, "cuda")
     print('Best tree accuracy:', best_tree_accuracy)
