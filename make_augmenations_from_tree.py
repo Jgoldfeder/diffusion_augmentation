@@ -31,6 +31,12 @@ classical_aug_transform = transforms.Compose([
             transforms.RandomRotation(degrees=30)   # Random rotation within [-30, 30] degrees
         ])
 
+transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+
 def generate_augmentations_from_tree(root: AugmentationNode, dataset, aug_managers, transform) -> list:
     augmentations = []
     labels = []
@@ -52,26 +58,28 @@ def generate_augmentations_from_tree(root: AugmentationNode, dataset, aug_manage
             #start from the root and traverse the tree down randomly based on the left and right probabilities
             curr_node = root
             curr_image = image
-            while curr_node.left and curr_node.right:
+            while curr_node:
+                print(f"Current node: {curr_node.augmentation_type}")
+                if curr_node.augmentation_type == "segment":
+                    curr_image = segment_aug_manager.generate_augmentations([curr_image], [class_name])[0]
+                elif curr_node.augmentation_type == "color":
+                    curr_image = color_aug_manager.generate_augmentations([curr_image], [class_name])[0]
+                elif curr_node.augmentation_type == "canny":
+                    curr_image = canny_aug_manager.generate_augmentations([curr_image], [class_name])[0]
+                elif curr_node.augmentation_type == "nerf":
+                    curr_image = nerf_aug_manager.generate_augmentations([curr_image], [class_name])[0]
+                elif curr_node.augmentation_type == "depth":
+                    curr_image = depth_aug_manager.generate_augmentations([curr_image], [class_name])[0]
+                elif curr_node.augmentation_type == "classical":
+                    curr_image = classical_aug_transform(curr_image)
+                elif curr_node.augmentation_type == "none":
+                    curr_image = curr_image # do nothing explicitly
+                
+                #traverse the tree down randomly based on the left and right probabilities
                 if random.random() < curr_node.left_child_probability:
                     curr_node = curr_node.left
                 else:
                     curr_node = curr_node.right
-
-                if curr_node.parent_edge_type == "segment":
-                    curr_image = segment_aug_manager.generate_augmentations([curr_image], [class_name])[0]
-                elif curr_node.parent_edge_type == "color":
-                    curr_image = color_aug_manager.generate_augmentations([curr_image], [class_name])[0]
-                elif curr_node.parent_edge_type == "canny":
-                    curr_image = canny_aug_manager.generate_augmentations([curr_image], [class_name])[0]
-                elif curr_node.parent_edge_type == "nerf":
-                    curr_image = nerf_aug_manager.generate_augmentations([curr_image], [class_name])[0]
-                elif curr_node.parent_edge_type == "depth":
-                    curr_image = depth_aug_manager.generate_augmentations([curr_image], [class_name])[0]
-                elif curr_node.parent_edge_type == "classical":
-                    curr_image = classical_aug_transform(curr_image)
-                elif curr_node.parent_edge_type == "none":
-                    curr_image = curr_image # do nothing explicitly
 
             #add the final image to the list
             augmentations.append(transform(curr_image))
@@ -92,28 +100,28 @@ def test_make_augmentations():
     depth_aug_manager = DepthAugmentationManager()
 
     aug_managers = [segment_aug_manager, color_aug_manager, canny_aug_manager, nerf_aug_manager, depth_aug_manager]
-
-    tree = AugmentationNode.initialize_augmentation_tree()
+    tree = AugmentationNode.initialize_augmentation_tree(depth=2)
     print_tree(tree)
 
     #create a sample dataset
-    sample_dataset = [(Image.open("torch/caltech256/256_ObjectCategories/001.ak47/001_0001.jpg"), 0)]
-    class_to_label_map = {0: "ak47"}
+    sample_dataset = [(Image.open("torch/caltech256/256_ObjectCategories/001.ak47/001_0001.jpg"), 0, "ak47")]
 
-    augmented_dataset = generate_augmentations_from_tree(tree, sample_dataset, class_to_label_map, aug_managers)
+    augmented_dataset = generate_augmentations_from_tree(tree, sample_dataset, aug_managers, transform)
 
     #save all the images to a folder
     import os
     if not os.path.exists("test_augmented_images"):
         os.makedirs("test_augmented_images")
-    for i, (image, label) in enumerate(augmented_dataset):
-
+    for i, (image, label, class_name) in enumerate(augmented_dataset):
+        if isinstance(image, torch.Tensor):
+            image = image * torch.tensor([0.229, 0.224, 0.225]).view(-1, 1, 1) + torch.tensor([0.485, 0.456, 0.406]).view(-1, 1, 1) # remove normalization
+            image = transforms.ToPILImage()(image)
         image.save(f"test_augmented_images/augmented_{i}.jpg")
 
     print(f"Saved {len(augmented_dataset)} augmented images to augmented_images/")
 
 if __name__ == '__main__':
-    test_generateda_augmentations()
+    test_make_augmentations()
    
 
     
