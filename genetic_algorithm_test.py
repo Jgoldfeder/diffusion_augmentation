@@ -6,8 +6,6 @@ import argparse
 import time
 import os
 
-from PIL import Image
-
 import AugmentationNode
 from AugmentationNode import print_tree
 import fitness_score
@@ -21,12 +19,11 @@ from fitness_score import create_datasets
 import get_base_model
 from make_augmenations_from_tree import generate_augmentations_from_tree
 from torch.utils.data import DataLoader
-from torchvision.models import resnet50, ResNet50_Weights
 from torchvision import transforms
 from torch import nn
 import torch
 
-from CustomDataset  import TreeAugmentedDataset, ClassicalDataset, ValDataset, split_into_two, FewShotDataset
+from CustomDataset import FewShotDataset
 
 seed = -1
 dataset = ''
