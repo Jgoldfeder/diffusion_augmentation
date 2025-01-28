@@ -10,22 +10,25 @@ from make_augmenations_from_tree import generate_augmentations_from_tree
 import get_base_model
 import AugmentationNode
 
-# from image_augmentation_models.SegmentAugmentation import SegmentAugmentationManager
-# from image_augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
-# from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
-# from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
-# from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
+from image_augmentation_models.SegmentAugmentation import SegmentAugmentationManager
+from image_augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
+from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
+from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
+from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
 
-# segment_aug_manager = SegmentAugmentationManager()
-# color_aug_manager = ColorControlNetAugmentationManager()
-# canny_aug_manager = CannyAugmentationManager()
-# nerf_aug_manager = NerfAugmentationManager()
-# depth_aug_manager = DepthAugmentationManager()
-# aug_managers = [segment_aug_manager, color_aug_manager, canny_aug_manager, nerf_aug_manager, depth_aug_manager]
+from fitness_score import fitness_score, create_datasets
 
-tree_depth = 4
-dataset = 'caltech256'
-seed = 42
+segment_aug_manager = SegmentAugmentationManager()
+color_aug_manager = ColorControlNetAugmentationManager()
+canny_aug_manager = CannyAugmentationManager()
+nerf_aug_manager = NerfAugmentationManager()
+depth_aug_manager = DepthAugmentationManager()
+aug_managers = [segment_aug_manager, color_aug_manager, canny_aug_manager, nerf_aug_manager, depth_aug_manager]
+
+tree_depth = 2
+dataset = 'flowers102'
+seed = 50
+num_shots = 2
 
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -38,7 +41,7 @@ def compute_test_accuracy(augmentation_tree, device):
     print('[LOG] Computing test accuracy on combined train and val datasets')
     print('For both classical augs and the best aug tree')
 
-    dataset_path = f"few_shot_datasets/{dataset}/2_shot/seed_{seed}"
+    dataset_path = f"few_shot_datasets/{dataset}/{num_shots}_shot/seed_{seed}"
     train_dataset = FewShotDataset(dataset_path, dataset_type='train')
     test_dataset = FewShotDataset(dataset_path, dataset_type='test')
 
@@ -110,6 +113,12 @@ def compute_test_accuracy(augmentation_tree, device):
 
     return test_accuracy
 
+def compute_fitness_score(augmentation_tree, device):
+    train_dataset, val_dataset, test_dataset = create_datasets(dataset, seed, num_shots)
+    loss = fitness_score(augmentation_tree, train_dataset, val_dataset, aug_managers)
+    fitness = loss * -1
+    return fitness
+
 def print_tree(node, level=0, direction='root'):
     if node:
         if direction == 'root':
@@ -128,7 +137,7 @@ def tree_to_string(node, level=0, direction='root'):
         if direction == 'root':
             edge_info = f"(root, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
         else:
-            edge_info = f"(edge: {node.parent_edge_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
+            edge_info = f"(edge: {node.augmentation_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
         tree_str += '  ' * level + f"{direction}: {edge_info}" + '\n'
         if node.left:
             tree_str += tree_to_string(node.left, level + 1, 'L')
@@ -140,6 +149,9 @@ def compute_random_tree_accuracy():
 	compute_test_accuracy(AugmentationNode.initialize_augmentation_tree(tree_depth), 'cuda')
 
 if __name__ == '__main__':
-	my_tree = AugmentationNode.initialize_augmentation_tree(tree_depth)
-	print_tree(my_tree)
-	print(tree_to_string(my_tree))
+    my_tree = AugmentationNode.initialize_augmentation_tree(tree_depth)
+    my_tree.augmentation_type = 'color'
+    my_tree.left.augmentation_type = 'none'
+    my_tree.right.augmentation_type = 'none'
+    print(compute_fitness_score(my_tree, 'cuda'))
+    print(tree_to_string(my_tree))
