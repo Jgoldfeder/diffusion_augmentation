@@ -42,8 +42,7 @@ transform = transforms.Compose([
 def create_trees():
     trees = []
     for augmentation_type in augmentation_types:
-        tree = AugmentationNode.initialize_augmentation_tree(depth=1)
-        tree.augmentation_type = augmentation_type
+        tree = AugmentationNode.AugmentationNode(augmentation_type=augmentation_type)
         trees.append(tree)
     return trees
 
