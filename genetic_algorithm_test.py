@@ -28,8 +28,9 @@ import torch
 
 from CustomDataset  import TreeAugmentedDataset, ClassicalDataset, ValDataset, split_into_two, FewShotDataset
 
-seed = 47
-dataset = 'flowers102'
+seed = -1
+dataset = ''
+num_shots = -1
 # NOTE these whill be set later by parser args
 
 segment_aug_manager = SegmentAugmentationManager()
@@ -47,9 +48,6 @@ transform = transforms.Compose([
 
 train_dataset, val_dataset, test_dataset = None, None, None
 
-# Problem parameters
-tree_depth = 4
-num_genes = 2 * (2 ** tree_depth - 1)
 
 def tree_to_string(node, level=0, direction='root'):
     tree_str = ''
@@ -146,7 +144,7 @@ def compute_test_accuracy(augmentation_tree, device):
     print('[LOG] Computing test accuracy on combined train and val datasets')
     print('For both classical augs and the best aug tree')
 
-    dataset_path = f"few_shot_datasets/{dataset}/2_shot/seed_{seed}"
+    dataset_path = f"few_shot_datasets/{dataset}/{num_shots}_shot/seed_{seed}"
     train_dataset = FewShotDataset(dataset_path, dataset_type='train')
     test_dataset = FewShotDataset(dataset_path, dataset_type='test')
 
@@ -310,6 +308,8 @@ def parse_args():
     parser.add_argument('--mutation_percent', type=int, default=10, help='Mutation percentage')
     parser.add_argument('--dataset', type=str, required=True, help='Dataset to use')
     parser.add_argument('--seed', type=int, required=True, help='Random seed for reproducibility')
+    parser.add_argument('--num_shots', type=int, required=True, help='Number of shots (examples per class)')
+    parser.add_argument('--tree_depth', type=int, required=True, help='Depth of the augmentation tree')
     return parser.parse_args()
 
 def main():
@@ -324,20 +324,24 @@ def main():
             "keep_elitism": args.keep_elitism,
             "keep_parents": args.keep_parents,
             "mutation_percent": args.mutation_percent,
-            "tree_depth": tree_depth,
+            "tree_depth": args.tree_depth,
             "dataset": args.dataset,
-            "seed": args.seed
+            "seed": args.seed,
+            "num_shots": args.num_shots
         }
     )
 
     random.seed(args.seed)
 
-    global seed, dataset, train_dataset, val_dataset, test_dataset
+    global seed, dataset, num_shots, train_dataset, val_dataset, test_dataset
 
     dataset = args.dataset
     seed = args.seed
+    num_shots = args.num_shots
 
-    train_dataset, val_dataset, test_dataset = create_datasets(dataset, seed)
+    train_dataset, val_dataset, test_dataset = create_datasets(dataset, seed, num_shots)
+
+    num_genes = 2 * (2 ** args.tree_depth - 1)
 
     ga_instance = pygad.GA(
         num_generations=args.num_generations,
@@ -350,7 +354,8 @@ def main():
         gene_space=gene_space(),
         mutation_percent_genes=args.mutation_percent,
         on_generation=on_generation,
-        on_stop=on_stop
+        on_stop=on_stop,
+        save_solutions=True
     )
 
     # Run the GA

@@ -21,8 +21,8 @@ transform = transforms.Compose([
 
 device = "cpu"
 
-def create_datasets(dataset, seed):
-    dataset_path = f"few_shot_datasets/{dataset}/2_shot/seed_{seed}"
+def create_datasets(dataset, seed, num_shots):
+    dataset_path = f"few_shot_datasets/{dataset}/{num_shots}_shot/seed_{seed}"
     train_dataset = FewShotDataset(dataset_path, dataset_type='train')
     test_dataset = FewShotDataset(dataset_path, dataset_type='test')
 
