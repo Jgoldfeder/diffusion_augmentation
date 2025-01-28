@@ -31,6 +31,7 @@ from CustomDataset  import TreeAugmentedDataset, ClassicalDataset, ValDataset, s
 seed = -1
 dataset = ''
 num_shots = -1
+tree_depth = -1
 # NOTE these whill be set later by parser args
 
 segment_aug_manager = SegmentAugmentationManager()
@@ -333,15 +334,16 @@ def main():
 
     random.seed(args.seed)
 
-    global seed, dataset, num_shots, train_dataset, val_dataset, test_dataset
+    global tree_depth, seed, dataset, num_shots, train_dataset, val_dataset, test_dataset
 
     dataset = args.dataset
     seed = args.seed
     num_shots = args.num_shots
+    tree_depth = args.tree_depth
 
     train_dataset, val_dataset, test_dataset = create_datasets(dataset, seed, num_shots)
 
-    num_genes = 2 * (2 ** args.tree_depth - 1)
+    num_genes = 2 * (2 ** tree_depth - 1)
 
     ga_instance = pygad.GA(
         num_generations=args.num_generations,
