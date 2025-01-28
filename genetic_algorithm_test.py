@@ -51,18 +51,20 @@ train_dataset, val_dataset, test_dataset = None, None, None
 
 
 def tree_to_string(node, level=0, direction='root'):
-    tree_str = ''
     if node:
-        if direction == 'root':
-            edge_info = f"(root, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
+        if not node.left and not node.right:
+            # Leaf nodes: only show augmentation type
+            edge_info = f"(Augmentation: {node.augmentation_type})"
         else:
-            edge_info = f"(edge: {node.augmentation_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
+            # Non-leaf nodes: show augmentation type and probabilities
+            edge_info = f"(Augmentation: {node.augmentation_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
         tree_str += '  ' * level + f"{direction}: {edge_info}" + '\n'
         if node.left:
             tree_str += tree_to_string(node.left, level + 1, 'L')
         if node.right:
             tree_str += tree_to_string(node.right, level + 1, 'R')
     return tree_str
+
 
 def genome_to_tree(genome):
     root_node = AugmentationNode.AugmentationNode(AugmentationNode.augmentation_types[int(genome[0])])
