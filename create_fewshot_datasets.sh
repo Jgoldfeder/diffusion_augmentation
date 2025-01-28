@@ -1,3 +1,4 @@
+#!/bin/bash
 # Create datasets for Caltech256
 for seed in {41..50}; do
     for shot in 5 10; do
