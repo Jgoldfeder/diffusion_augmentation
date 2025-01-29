@@ -204,7 +204,9 @@ class ClassicalDataset(Dataset):
         for img, label, class_name in dataset:
             self.dataset.append((self.basic_transform(img), label, class_name))
             for _ in range(duplicate_factor-1):
-                self.dataset.append((classical_aug_transform(img), label, class_name))
+                basic_transformed_img = self.basic_transform(img)
+                augmented_img = classical_aug_transform(basic_transformed_img)
+                self.dataset.append((augmented_img, label, class_name))
         
     def __len__(self):
         return len(self.dataset)
