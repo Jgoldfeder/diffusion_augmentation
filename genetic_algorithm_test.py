@@ -29,6 +29,7 @@ seed = -1
 dataset = ''
 num_shots = -1
 tree_depth = -1
+sol_per_pop = -1
 # NOTE these whill be set later by parser args
 
 segment_aug_manager = SegmentAugmentationManager()
@@ -247,6 +248,23 @@ def gene_space():
         gene_space.extend([[i for i in range(len(AugmentationNode.augmentation_types))], {"low": 0.3, "high": 0.7}])
     return gene_space
 
+def initial_population():
+    population = []
+    augmentation_cycler = 0
+    num_genes = 2 * (2 ** tree_depth - 1)
+    for i in range(sol_per_pop):
+        genome = []
+        for j in range(0, num_genes, 2):
+            aug_type = random.randint(0, len(AugmentationNode.augmentation_types) - 1)
+            left_prob = random.uniform(0.3, 0.7)
+            genome.extend([aug_type, left_prob])
+        genome[0] = augmentation_cycler
+        augmentation_cycler += 1
+        augmentation_cycler %= len(AugmentationNode.augmentation_types)
+        population.append(genome)
+    # print(population)
+    return population
+
 # Initialize GA
 fitness_progress = []  # To store fitness values for each generation
 
@@ -333,12 +351,13 @@ def main():
 
     random.seed(args.seed)
 
-    global tree_depth, seed, dataset, num_shots, train_dataset, val_dataset, test_dataset
+    global sol_per_pop, tree_depth, seed, dataset, num_shots, train_dataset, val_dataset, test_dataset
 
     dataset = args.dataset
     seed = args.seed
     num_shots = args.num_shots
     tree_depth = args.tree_depth
+    sol_per_pop = args.sol_per_pop
 
     train_dataset, val_dataset, test_dataset = create_datasets(dataset, seed, num_shots)
 
@@ -348,10 +367,11 @@ def main():
         num_generations=args.num_generations,
         num_parents_mating=args.num_parents_mating,
         fitness_func=fitness_function,
-        sol_per_pop=args.sol_per_pop,
+        # sol_per_pop=sol_per_pop,
+        # num_genes=num_genes,
+        initial_population=initial_population(),
         keep_elitism=args.keep_elitism,
         keep_parents=args.keep_parents,
-        num_genes=num_genes,
         gene_space=gene_space(),
         mutation_percent_genes=args.mutation_percent,
         on_generation=on_generation,
