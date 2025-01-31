@@ -7,6 +7,8 @@ import AugmentationNode
 from AugmentationNode import print_tree
 
 tree_depth = 2
+num_genes = 2 * (2 ** tree_depth - 1)
+sol_per_pop = 12
 
 total_occurances = [0 for i in range(len(AugmentationNode.augmentation_types))]
 
@@ -122,10 +124,26 @@ def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
 
     return fitness
 
+def initial_population():
+    population = []
+    augmentation_cycler = 0
+    for i in range(sol_per_pop):
+        genome = []
+        for j in range(0, num_genes, 2):
+            aug_type = random.randint(0, len(AugmentationNode.augmentation_types) - 1)
+            left_prob = random.uniform(0.3, 0.7)
+            genome.extend([aug_type, left_prob])
+        genome[0] = augmentation_cycler
+        augmentation_cycler += 1
+        augmentation_cycler %= len(AugmentationNode.augmentation_types)
+        population.append(genome)
+    # print(population)
+    return population
+
 def gene_space():
     """Defines the gene space for the GA."""
     gene_space = []
-    for i in range(2 ** tree_depth - 1):
+    for j in range(0, num_genes, 2):
         gene_space.extend([[i for i in range(len(AugmentationNode.augmentation_types))], {"low": 0.3, "high": 0.7}])
     return gene_space
 
@@ -147,7 +165,7 @@ def on_generation(ga_instance):
     for ga_member in ga_instance.population:
         aug_type_as_int = int(ga_member[0])
         total_occurances[aug_type_as_int] += 1
-    print(total_occurances)
+    # print(total_occurances)
 
     # best_solution = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)
     # best_tree = genome_to_tree(best_solution[0])
@@ -159,23 +177,38 @@ def on_generation(ga_instance):
     # print('Time since start (seconds):', int(time.time() - start_time))
 
 def main():
-    num_genes = 2 * (2 ** tree_depth - 1)
+    global total_occurances
 
-    ga_instance = pygad.GA(
-        num_generations=10,
-        num_parents_mating=6,
-        fitness_func=fitness_function,
-        sol_per_pop=12,
-        keep_elitism=1,
-        keep_parents=1,
-        num_genes=num_genes,
-        gene_space=gene_space(),
-        mutation_percent_genes=10,
-        on_generation=on_generation,
-        save_solutions=True
-    )
+    totals = []
 
-    ga_instance.run()
+    for i in range(1000):
+        total_occurances = [0 for i in range(len(AugmentationNode.augmentation_types))]
+
+
+        ga_instance = pygad.GA(
+            num_generations=10,
+            num_parents_mating=6,
+            fitness_func=fitness_function,
+            sol_per_pop=sol_per_pop,
+            num_genes=num_genes,
+            gene_space=gene_space(),
+            # initial_population=initial_population(),
+            keep_elitism=1,
+            keep_parents=1,
+            mutation_percent_genes=10,
+            on_generation=on_generation,
+            save_solutions=True
+        )
+
+        ga_instance.run()
+
+        totals.append(total_occurances)
+
+    # here we find the avg val of aug type at index 3
+    curr_sum = 0
+    for row in totals:
+        curr_sum += row[3]
+    print(curr_sum / len(totals))
 
 if __name__ == "__main__":
     main()
