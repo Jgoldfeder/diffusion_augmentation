@@ -49,6 +49,7 @@ train_dataset, val_dataset, test_dataset = None, None, None
 
 
 def tree_to_string(node, level=0, direction='root'):
+    tree_str = ''
     if node:
         if not node.left and not node.right:
             # Leaf nodes: only show augmentation type
