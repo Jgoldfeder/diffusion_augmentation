@@ -253,6 +253,7 @@ def initial_population():
     population = []
     augmentation_cycler = 0
     num_genes = 2 * (2 ** tree_depth - 1)
+    added_baseline = False
     for i in range(sol_per_pop):
         genome = []
         for j in range(0, num_genes, 2):
@@ -260,6 +261,13 @@ def initial_population():
             left_prob = random.uniform(0.3, 0.7)
             genome.extend([aug_type, left_prob])
         genome[0] = augmentation_cycler
+
+        # have one tree that is our baseline
+        if not added_baseline and AugmentationNode.augmentation_types[augmentation_cycler] == 'classical':
+            added_baseline = True
+            for j in range(2, num_genes, 2):
+                genome[j] = AugmentationNode.augmentation_types.index('none')
+
         augmentation_cycler += 1
         augmentation_cycler %= len(AugmentationNode.augmentation_types)
         population.append(genome)
