@@ -41,7 +41,7 @@ class ControlNetAugmentationManager:
 		).to(self.control_net_device)
 
 		pipe = StableDiffusionControlNetPipeline.from_pretrained(
-			"runwayml/stable-diffusion-v1-5",
+			"models/runwayml-stable-diffusion-v1-5",
 			controlnet=controlnet,
 			torch_dtype=torch.float16,
 			safety_checker=None
