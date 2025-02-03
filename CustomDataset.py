@@ -194,8 +194,7 @@ class ClassicalDataset(Dataset):
             ),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomVerticalFlip(p=0.5), 
-            transforms.RandomRotation(degrees=10),
-            transforms.ToTensor()
+            transforms.RandomRotation(degrees=10)
         ])
         
         self.basic_transform = basic_transform
@@ -204,9 +203,8 @@ class ClassicalDataset(Dataset):
         for img, label, class_name in dataset:
             self.dataset.append((self.basic_transform(img), label, class_name))
             for _ in range(duplicate_factor-1):
-                basic_transformed_img = self.basic_transform(img)
-                augmented_img = classical_aug_transform(basic_transformed_img)
-                self.dataset.append((augmented_img, label, class_name))
+                augmented_img = classical_aug_transform(img)
+                self.dataset.append((self.basic_transform(augmented_img), label, class_name))
         
     def __len__(self):
         return len(self.dataset)
@@ -347,6 +345,11 @@ def create_datasets(args):
     for old_label, new_label in old_to_new_labels.items():
         new_label_to_class[new_label] = label_to_class[old_label]
 
+    basic_transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
@@ -354,7 +357,7 @@ def create_datasets(args):
     ])
 
     aug_dataset = AugmentedDataset(base_dataset, new_label_to_class, transform=transform, args=args)
-    classical_dataset = ClassicalDataset(base_dataset, transform, duplicate_factor=len(aug_dataset)//len(base_dataset))
+    classical_dataset = ClassicalDataset(base_dataset, basic_transform, duplicate_factor=len(aug_dataset)//len(base_dataset))
     test_dataset = ClassicalDataset(test_dataset, transform, duplicate_factor=1)
 
     print('Dataset sizes:')

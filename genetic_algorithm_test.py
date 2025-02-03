@@ -223,6 +223,30 @@ def compute_test_accuracy(augmentation_tree, device):
             "epoch": epoch
         })
 
+        if epoch == 399:  # On the last epoch
+            # Calculate confusion matrix
+            confusion_matrix = torch.zeros(5, 5)  # Assuming 5 classes
+            with torch.no_grad():
+                for images, labels, class_names in test_loader:
+                    images, labels = images.to(device), labels.to(device)
+                    outputs = model(images)
+                    _, predicted = torch.max(outputs.data, 1)
+                    for t, p in zip(labels.view(-1), predicted.view(-1)):
+                        confusion_matrix[t.long(), p.long()] += 1
+
+            print("\nConfusion Matrix:")
+            print(confusion_matrix)
+            
+            # Log confusion matrix to wandb
+            wandb.log({
+                "confusion_matrix": wandb.plot.confusion_matrix(
+                    probs=None,
+                    y_true=confusion_matrix.cpu().numpy().astype(int),
+                    preds=None,
+                    class_names=[str(i) for i in range(5)]  # Replace with actual class names if available
+                )
+            })
+
     return test_accuracy
 
 num_times_fitness_called = 0
