@@ -46,6 +46,8 @@ def split_train_test(dataset, class_to_label, labels, num_ways, num_shots, seed)
         train_indexes.extend(indexes[:num_shots])
         test_indexes.extend(indexes[num_shots:])
 
+    # TODO: fix this to remove the RemappedDataset class
+
     old_to_new_labels = get_label_remapping(set(target_labels))
     train_dataset = RemappedDataset(Subset(dataset, train_indexes), old_to_new_labels)
     test_dataset = RemappedDataset(Subset(dataset, test_indexes), old_to_new_labels)
