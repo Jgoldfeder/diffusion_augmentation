@@ -226,6 +226,8 @@ def compute_test_accuracy(augmentation_tree, device):
         if epoch == 399:  # On the last epoch
             # Calculate confusion matrix
             confusion_matrix = torch.zeros(5, 5)  # Assuming 5 classes
+            all_preds = []
+            all_labels = []
             with torch.no_grad():
                 for images, labels, class_names in test_loader:
                     images, labels = images.to(device), labels.to(device)
@@ -233,6 +235,8 @@ def compute_test_accuracy(augmentation_tree, device):
                     _, predicted = torch.max(outputs.data, 1)
                     for t, p in zip(labels.view(-1), predicted.view(-1)):
                         confusion_matrix[t.long(), p.long()] += 1
+                    all_preds.extend(predicted.cpu().numpy())
+                    all_labels.extend(labels.cpu().numpy())
 
             print("\nConfusion Matrix:")
             print(confusion_matrix)
@@ -241,8 +245,8 @@ def compute_test_accuracy(augmentation_tree, device):
             wandb.log({
                 "confusion_matrix": wandb.plot.confusion_matrix(
                     probs=None,
-                    y_true=confusion_matrix.cpu().numpy().astype(int),
-                    preds=None,
+                    y_true=all_labels,
+                    preds=all_preds,
                     class_names=[str(i) for i in range(5)]  # Replace with actual class names if available
                 )
             })
