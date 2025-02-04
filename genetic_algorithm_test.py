@@ -65,6 +65,7 @@ def tree_to_string(node, level=0, direction='root'):
     return tree_str
 
 
+
 def genome_to_tree(genome):
     root_node = AugmentationNode.AugmentationNode(AugmentationNode.augmentation_types[int(genome[0])])
     root_node.left_child_probability = genome[1]
@@ -420,6 +421,52 @@ def main():
     ga_instance.run()
 
     wandb.finish()
+
+def string_to_tree(tree_string):
+    print(tree_string)
+    # Split the string into lines and remove empty lines
+    lines = [line for line in tree_string.strip().split('\n') if line.strip()]
+    
+    # Create a map of (level, position) -> line for easy lookup
+    tree_map = {}
+    for line in lines:
+        # Calculate level based on indentation (2 spaces per level)
+        level = (len(line) - len(line.lstrip())) // 2
+        # Extract position (root, L, R, etc.)
+        position = line.lstrip().split(':')[0].strip()
+        tree_map[(level, position)] = line.strip()
+
+    def create_node(level, position):
+        if (level, position) not in tree_map:
+            return None
+
+        line = tree_map[(level, position)]
+        # Extract augmentation type from between parentheses
+        aug_info = line[line.find("(")+1:line.find(")")].strip()
+        aug_type = aug_info.split('Augmentation:')[1].split(',')[0].strip()
+        
+        node = AugmentationNode.AugmentationNode(aug_type)
+        
+        # Extract probabilities if they exist (non-leaf nodes)
+        if 'L_prob:' in line:
+            left_prob = float(line.split('L_prob:')[1].split(',')[0].strip())
+            right_prob = float(line.split('R_prob:')[1].split(')')[0].strip())
+            node.left_child_probability = left_prob
+            node.right_child_probability = right_prob
+            
+            # Create children
+            if position == 'root':
+                node.left = create_node(level + 1, 'L')
+                node.right = create_node(level + 1, 'R')
+            else:
+                node.left = create_node(level + 1, position + 'L')
+                node.right = create_node(level + 1, position + 'R')
+        
+        return node
+
+    # Start creating the tree from the root
+    root = create_node(0, 'root')
+    return root
 
 if __name__ == "__main__":
     main()
