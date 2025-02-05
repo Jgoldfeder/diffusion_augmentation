@@ -40,7 +40,7 @@ def tree_to_string(node, level=0, direction='root'):
         if direction == 'root':
             edge_info = f"(root, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
         else:
-            edge_info = f"(edge: {node.parent_edge_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
+            edge_info = f"(edge: {node.augmentation_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
         tree_str += '  ' * level + f"{direction}: {edge_info}" + '\n'
         if node.left:
             tree_str += tree_to_string(node.left, level + 1, 'L')
