@@ -1,3 +1,4 @@
+models/runwayml-stable-diffusion-v1-5
 genetic_runs/genetic_output*
 genetic_runs/nohup.out
 few_shot_datasets/
@@ -5,6 +6,7 @@ sample_tree_augmentations/
 torch/
 augmented_images/
 color_controlnet/
+
 __pycache__/*
 annotator/__pycache__/*
 *.pyc
