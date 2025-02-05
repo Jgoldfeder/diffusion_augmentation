@@ -16,6 +16,7 @@ from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
 from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
 
 from AugmentationNode import print_tree
+from CustomDataset import TreeAugmentedDataset
 
 classical_aug_transform = transforms.Compose([
             transforms.Resize(size=(256, 256)), # NOTE should this resize be here? Otherwise errors on some classes, ex. kangaroo-101 there is an image of size (300, 182)
@@ -49,7 +50,7 @@ def generate_augmentations_from_tree(root: AugmentationNode, dataset, aug_manage
 
     for image, label, class_name in dataset:
         #run through the tree 5 times and compose augmentations based on the given tree
-        augmentations.append(transform(image))
+        augmentations.append(image)
         labels.append(label)
         class_names.append(class_name)
 
@@ -82,12 +83,12 @@ def generate_augmentations_from_tree(root: AugmentationNode, dataset, aug_manage
                     curr_node = curr_node.right
 
             #add the final image to the list
-            augmentations.append(transform(curr_image))
+            augmentations.append(curr_image)
             labels.append(label)
             class_names.append(class_name)
 
     #return a list of tuples (image, label, class_name)
-    dataset = list(zip(augmentations, labels, class_names))
+    dataset = TreeAugmentedDataset(list(zip(augmentations, labels, class_names)), transforms.Compose([classical_aug_transform, transform]))
     return dataset
 
 

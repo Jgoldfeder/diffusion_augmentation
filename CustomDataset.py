@@ -181,6 +181,7 @@ class FewShotDataset(Dataset): #dataset containing images from predefined struct
         class_names = self.class_names[index]
         return img, label, class_names
 
+# TODO put the classical transform in the get function rather than creating the list at initialization
 class ClassicalDataset(Dataset):
     def __init__(self, dataset, basic_transform, duplicate_factor=1):
         classical_aug_transform = transforms.Compose([
@@ -269,17 +270,14 @@ class AugmentedDataset(Dataset):
 class TreeAugmentedDataset(Dataset):
     def __init__(self, base_dataset, transform):
         self.transform = transform
-
-        self.dataset = []
-        for img, label in base_dataset:
-            self.dataset.append((self.transform(img), label))
+        self.dataset = base_dataset
 
     def __len__(self):
         return len(self.dataset)
 
     def __getitem__(self, index):
-        img, label = self.dataset[index]
-        return img, label
+        img, label, class_name = self.dataset[index]
+        return self.transform(img), label, class_name 
 
 def create_datasets(args):
     root = './torch'

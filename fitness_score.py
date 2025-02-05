@@ -30,13 +30,6 @@ def create_datasets(dataset, seed, num_shots):
 
     return fold_0_dataset, fold_1_dataset, test_dataset
 
-def create_augmented_val_datasets(individual, train_dataset, val_dataset, label_to_class, aug_managers):
-    val_dataset = TreeAugmentedDataset(val_dataset, label_to_class, transform)
-    #then generate the augmentations on the train set
-    augmented_dataset = generate_augmentations_from_tree(individual, train_dataset, label_to_class, aug_managers)
-    augmented_dataset = TreeAugmentedDataset(augmented_dataset, label_to_class, transform)
-    return augmented_dataset, val_dataset
-
 def get_val_loss(model, train_loader, val_loader, optimizer, criterion, device):
     for epoch in range(20):
         for batch in train_loader:
