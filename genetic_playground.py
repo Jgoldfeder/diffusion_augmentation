@@ -11,6 +11,10 @@ num_genes = 2 * (2 ** tree_depth - 1)
 sol_per_pop = 12
 
 total_occurances = [0 for i in range(len(AugmentationNode.augmentation_types))]
+all_genomes_from_fitness = []
+genome_numbers = set()
+genome_repeat_count = 0
+fitness_cache = dict()
 
 def tree_to_string(node, level=0, direction='root'):
     tree_str = ''
@@ -44,6 +48,14 @@ def genome_to_tree(genome):
         queue.append(node.left)
         queue.append(node.right)
     return root_node
+
+def genome_to_number(genome):
+    number = 0
+    mult = 1
+    for i in range(0, len(genome), 2):
+        number += (genome[i] + genome[i+1]) * mult
+        mult *= 10
+    return number
 
 def string_to_genome(tree_string):
     # Dictionary to map augmentation names to indices
@@ -106,6 +118,15 @@ start_time = int(time.time())
 num_times_fitness_called = 0
 def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     """Calculates the fitness of an individual."""
+    global all_genomes_from_fitness, genome_numbers, genome_repeat_count, fitness_cache
+    genome_number = genome_to_number(augmentation_tree_genome)
+    if genome_number in fitness_cache:
+        return fitness_cache[genome_number]
+    all_genomes_from_fitness.append(augmentation_tree_genome)
+    if genome_number in genome_numbers:
+        genome_repeat_count += 1
+    genome_numbers.add(genome_number)
+
     augmentation_tree = genome_to_tree(augmentation_tree_genome)
     k = AugmentationNode.augmentation_types.index('color')
     fitness = 0
@@ -122,6 +143,7 @@ def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     global num_times_fitness_called
     num_times_fitness_called += 1
 
+    fitness_cache[genome_number] = fitness
     return fitness
 
 def initial_population():
@@ -177,22 +199,26 @@ def on_generation(ga_instance):
     # print('Time since start (seconds):', int(time.time() - start_time))
 
 def main():
-    global total_occurances
+    global total_occurances, all_genomes_from_fitness, genome_numbers, genome_repeat_count
 
     totals = []
+    genome_repeat_counts = []
 
     for i in range(1000):
         total_occurances = [0 for i in range(len(AugmentationNode.augmentation_types))]
+        all_genomes_from_fitness = []
+        genome_numbers = set()
+        genome_repeat_count = 0
 
 
         ga_instance = pygad.GA(
             num_generations=10,
             num_parents_mating=6,
             fitness_func=fitness_function,
-            sol_per_pop=sol_per_pop,
-            num_genes=num_genes,
+            # sol_per_pop=sol_per_pop,
+            # num_genes=num_genes,
             gene_space=gene_space(),
-            # initial_population=initial_population(),
+            initial_population=initial_population(),
             keep_elitism=1,
             keep_parents=1,
             mutation_percent_genes=10,
@@ -203,12 +229,22 @@ def main():
         ga_instance.run()
 
         totals.append(total_occurances)
+        genome_repeat_counts.append(genome_repeat_count)
 
     # here we find the avg val of aug type at index 3
     curr_sum = 0
     for row in totals:
         curr_sum += row[3]
-    print(curr_sum / len(totals))
+    print('avg num appearances of aug type 3 at tree node 0:', curr_sum / len(totals))
+    print('min num appearances of aug type 3 at tree node 0:', min([totals[i][3] for i in range(len(totals))]))
+
+    print()
+
+    print('num repeat fitness calls:')
+    print(min(genome_repeat_counts))
+    print(sum(genome_repeat_counts) / len(genome_repeat_counts))
+    print(max(genome_repeat_counts))
+
 
 if __name__ == "__main__":
     main()
