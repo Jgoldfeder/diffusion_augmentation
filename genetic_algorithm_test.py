@@ -32,6 +32,8 @@ tree_depth = -1
 sol_per_pop = -1
 # NOTE these whill be set later by parser args
 
+fitness_cache = dict()
+
 segment_aug_manager = SegmentAugmentationManager()
 color_aug_manager = ColorControlNetAugmentationManager()
 canny_aug_manager = CannyAugmentationManager()
@@ -84,6 +86,14 @@ def genome_to_tree(genome):
         queue.append(node.left)
         queue.append(node.right)
     return root_node
+
+def genome_to_number(genome):
+    number = 0
+    mult = 1
+    for i in range(0, len(genome), 2):
+        number += (genome[i] + genome[i+1]) * mult
+        mult *= 10
+    return number
 
 def string_to_genome(tree_string):
     # Dictionary to map augmentation names to indices
@@ -254,9 +264,15 @@ def compute_test_accuracy(augmentation_tree, device):
 
     return test_accuracy
 
-num_times_fitness_called = 0
+num_times_fitness_calculated = 0
 def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     """Calculates the fitness of an individual."""
+    global fitness_cache
+    genome_number = genome_to_number(augmentation_tree_genome)
+    if genome_number in fitness_cache:
+        print('fitness function call using cached fitness')
+        return fitness_cache[genome_number]
+
     augmentation_tree = genome_to_tree(augmentation_tree_genome)
     loss = fitness_score.fitness_score(augmentation_tree, train_dataset, val_dataset, aug_managers)
     fitness = -1 * loss
@@ -266,9 +282,10 @@ def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
     print('fitness:', fitness)
     print('Time since start (seconds):', int(time.time() - start_time))
 
-    global num_times_fitness_called
-    num_times_fitness_called += 1
+    global num_times_fitness_calculated
+    num_times_fitness_calculated += 1
 
+    fitness_cache[genome_number] = fitness
     return fitness
 
 def gene_space():
@@ -308,13 +325,13 @@ fitness_progress = []  # To store fitness values for each generation
 
 num_generations_finished = 0
 def on_generation(ga_instance):
-    global num_times_fitness_called, num_generations_finished
+    global num_times_fitness_calculated, num_generations_finished
 
     print('Finished evolution generation')
-    print('Num times fitness function called:', num_times_fitness_called)
+    print('Num times fitness function called:', num_times_fitness_calculated)
 
     num_generations_finished += 1
-    num_times_fitness_called = 0
+    num_times_fitness_calculated = 0
 
     best_solution = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)
     best_tree = genome_to_tree(best_solution[0])
