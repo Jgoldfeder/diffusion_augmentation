@@ -52,7 +52,7 @@ def compute_test_accuracy(augmentation_tree, device, args):
     print('[LOG] Computing test accuracy on combined train and val datasets')
     print('For both classical augs and the best aug tree')
 
-    dataset_path = f"few_shot_datasets/{args.dataset}/{args.num_shots}_shot/seed_{args.seed}"
+    dataset_path = f"few_shot_datasets/{args.dataset}/{args.num_shots}_shot/subset_{args.subset}"
     train_dataset = FewShotDataset(dataset_path, dataset_type='train')
     test_dataset = FewShotDataset(dataset_path, dataset_type='test')
 
@@ -135,7 +135,7 @@ def main():
     # Add argument parser
     parser = argparse.ArgumentParser(description='Train and evaluate augmentation tree')
     parser.add_argument('--dataset', type=str, required=True, help='Name of the dataset')
-    parser.add_argument('--seed', type=int, required=True, help='Random seed')
+    parser.add_argument('--subset', type=int, required=True, help='Which subset to use')
     parser.add_argument('--num_shots', type=int, required=True, help='Number of shots (examples per class)')
     parser.add_argument('--num_ways', type=int, required=True, help='Number of ways (classes)')
     
@@ -146,7 +146,7 @@ def main():
         project="random-augmentation-tree-tests",
         config={
             "dataset": args.dataset,
-            "seed": args.seed,
+            "subset": args.subset,
             "num_shots": args.num_shots,
             "num_ways": args.num_ways
         }
@@ -159,11 +159,6 @@ def main():
     print(tree_to_string(tree))
     wandb.log({"tree": tree_to_string(tree)})
 
-    # Now set the seeds for the rest of the training process
-    torch.manual_seed(args.seed)
-    np.random.seed(args.seed)
-    random.seed(args.seed)
-    
     # Compute accuracy with the provided arguments
     test_accuracy = compute_test_accuracy(tree, "cuda", args)
     print(f"Final test accuracy: {test_accuracy:.2f}%")
