@@ -3,7 +3,7 @@
 # Array of seeds to use
 seeds=(41 42 43 44 45 46 47 48 49 50)
 datasets=("flowers102" "caltech256")
-shots=(5 10)
+shots=(2 5 10)
 
 # For each seed, run the experiment once
 for seed in "${seeds[@]}"; do
