@@ -1,12 +1,12 @@
 #!/bin/bash
 # Create datasets for Caltech256
 
-for subset in {41..50}; do
-    python create_dataset.py --dataset flowers102 --subset $subset --num_ways 5 --num_shots 2
-done
+# for subset in {41..50}; do
+#     python create_dataset.py --dataset flowers102 --subset $subset --num_ways 5 --num_shots 2
+# done
 
 for subset in {41..50}; do
-    python create_dataset.py --dataset flowers102 --subset $subset --num_ways 5 --num_shots 2
+    python create_dataset.py --dataset caltech256 --subset $subset --num_ways 5 --num_shots 2
 done
 
 # for seed in {41..50}; do
