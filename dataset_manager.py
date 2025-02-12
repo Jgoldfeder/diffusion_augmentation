@@ -2,10 +2,9 @@ import os
 import json
 import random
 import logging
-from typing import List
 from collections import defaultdict
 
-
+import argparse
 from torch.utils.data import Dataset, ConcatDataset, Subset
 from torchvision.datasets import Caltech256, ImageFolder
 
@@ -28,15 +27,15 @@ def get_dataset_from_torch(dataset_name: str, root='./torch') -> tuple[Dataset, 
 			raise Exception('Download the dataset from kaggle from the following page using curl: https://www.kaggle.com/datasets/waseemalastal/the-oxford-flowers-102-dataset')
 		dataset = ConcatDataset([train_dataset, validation_dataset])
 		with open(os.path.join(data_dir, 'cat_to_name.json'), 'r') as f:
-			label_to_class_as_str: dict = json.load(f)
+			label_str_to_class: dict = json.load(f)
 		label_to_class = dict()
-		for label_str, class_name in label_to_class_as_str.items():
+		for label_str, class_name in label_str_to_class.items():
 			label_to_class[int(label_str)] = class_name
 	else:
 		raise Exception(f"Dataset {dataset_name} not supported")
 	return dataset, label_to_class
 
-def pick_labels(label_to_class: dict[int, str], num_ways: int):
+def pick_random_labels(label_to_class: dict[int, str], num_ways: int):
 	chosen_labels = sorted(random.sample(list(label_to_class.keys()), num_ways))
 	chosen_classes = [label_to_class[label] for label in chosen_labels]
 	logging.info(f"selected classes: {chosen_classes}")
@@ -86,15 +85,30 @@ def save_to_dir(dataset: Dataset, chosen_labels: list[int], label_to_class: dict
 
 def create_fewshot_dataset(dataset_name: str, num_ways: int, num_shots: int, subset: int):
 	original_dataset, label_to_class = get_dataset_from_torch(dataset_name)
-	chosen_labels = pick_labels(label_to_class, num_ways)
+	chosen_labels = pick_random_labels(label_to_class, num_ways)
 	train_dataset, test_dataset = split_dataset(original_dataset, chosen_labels, num_shots)
 	save_to_dir(train_dataset, chosen_labels, label_to_class, dataset_name, num_ways, num_shots, subset, train=True)
 	save_to_dir(test_dataset, chosen_labels, label_to_class, dataset_name, num_ways, num_shots, subset, train=False)
 
+def create_parser() -> argparse.ArgumentParser:
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--dataset', type=str, required=True)
+	parser.add_argument('--num_ways', type=int, required=True)
+	parser.add_argument('--num_shots', type=int, required=True)
+	parser.add_argument('--subset', type=int, required=True)
+	return parser
+
 if __name__ == '__main__':
-	dataset_name = 'flowers102'
-	num_ways = 5
-	num_shots = 2
-	subset = 42
-	random.seed(subset)
+	logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+	parser = create_parser()
+	args = parser.parse_args()
+
+	dataset_name = args.dataset
+	num_ways = args.num_ways
+	num_shots = args.num_shots
+	subset = args.subset
+
+	random.seed(args.subset)
+
 	create_fewshot_dataset(dataset_name, num_ways, num_shots, subset)
