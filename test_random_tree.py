@@ -55,12 +55,15 @@ def compute_test_accuracy(augmentation_tree, device, args):
     print('[LOG] Computing test accuracy on combined train and val datasets')
     print('For both classical augs and the best aug tree')
 
-    dataset_path = f"few_shot_datasets/{args.dataset}/{args.num_shots}_shot/subset_{args.subset}"
+    dataset_path = f"few_shot_datasets/{args.dataset}/{args.num_ways}_ways/{args.num_shots}_shot/subset_{args.subset}"
     train_dataset = FewShotDataset(dataset_path, dataset_type='train')
     test_dataset = FewShotDataset(dataset_path, dataset_type='test')
 
     # classical_dataset = ClassicalDataset(train_dataset, transform, duplicate_factor=6)
     augmented_dataset = generate_augmentations_from_tree(augmentation_tree, train_dataset, aug_managers, transform)
+
+    #calculate the shape of an image in the augmented dataset
+    print("[LOG] Shape of an image in the augmented dataset: ", augmented_dataset[0][0].shape)
 
     output_dir = 'sample_tree_augmentations'
     for idx, (img, label, class_name) in enumerate(augmented_dataset):
@@ -84,6 +87,10 @@ def compute_test_accuracy(augmentation_tree, device, args):
 
     train_loader = DataLoader(augmented_dataset, batch_size=32, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+
+    for images, labels, class_names in test_loader:
+        print("[LOG] Shape of an image in the test loader: ", images.shape)
+        break
 
     for epoch in range(400):
         model.train()
@@ -158,7 +165,7 @@ def main():
     # Initialize random seed for tree generation with current time
     random.seed(time.time())
     
-    tree = AugmentationNode.initialize_augmentation_tree(depth=4)
+    tree = AugmentationNode.initialize_augmentation_tree(depth=3)
     print(tree_to_string(tree))
     wandb.log({"tree": tree_to_string(tree)})
 
