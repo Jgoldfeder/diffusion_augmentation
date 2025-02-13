@@ -16,10 +16,10 @@ if __name__ == '__main__':
 
 	aug_managers = {
 		'canny': CannyAugmentationManager(),
-		'depth': DepthAugmentationManager(),
-		'segment': SegmentAugmentationManager(),
-		'color': ColorControlNetAugmentationManager(),
-		'nerf': NerfAugmentationManager()
+		# 'depth': DepthAugmentationManager(),
+		# 'segment': SegmentAugmentationManager(),
+		# 'color': ColorControlNetAugmentationManager(),
+		# 'nerf': NerfAugmentationManager()
 	}
 
 	img_path = './test_images/original.png'
