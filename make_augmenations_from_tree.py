@@ -1,9 +1,4 @@
 import AugmentationNode
-# from image_augmentation_models.SegmentAugmentation import SegmentAugmentationManager
-# from image_augmentation_models.ColorControlNetAugmentation import ColorControlNetAugmentationManager
-# from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
-# from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
-# from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
 import torchvision.transforms as transforms
 import random
 from PIL import Image
@@ -61,7 +56,7 @@ def generate_augmentations_from_tree(root: AugmentationNode, dataset, aug_manage
             curr_image = image
             while curr_node:
                 print(f"Current node: {curr_node.augmentation_type}")
-                if curr_node.augmentation_type == "segment":
+                if curr_node.augmentation_type == "seg":
                     curr_image = segment_aug_manager.generate_augmentations([curr_image], [class_name])[0]
                 elif curr_node.augmentation_type == "color":
                     curr_image = color_aug_manager.generate_augmentations([curr_image], [class_name])[0]
