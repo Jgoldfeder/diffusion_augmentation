@@ -1,20 +1,9 @@
 import random
 from enum import Enum
 
-import dataset_models
-from image_augmentation_models.augmentation_manager import AugmentationManager
-
-class AugmentationType(Enum):
-	CANNY = 0
-	DEPTH = 1
-	SEGMENT = 2
-	COLOR = 3
-	NERF = 4
-	CLASSICAL = 5
-	NONE = 6
-
-	def get_random_augmentation():
-		return random.choice(list(AugmentationType))
+import dataset_manager
+from dataset_manager import FolderDataset
+from image_augmentation_models.augmentation_manager import AugmentationManager, AugmentationType
 
 class ProbabilityLimits(Enum):
 	LOW = .3
@@ -37,29 +26,21 @@ class BinaryAugmentationNode:
 	def get_right_probability(self):
 		return 1 - self.get_left_probability()
 
-	def generate_augmentation(self, augmentation_manager: AugmentationManager, img, class_name):
+	def generate_augmentation(self, img, class_name):
 		if self.augmentation_type == AugmentationType.NONE:
 			img = img
 		elif self.augmentation_type == AugmentationType.CLASSICAL:
-			img = dataset_models.get_classical_transform()(img)
-		elif self.augmentation_type == AugmentationType.COLOR:
-			img = augmentation_manager.color_manager.generate_augmentations([img], [class_name])[0]
-		elif self.augmentation_type == AugmentationType.CANNY:
-			img = augmentation_manager.canny_manager.generate_augmentations([img], [class_name])[0]
-		elif self.augmentation_type == AugmentationType.SEGMENT:
-			img = augmentation_manager.segment_manager.generate_augmentations([img], [class_name])[0]
-		elif self.augmentation_type == AugmentationType.NERF:
-			img = augmentation_manager.nerf_manager.generate_augmentations([img], [class_name])[0]
-		elif self.augmentation_type == AugmentationType.DEPTH:
-			img = augmentation_manager.depth_manager.generate_augmentations([img], [class_name])[0]
+			img = dataset_manager.get_classical_transform()(img)
+		else:
+			img = AugmentationManager.get_manager(self.augmentation_type).generate_augmentations([img], [class_name])[0]
 		
 		if not (self.left and self.right):
 			return img
 
 		if random.random() < self.get_left_probability():
-			return self.left.generate_augmentation(augmentation_manager, img, class_name)
+			return self.left.generate_augmentation(img, class_name)
 		else:
-			return self.right.generate_augmentation(augmentation_manager, img, class_name)
+			return self.right.generate_augmentation(img, class_name)
 
 	def make_random_tree(self, num_levels):
 		self.augmentation_type = AugmentationType.get_random_augmentation()
@@ -90,6 +71,21 @@ class BinaryAugmentationNode:
 	def __str__(self):
 		return self.str_helper(level=0)
 
+class TreeAugmentedDataset(FolderDataset):
+	def __init__(self, dataset_path: str, augmentation_tree: BinaryAugmentationNode, num_augmentations_per_image: int):
+		super().__init__(dataset_path)
+
+		images_to_add = []
+		labels_to_add = []
+		for img, label in self:
+			for _ in range(num_augmentations_per_image):
+				augmented_img = augmentation_tree.generate_augmentation(img, self.labels_to_class[label])
+				images_to_add.append(augmented_img)
+				labels_to_add.append(label)
+
+		self.images.extend(images_to_add)
+		self.labels.extend(labels_to_add)
+
 if __name__ == '__main__':
 	from PIL import Image
 	import time
@@ -100,12 +96,10 @@ if __name__ == '__main__':
 	node.make_random_tree(3)
 	print(node)
 
-	aug_manager = AugmentationManager()
-
 	# load img from /home/shreyes/diffusion_augmentation/orig_images/0.png
 	img = Image.open('/home/shreyes/diffusion_augmentation/orig_images/0.png')
 
-	img = node.generate_augmentation(aug_manager, img, 'tent')
+	img = node.generate_augmentation(img, 'tent')
 
 	# save img to /home/shreyes/diffusion_augmentation/aug_images/0.png
 	img.save('/home/shreyes/diffusion_augmentation/aug_images/0.png')

@@ -5,8 +5,11 @@ import logging
 from collections import defaultdict
 
 import argparse
+from PIL import Image
+from sklearn.model_selection import StratifiedShuffleSplit
 from torch.utils.data import Dataset, ConcatDataset, Subset
 from torchvision.datasets import Caltech256, ImageFolder
+from torchvision.transforms import Compose, ToTensor, Normalize, Resize, RandomCrop, ColorJitter, RandomHorizontalFlip, RandomVerticalFlip, RandomRotation
 
 # we need to get the dataset, as well as the class name which corresponds to ea. label
 def get_dataset_from_torch(dataset_name: str, root='./torch') -> tuple[Dataset, dict[int, str]]:
@@ -89,6 +92,66 @@ def create_fewshot_dataset(dataset_name: str, num_ways: int, num_shots: int, sub
 	train_dataset, test_dataset = split_dataset(original_dataset, chosen_labels, num_shots)
 	save_to_dir(train_dataset, chosen_labels, label_to_class, dataset_name, num_ways, num_shots, subset, train=True)
 	save_to_dir(test_dataset, chosen_labels, label_to_class, dataset_name, num_ways, num_shots, subset, train=False)
+
+def get_base_transform():
+	return Compose([
+		Resize(size=(256, 256)),
+		ToTensor(),
+		Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+	])
+
+def get_classical_transform():
+	return Compose([
+		Resize(size=(256, 256)),
+		RandomCrop(size=(224, 224)),
+		ColorJitter(
+			brightness=0.4,
+			contrast=0.4,
+			saturation=0.4,
+			hue=0.2 
+		),
+		RandomHorizontalFlip(p=0.5),
+		RandomVerticalFlip(p=0.5), 
+		RandomRotation(degrees=10)
+	])
+
+class FolderDataset(Dataset):
+	def __init__(self, dataset_path):
+		self.images: list[Image.Image] = []
+		self.labels: list[int] = []
+		self.labels_to_class: dict[int, str] = dict()
+		self.base_transform = get_base_transform()
+
+		for local_class_path in os.listdir(dataset_path):
+			class_parts = local_class_path.split('_')
+			class_label = int(class_parts[0])
+			class_name = '_'.join(class_parts[1:])
+			self.labels_to_class[class_label] = class_name
+
+			class_path = os.path.join(dataset_path, local_class_path)
+
+			for img in os.listdir(class_path):
+				if img.endswith('.png'):
+					img = Image.open(os.path.join(class_path, img))
+					self.images.append(img)
+					self.labels.append(class_label)
+
+	def get_class_for_label(self, label):
+		return self.labels_to_class[label]
+
+	def get_class_for_index(self, index):
+		return self.get_class_for_label(self.labels[index])
+
+	def __len__(self):
+		return len(self.labels)
+
+	def __getitem__(self, index):
+		return self.base_transform(self.images[index]), self.labels[index]
+
+def split_train_val(dataset: FolderDataset):
+	splitter = StratifiedShuffleSplit(n_splits=1, train_size=0.5)
+	train_indices, val_indices = next(splitter.split(dataset, dataset.labels))
+	return Subset(dataset, train_indices), Subset(dataset, val_indices)
 
 def create_parser() -> argparse.ArgumentParser:
 	parser = argparse.ArgumentParser()
