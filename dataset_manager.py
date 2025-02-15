@@ -44,7 +44,7 @@ def pick_random_labels(label_to_class: dict[int, str], num_ways: int):
 	logging.info(f"selected classes: {chosen_classes}")
 	return chosen_labels
 
-def split_dataset(dataset: Dataset, chosen_labels: list[int], num_shots: int):
+def partition_train_test(dataset: Dataset, chosen_labels: list[int], num_shots: int):
 	labels_indexes = defaultdict(list)
 	for i, (_, label) in enumerate(dataset):
 		if label in chosen_labels:
@@ -56,7 +56,7 @@ def split_dataset(dataset: Dataset, chosen_labels: list[int], num_shots: int):
 		random.shuffle(indexes)
 		train_indexes.extend(indexes[:num_shots])
 		test_indexes.extend(indexes[num_shots:])
-	logging.debug(f'num train: {len(train_indexes)}, num test: {len(test_indexes)}')
+	logging.info(f'num train: {len(train_indexes)}, num test: {len(test_indexes)}')
 
 	train_dataset = Subset(dataset, train_indexes)
 	test_dataset = Subset(dataset, test_indexes)
@@ -89,7 +89,7 @@ def save_to_dir(dataset: Dataset, chosen_labels: list[int], label_to_class: dict
 def create_fewshot_dataset(dataset_name: str, num_ways: int, num_shots: int, subset: int):
 	original_dataset, label_to_class = get_dataset_from_torch(dataset_name)
 	chosen_labels = pick_random_labels(label_to_class, num_ways)
-	train_dataset, test_dataset = split_dataset(original_dataset, chosen_labels, num_shots)
+	train_dataset, test_dataset = partition_train_test(original_dataset, chosen_labels, num_shots)
 	save_to_dir(train_dataset, chosen_labels, label_to_class, dataset_name, num_ways, num_shots, subset, train=True)
 	save_to_dir(test_dataset, chosen_labels, label_to_class, dataset_name, num_ways, num_shots, subset, train=False)
 
@@ -153,20 +153,18 @@ def split_train_val(dataset: FolderDataset):
 	train_indices, val_indices = next(splitter.split(dataset, dataset.labels))
 	return Subset(dataset, train_indices), Subset(dataset, val_indices)
 
-def create_parser() -> argparse.ArgumentParser:
+def parse_args():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--dataset', type=str, required=True)
 	parser.add_argument('--num_ways', type=int, required=True)
 	parser.add_argument('--num_shots', type=int, required=True)
 	parser.add_argument('--subset', type=int, required=True)
-	return parser
+	return parser.parse_args()
 
 if __name__ == '__main__':
 	logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-	parser = create_parser()
-	args = parser.parse_args()
-
+	args = parse_args()
 	dataset_name = args.dataset
 	num_ways = args.num_ways
 	num_shots = args.num_shots
