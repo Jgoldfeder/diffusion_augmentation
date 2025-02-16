@@ -93,13 +93,15 @@ def create_fewshot_dataset(dataset_name: str, num_ways: int, num_shots: int, sub
 	save_to_dir(train_dataset, chosen_labels, label_to_class, dataset_name, num_ways, num_shots, subset, train=True)
 	save_to_dir(test_dataset, chosen_labels, label_to_class, dataset_name, num_ways, num_shots, subset, train=False)
 
+# NOTE this transform is specific for resnet, might want to use another for a diff model
 def get_base_transform():
 	return Compose([
-		Resize(size=(256, 256)),
+		Resize(size=(224, 224)),
 		ToTensor(),
-		Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+		Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
 	])
 
+# TODO try this before returning images from the FolderDataset
 def get_classical_transform():
 	return Compose([
 		Resize(size=(256, 256)),
@@ -132,7 +134,7 @@ class FolderDataset(Dataset):
 
 			for img in os.listdir(class_path):
 				if img.endswith('.png'):
-					img = Image.open(os.path.join(class_path, img))
+					img = Image.open(os.path.join(class_path, img)).convert('RGB').resize((224, 224))
 					self.images.append(img)
 					self.labels.append(class_label)
 

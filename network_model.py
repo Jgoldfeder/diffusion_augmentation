@@ -41,7 +41,6 @@ class ModelResults():
 		self.preds = preds
 		self.labels = labels
 
-# TODO run a certain number of epochs of finetuning
 def train_and_val(model: Module, train_dataset, val_dataset, num_epochs, device):
 	model.to(device)
 	optimizer = get_optimizer(model)
@@ -76,7 +75,7 @@ def train_and_val(model: Module, train_dataset, val_dataset, num_epochs, device)
 			train_losses[-1] += loss.item()
 			train_accs[-1] += (predicted == labels).sum().item()
 		train_losses[-1] /= len(train_loader)
-		train_accs[-1] /= len(train_loader)
+		train_accs[-1] /= len(train_dataset)
 
 		model.eval()
 		with torch.no_grad():
@@ -91,7 +90,7 @@ def train_and_val(model: Module, train_dataset, val_dataset, num_epochs, device)
 				val_losses[-1] += loss.item()
 				val_accs[-1] += (predicted == labels).sum().item()
 			val_losses[-1] /= len(val_loader)
-			val_accs[-1] /= len(val_loader)
+			val_accs[-1] /= len(val_dataset)
 
 		epoch_info = {
 			'epoch': epoch,
@@ -125,12 +124,13 @@ def evaluate(model, dataset):
 
 if __name__ == '__main__':
 	from dataset_manager import get_dataset_path, FolderDataset
-	logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+	logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 
 	train_dataset = FolderDataset(get_dataset_path('flowers102', 5, 2, 42, train=True))
-	val_dataset = FolderDataset(get_dataset_path('flowers102', 5, 2, 42, train=False))
+	test_dataset = FolderDataset(get_dataset_path('flowers102', 5, 2, 42, train=False))
 
 	my_model = get_model_for_finetune(ModelType.RESNET50, 5)
-	results = train_and_val(my_model, train_dataset, val_dataset, 20, 'cuda')
+	results = train_and_test(my_model, train_dataset, test_dataset, 20, 'cuda')
+	breakpoint()
 
 	print(results)

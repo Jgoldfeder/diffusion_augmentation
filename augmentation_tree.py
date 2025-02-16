@@ -1,4 +1,5 @@
 import random
+import logging
 from enum import Enum
 
 import dataset_manager
@@ -27,6 +28,7 @@ class BinaryAugmentationNode:
 		return 1 - self.get_left_probability()
 
 	def generate_augmentation(self, img, class_name):
+		logging.info(f'Generating augmentation for {class_name}')
 		if self.augmentation_type == AugmentationType.NONE:
 			img = img
 		elif self.augmentation_type == AugmentationType.CLASSICAL:
@@ -75,31 +77,32 @@ class TreeAugmentedDataset(FolderDataset):
 	def __init__(self, dataset_path: str, augmentation_tree: BinaryAugmentationNode, num_augmentations_per_image: int):
 		super().__init__(dataset_path)
 
-		images_to_add = []
-		labels_to_add = []
-		for img, label in self:
+		original_size = len(self.images)
+		for i in range(original_size): # get them without transforms
+			img = self.images[i]
+			label = self.labels[i]
 			for _ in range(num_augmentations_per_image):
 				augmented_img = augmentation_tree.generate_augmentation(img, self.labels_to_class[label])
-				images_to_add.append(augmented_img)
-				labels_to_add.append(label)
-
-		self.images.extend(images_to_add)
-		self.labels.extend(labels_to_add)
+				self.images.append(augmented_img)
+				self.labels.append(label)
 
 if __name__ == '__main__':
 	from PIL import Image
 	import time
 
-	random.seed(time.time())
+	logging.basicConfig(level=logging.INFO)
+
+	random.seed(42)
 
 	node = BinaryAugmentationNode()
 	node.make_random_tree(3)
+	node.augmentation_type = AugmentationType.NONE
+	node.left.augmentation_type = AugmentationType.CANNY
+	node.right.augmentation_type = AugmentationType.SEGMENT
+	node.left.left.augmentation_type = AugmentationType.DEPTH
+	node.left.right.augmentation_type = AugmentationType.COLOR
+	node.right.left.augmentation_type = AugmentationType.NERF
+	node.right.right.augmentation_type = AugmentationType.CLASSICAL
 	print(node)
 
-	# load img from /home/shreyes/diffusion_augmentation/orig_images/0.png
-	img = Image.open('/home/shreyes/diffusion_augmentation/orig_images/0.png')
-
-	img = node.generate_augmentation(img, 'tent')
-
-	# save img to /home/shreyes/diffusion_augmentation/aug_images/0.png
-	img.save('/home/shreyes/diffusion_augmentation/aug_images/0.png')
+	tad = TreeAugmentedDataset(dataset_manager.get_dataset_path('flowers102', 5, 2, 42, train=True), node, 1)

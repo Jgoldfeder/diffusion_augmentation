@@ -66,7 +66,7 @@ class GAHelper:
 	def __init__(
 		self, dataset_name: str, num_ways: int, num_shots: int, subset: int,
 		model_type: ModelType, tree_depth: int, num_augmentations_per_image: int,
-		num_iterations_for_test: int, device
+		num_iterations_for_val: int, num_iterations_for_test: int, device
 	):
 		self.dataset_name = dataset_name
 		self.num_ways = num_ways
@@ -75,6 +75,7 @@ class GAHelper:
 		self.model_type = model_type
 		self.tree_depth = tree_depth
 		self.num_augmentations_per_image = num_augmentations_per_image
+		self.num_iterations_for_val = num_iterations_for_val
 		self.num_iterations_for_test = num_iterations_for_test
 		self.device = device
 
@@ -91,16 +92,15 @@ class GAHelper:
 			return self.fitness_cache[genome_number]
 		self.tree_evals_per_generation[-1] += 1
 
-		return random.random()
-		# node = genome_to_tree(genome)
-		# dataset = TreeAugmentedDataset(self.train_path, node, self.num_augmentations_per_image)
-		# train_dataset, val_dataset = dataset_manager.split_train_val(dataset)
-		# model = network_model.get_model_for_finetune(self.model_type, self.num_ways)
-		# model_results: ModelResults = network_model.train_and_test(model, train_dataset, val_dataset, self.num_iterations_for_test, self.device)
+		node = genome_to_tree(genome)
+		dataset = TreeAugmentedDataset(self.train_path, node, self.num_augmentations_per_image)
+		train_dataset, val_dataset = dataset_manager.split_train_val(dataset)
+		model = network_model.get_model_for_finetune(self.model_type, self.num_ways)
+		model_results: ModelResults = network_model.train_and_test(model, train_dataset, val_dataset, self.num_iterations_for_val, self.device)
 
-		# fitness = -1 * model_results.losses[-1]
-		# self.fitness_cache[genome_number] = fitness
-		# return fitness
+		fitness = -1 * model_results.losses[-1]
+		self.fitness_cache[genome_number] = fitness
+		return fitness
 
 	def on_generation(self, ga_instance):
 		best_solution = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)
@@ -135,7 +135,25 @@ class GAHelper:
 		model = network_model.get_model_for_finetune(self.model_type, self.num_ways)
 		model_results: ModelResults = network_model.train_and_test(model, train_dataset, test_dataset, self.num_iterations_for_test, self.device)
 		best_tree_accuracy = model_results.accs[-1]
-		logging.info('Best tree accuracy:', best_tree_accuracy)
+
+		logging.info(f'Best tree accuracy: {best_tree_accuracy}')
+
+		for i in range(self.num_iterations_for_test):
+			wandb.log({
+				'train_loss': model_results.train_losses[i],
+				'train_acc': model_results.train_accs[i],
+				'test_loss': model_results.losses[i],
+				'test_acc': model_results.accs[i],
+				'epoch': i
+			})
+		wandb.log({
+			"confusion_matrix": wandb.plot.confusion_matrix(
+				probs=None,
+				y_true=model_results.labels,
+				preds=model_results.preds,
+				class_names=[test_dataset.labels_to_class[i] for i in range(self.num_ways)]
+			)
+		})
 		wandb.log({
 			"best_tree_accuracy": best_tree_accuracy
 		})
@@ -155,6 +173,7 @@ def parse_args():
     parser.add_argument('--model_type', type=str, default='resnet50', help='Which base model to use')
     parser.add_argument('--tree_depth', type=int, required=True, help='Depth of the augmentation tree')
     parser.add_argument('--num_augmentations_per_image', type=int, default=5, help='Number of augmentations per image to expand dataset by')
+    parser.add_argument('--num_iterations_for_val', type=int, default=20, help='Number of iterations to train each tree before getting loss from val')
     parser.add_argument('--num_iterations_for_test', type=int, default=400, help='Number of iterations to train best tree before final testing')
     parser.add_argument('--seed', type=int, required=True, help='Random seed for reproducibility')
     return parser.parse_args()
@@ -162,6 +181,8 @@ def parse_args():
 if __name__ == '__main__':
 	logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 	args = parse_args()
+
+	random.seed(args.seed)
 
 	ga_helper = GAHelper(
 		dataset_name=args.dataset,
@@ -171,8 +192,9 @@ if __name__ == '__main__':
 		model_type=ModelType(args.model_type),
 		tree_depth=args.tree_depth,
 		num_augmentations_per_image=args.num_augmentations_per_image,
+		num_iterations_for_val=args.num_iterations_for_val,
 		num_iterations_for_test=args.num_iterations_for_test,
-		device='cuda'
+		device='cpu'
 	)
     
 	wandb.init(
@@ -195,8 +217,6 @@ if __name__ == '__main__':
 			"seed": args.seed,
 		}
 	)
-
-	random.seed(args.seed)
 
 	ga_instance = pygad.GA(
 		num_generations=args.num_generations,
