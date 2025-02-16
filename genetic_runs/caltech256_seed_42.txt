@@ -248,3 +248,453 @@ root: (root, L_prob: 0.38, R_prob: 0.62)
 10 generations finished
 
 
+Best tree:[0.         0.34453243 5.         0.3        1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: canny, L_prob: 0.34, R_prob: 0.66)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+1 generations finished
+
+
+Best tree:[0.         0.34453243 5.         0.3        1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: canny, L_prob: 0.34, R_prob: 0.66)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+2 generations finished
+
+
+Best tree:[0.         0.34453243 5.         0.3        1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: canny, L_prob: 0.34, R_prob: 0.66)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+3 generations finished
+
+
+Best tree:[6.         0.3        4.         0.3        1.         0.59780814]
+-0.0032453161017292897
+root: (Augmentation: none, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: nerf)
+  R: (Augmentation: depth)
+
+4 generations finished
+
+
+Best tree:[6.         0.3        4.         0.3        1.         0.59780814]
+-0.0032453161017292897
+root: (Augmentation: none, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: nerf)
+  R: (Augmentation: depth)
+
+5 generations finished
+
+
+Best tree:[6.         0.3        4.         0.3        1.         0.59780814]
+-0.0032453161017292897
+root: (Augmentation: none, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: nerf)
+  R: (Augmentation: depth)
+
+6 generations finished
+
+
+Best tree:[6.         0.3        4.         0.3        1.         0.59780814]
+-0.0032453161017292897
+root: (Augmentation: none, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: nerf)
+  R: (Augmentation: depth)
+
+7 generations finished
+
+
+Best tree:[6.         0.3        4.         0.3        1.         0.59780814]
+-0.0032453161017292897
+root: (Augmentation: none, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: nerf)
+  R: (Augmentation: depth)
+
+8 generations finished
+
+
+Best tree:[6.         0.3        4.         0.3        1.         0.59780814]
+-0.0032453161017292897
+root: (Augmentation: none, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: nerf)
+  R: (Augmentation: depth)
+
+9 generations finished
+
+
+Best tree:[1.         0.3        4.         0.3        1.         0.66368956]
+-0.002155378351426429
+root: (Augmentation: depth, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: nerf)
+  R: (Augmentation: depth)
+
+10 generations finished
+
+
+Best tree:[3.         0.58052999 5.         0.62943843 1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+1 generations finished
+
+
+Best tree:[3.         0.58052999 5.         0.62943843 1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+2 generations finished
+
+
+Best tree:[3.         0.58052999 5.         0.62943843 1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+3 generations finished
+
+
+Best tree:[3.         0.58052999 5.         0.62943843 1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+4 generations finished
+
+
+Best tree:[3.         0.58052999 5.         0.62943843 1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+5 generations finished
+
+
+Best tree:[3.         0.3        4.         0.62943843 1.         0.3       ]
+-0.02103426000705888
+root: (Augmentation: color, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: nerf)
+  R: (Augmentation: depth)
+
+6 generations finished
+
+
+Best tree:[3.         0.3        4.         0.62943843 1.         0.3       ]
+-0.02103426000705888
+root: (Augmentation: color, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: nerf)
+  R: (Augmentation: depth)
+
+7 generations finished
+
+
+Best tree:[3.         0.3        4.         0.62943843 1.         0.3       ]
+-0.02103426000705888
+root: (Augmentation: color, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: nerf)
+  R: (Augmentation: depth)
+
+8 generations finished
+
+
+Best tree:[3.         0.3        4.         0.62943843 1.         0.3       ]
+-0.02103426000705888
+root: (Augmentation: color, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: nerf)
+  R: (Augmentation: depth)
+
+9 generations finished
+
+
+Best tree:[3.         0.3        4.         0.62943843 1.         0.3       ]
+-0.02103426000705888
+root: (Augmentation: color, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: nerf)
+  R: (Augmentation: depth)
+
+10 generations finished
+
+
+Best tree:[0.         0.34453243 5.         0.3        1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: canny, L_prob: 0.34, R_prob: 0.66)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+1 generations finished
+
+
+Best tree:[0.         0.34453243 5.         0.3        1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: canny, L_prob: 0.34, R_prob: 0.66)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+2 generations finished
+
+
+Best tree:[0.         0.34453243 5.         0.3        1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: canny, L_prob: 0.34, R_prob: 0.66)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+3 generations finished
+
+
+Best tree:[0.         0.34453243 5.         0.3        1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: canny, L_prob: 0.34, R_prob: 0.66)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+4 generations finished
+
+
+Best tree:[0.         0.34453243 5.         0.3        1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: canny, L_prob: 0.34, R_prob: 0.66)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+5 generations finished
+
+
+Best tree:[1.         0.63899775 5.         0.41001173 0.         0.36695507]
+-0.0071908389850935395
+root: (Augmentation: depth, L_prob: 0.64, R_prob: 0.36)
+  L: (Augmentation: classical)
+  R: (Augmentation: canny)
+
+6 generations finished
+
+
+Best tree:[1.         0.63899775 5.         0.41001173 0.         0.36695507]
+-0.0071908389850935395
+root: (Augmentation: depth, L_prob: 0.64, R_prob: 0.36)
+  L: (Augmentation: classical)
+  R: (Augmentation: canny)
+
+7 generations finished
+
+
+Best tree:[1.         0.63899775 5.         0.41001173 0.         0.36695507]
+-0.0071908389850935395
+root: (Augmentation: depth, L_prob: 0.64, R_prob: 0.36)
+  L: (Augmentation: classical)
+  R: (Augmentation: canny)
+
+8 generations finished
+
+
+Best tree:[1.         0.63899775 5.         0.41001173 0.         0.36695507]
+-0.0071908389850935395
+root: (Augmentation: depth, L_prob: 0.64, R_prob: 0.36)
+  L: (Augmentation: classical)
+  R: (Augmentation: canny)
+
+9 generations finished
+
+
+Best tree:[1.         0.63899775 5.         0.41001173 0.         0.36695507]
+-0.0071908389850935395
+root: (Augmentation: depth, L_prob: 0.64, R_prob: 0.36)
+  L: (Augmentation: classical)
+  R: (Augmentation: canny)
+
+10 generations finished
+
+
+Best tree:[3.         0.58052999 5.         0.58579518 1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+1 generations finished
+
+
+Best tree:[3.         0.58052999 5.         0.58579518 1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+2 generations finished
+
+
+Best tree:[3.         0.58052999 5.         0.58579518 1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+3 generations finished
+
+
+Best tree:[3.         0.58052999 5.         0.58579518 1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+4 generations finished
+
+
+Best tree:[3.         0.58052999 5.         0.58579518 1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: classical)
+  R: (Augmentation: depth)
+
+5 generations finished
+
+
+Best tree:[3.         0.3        2.         0.58579518 4.         0.3       ]
+-0.02103426000705888
+root: (Augmentation: color, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: seg)
+  R: (Augmentation: nerf)
+
+6 generations finished
+
+
+Best tree:[3.         0.3        2.         0.58579518 4.         0.3       ]
+-0.02103426000705888
+root: (Augmentation: color, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: seg)
+  R: (Augmentation: nerf)
+
+7 generations finished
+
+
+Best tree:[3.         0.3        2.         0.58579518 4.         0.3       ]
+-0.02103426000705888
+root: (Augmentation: color, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: seg)
+  R: (Augmentation: nerf)
+
+8 generations finished
+
+
+Best tree:[3.         0.3        2.         0.58579518 4.         0.3       ]
+-0.02103426000705888
+root: (Augmentation: color, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: seg)
+  R: (Augmentation: nerf)
+
+9 generations finished
+
+
+Best tree:[3.         0.3        2.         0.58579518 4.         0.3       ]
+-0.02103426000705888
+root: (Augmentation: color, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: seg)
+  R: (Augmentation: nerf)
+
+10 generations finished
+
+
+Best tree:[3.         0.58052999 3.         0.3        1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: color)
+  R: (Augmentation: depth)
+
+1 generations finished
+
+
+Best tree:[3.         0.58052999 3.         0.3        1.         0.35581517]
+-0.03210024390403776
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: color)
+  R: (Augmentation: depth)
+
+2 generations finished
+
+
+Best tree:[3.         0.58052999 3.         0.38817625 4.         0.3       ]
+-0.011481021942819636
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: color)
+  R: (Augmentation: nerf)
+
+3 generations finished
+
+
+Best tree:[3.         0.58052999 3.         0.38817625 4.         0.3       ]
+-0.011481021942819636
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: color)
+  R: (Augmentation: nerf)
+
+4 generations finished
+
+
+Best tree:[3.         0.58052999 3.         0.38817625 4.         0.3       ]
+-0.011481021942819636
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: color)
+  R: (Augmentation: nerf)
+
+5 generations finished
+
+
+Best tree:[3.         0.58052999 3.         0.38817625 4.         0.3       ]
+-0.011481021942819636
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: color)
+  R: (Augmentation: nerf)
+
+6 generations finished
+
+
+Best tree:[3.         0.58052999 3.         0.38817625 4.         0.3       ]
+-0.011481021942819636
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: color)
+  R: (Augmentation: nerf)
+
+7 generations finished
+
+
+Best tree:[3.         0.58052999 3.         0.38817625 4.         0.3       ]
+-0.011481021942819636
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: color)
+  R: (Augmentation: nerf)
+
+8 generations finished
+
+
+Best tree:[3.         0.58052999 3.         0.38817625 4.         0.3       ]
+-0.011481021942819636
+root: (Augmentation: color, L_prob: 0.58, R_prob: 0.42)
+  L: (Augmentation: color)
+  R: (Augmentation: nerf)
+
+9 generations finished
+
+
+Best tree:[3.         0.3        4.         0.50760496 4.         0.36211514]
+-0.002155378351426429
+root: (Augmentation: color, L_prob: 0.30, R_prob: 0.70)
+  L: (Augmentation: nerf)
+  R: (Augmentation: nerf)
+
+10 generations finished
+
+
