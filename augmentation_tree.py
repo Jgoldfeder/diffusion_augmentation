@@ -28,7 +28,6 @@ class BinaryAugmentationNode:
 		return 1 - self.get_left_probability()
 
 	def generate_augmentation(self, img, class_name):
-		logging.info(f'Generating augmentation for {class_name}')
 		if self.augmentation_type == AugmentationType.NONE:
 			img = img
 		elif self.augmentation_type == AugmentationType.CLASSICAL:
@@ -82,7 +81,9 @@ class TreeAugmentedDataset(FolderDataset):
 			img = self.images[i]
 			label = self.labels[i]
 			for _ in range(num_augmentations_per_image):
-				augmented_img = augmentation_tree.generate_augmentation(img, self.labels_to_class[label])
+				class_name = self.labels_to_class[label]
+				logging.info(f'Generating augmentation for {class_name}')
+				augmented_img = augmentation_tree.generate_augmentation(img, class_name)
 				self.images.append(augmented_img)
 				self.labels.append(label)
 
