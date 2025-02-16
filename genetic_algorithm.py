@@ -213,6 +213,7 @@ if __name__ == '__main__':
 			"model_type": ga_helper.model_type.value,
 			"tree_depth": ga_helper.tree_depth,
 			"num_augmentations_per_image": ga_helper.num_augmentations_per_image,
+			"num_iterations_for_val": ga_helper.num_iterations_for_val,
 			"num_iterations_for_test": ga_helper.num_iterations_for_test,
 			"seed": args.seed,
 		}
