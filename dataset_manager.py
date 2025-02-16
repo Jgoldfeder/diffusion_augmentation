@@ -22,7 +22,7 @@ def get_dataset_from_torch(dataset_name: str, root='./torch') -> tuple[Dataset, 
 			class_name = parts[1]
 			label_to_class[label] = class_name
 	elif dataset_name == 'flowers102':
-		data_dir = os.path.join(root, 'flower_data')
+		data_dir = os.path.join(root, 'flowers102')
 		try:
 			train_dataset = ImageFolder(os.path.join(data_dir, 'train'))
 			validation_dataset = ImageFolder(os.path.join(data_dir, 'valid'))
@@ -44,6 +44,20 @@ def get_dataset_from_torch(dataset_name: str, root='./torch') -> tuple[Dataset, 
 		label_to_class = dict()
 		for i in range(len(train_dataset.classes)):
 			label_to_class[i] = train_dataset.classes[i]
+	elif dataset_name == 'stanford_dogs':
+		data_dir = os.path.join(root, 'stanford_dogs', 'Images')
+		label_to_class = dict()
+		label = 0
+		for category in os.listdir(data_dir):
+			if category == '.DS_Store':
+				continue
+			parts = category.split('-')
+			class_name = parts[1].lower()
+			label_to_class[label] = class_name
+			label += 1
+		print(label_to_class)
+		dataset = ImageFolder(data_dir)
+
 	else:
 		raise Exception(f"Dataset {dataset_name} not supported")
 	return dataset, label_to_class
