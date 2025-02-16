@@ -34,6 +34,16 @@ def get_dataset_from_torch(dataset_name: str, root='./torch') -> tuple[Dataset, 
 		label_to_class = dict()
 		for label_str, class_name in label_str_to_class.items():
 			label_to_class[int(label_str)] = class_name
+	elif dataset_name == 'stanford_dogs':
+		try:
+			data_dir = os.path.join(root, 'stanford_dogs', 'Images')
+			label_to_class = dict()
+			label = 0
+			dataset = ImageFolder(data_dir)
+			for class_name, label in dataset.class_to_idx.items():
+					label_to_class[label] = class_name.split('-')[1].lower()
+		except FileNotFoundError:
+			raise Exception('Download dataset by running wget http://vision.stanford.edu/aditya86/ImageNetDogs/images.tar')
 	elif dataset_name == 'stanford_cars':
 		try:
 			train_dataset = StanfordCars(root=root, download=False)
@@ -44,20 +54,6 @@ def get_dataset_from_torch(dataset_name: str, root='./torch') -> tuple[Dataset, 
 		label_to_class = dict()
 		for i in range(len(train_dataset.classes)):
 			label_to_class[i] = train_dataset.classes[i]
-	elif dataset_name == 'stanford_dogs':
-		data_dir = os.path.join(root, 'stanford_dogs', 'Images')
-		label_to_class = dict()
-		label = 0
-		for category in os.listdir(data_dir):
-			if category == '.DS_Store':
-				continue
-			parts = category.split('-')
-			class_name = parts[1].lower()
-			label_to_class[label] = class_name
-			label += 1
-		print(label_to_class)
-		dataset = ImageFolder(data_dir)
-
 	else:
 		raise Exception(f"Dataset {dataset_name} not supported")
 	return dataset, label_to_class
