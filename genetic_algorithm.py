@@ -96,7 +96,7 @@ class GAHelper:
 		dataset = TreeAugmentedDataset(self.train_path, node, self.num_augmentations_per_image)
 		train_dataset, val_dataset = dataset_manager.split_train_val(dataset)
 		model = network_model.get_model_for_finetune(self.model_type, self.num_ways)
-		model_results: ModelResults = network_model.train_and_test(model, train_dataset, val_dataset, self.num_iterations_for_val, self.device)
+		model_results: ModelResults = network_model.train_and_val(model, train_dataset, val_dataset, self.num_iterations_for_val, self.device)
 
 		fitness = -1 * model_results.losses[-1]
 		self.fitness_cache[genome_number] = fitness
