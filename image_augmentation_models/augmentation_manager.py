@@ -42,3 +42,16 @@ class AugmentationManager:
 	def get_manager(cls, augmentation_type: AugmentationType):
 		cls.initialize()
 		return cls._managers.get(augmentation_type)
+
+if __name__ == '__main__':
+	from PIL import Image
+
+	AugmentationManager.initialize()
+	print(AugmentationManager)
+	AugmentationManager.initialize()
+
+	img = Image.open('orig_images/0.png')
+
+	seg_am = AugmentationManager.get_manager(AugmentationType.SEGMENT)
+
+	breakpoint()
