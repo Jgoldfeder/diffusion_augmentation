@@ -170,6 +170,22 @@ class FolderDataset(Dataset):
 	def __getitem__(self, index):
 		return self.base_transform(self.images[index]), self.labels[index]
 
+class ClassicalDataset(FolderDataset):
+	def __init__(self, dataset_path, num_classical_augs_per_image):
+		super().__init__(dataset_path)
+		self.num_classical_augs_per_image = num_classical_augs_per_image
+
+	def __len__(self):
+		return len(self.images) * (self.num_classical_augs_per_image + 1)
+
+	def __getitem__(self, index):
+		true_index = index % len(self.images)
+		img = self.images[true_index]
+		label = self.labels[true_index]
+		transformed_img = self.base_transform(get_classical_transform()(img))
+		return transformed_img, label
+
+
 def split_train_val(dataset: FolderDataset):
 	splitter = StratifiedShuffleSplit(n_splits=1, train_size=0.5)
 	train_indices, val_indices = next(splitter.split(dataset, dataset.labels))
