@@ -1,3 +1,5 @@
+aug_images/
+orig_images/
 models/runwayml-stable-diffusion-v1-5
 genetic_runs/genetic_output*
 genetic_runs/nohup.out
