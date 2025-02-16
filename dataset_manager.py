@@ -8,7 +8,7 @@ import argparse
 from PIL import Image
 from sklearn.model_selection import StratifiedShuffleSplit
 from torch.utils.data import Dataset, ConcatDataset, Subset
-from torchvision.datasets import Caltech256, ImageFolder
+from torchvision.datasets import Caltech256, ImageFolder, StanfordCars
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize, RandomCrop, ColorJitter, RandomHorizontalFlip, RandomVerticalFlip, RandomRotation
 
 # we need to get the dataset, as well as the class name which corresponds to ea. label
@@ -27,13 +27,23 @@ def get_dataset_from_torch(dataset_name: str, root='./torch') -> tuple[Dataset, 
 			train_dataset = ImageFolder(os.path.join(data_dir, 'train'))
 			validation_dataset = ImageFolder(os.path.join(data_dir, 'valid'))
 		except FileNotFoundError:
-			raise Exception('Download the dataset from kaggle from the following page using curl: https://www.kaggle.com/datasets/waseemalastal/the-oxford-flowers-102-dataset')
+			raise Exception('Download dataset from kaggle: https://www.kaggle.com/datasets/waseemalastal/the-oxford-flowers-102-dataset')
 		dataset = ConcatDataset([train_dataset, validation_dataset])
 		with open(os.path.join(data_dir, 'cat_to_name.json'), 'r') as f:
 			label_str_to_class: dict = json.load(f)
 		label_to_class = dict()
 		for label_str, class_name in label_str_to_class.items():
 			label_to_class[int(label_str)] = class_name
+	elif dataset_name == 'stanford_cars':
+		try:
+			train_dataset = StanfordCars(root=root, download=False)
+			test_dataset = StanfordCars(root=root, download=False, split="test")
+		except FileNotFoundError:
+			raise Exception('Download dataset from kaggle: https://www.kaggle.com/api/v1/datasets/download/rickyyyyyyy/torchvision-stanford-cars')
+		dataset = ConcatDataset([train_dataset, test_dataset])
+		label_to_class = dict()
+		for i in range(len(train_dataset.classes)):
+			label_to_class[i] = train_dataset.classes[i]
 	else:
 		raise Exception(f"Dataset {dataset_name} not supported")
 	return dataset, label_to_class
