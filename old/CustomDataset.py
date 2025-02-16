@@ -304,7 +304,7 @@ def create_datasets(args):
         label_to_class = {label: class_name for class_name, label in class_to_label.items()}
         labels = dataset.targets.tolist()
     elif dataset_name =='flowers102':
-        data_dir = os.path.join(root, 'flower_data')
+        data_dir = os.path.join(root, 'flowers102')
         try:
             dataset = ImageFolder(os.path.join(data_dir, 'train'))
         except FileNotFoundError:

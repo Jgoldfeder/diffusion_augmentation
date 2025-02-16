@@ -22,7 +22,7 @@ def get_dataset_from_torch(dataset_name: str, root='./torch') -> tuple[Dataset, 
 			class_name = parts[1]
 			label_to_class[label] = class_name
 	elif dataset_name == 'flowers102':
-		data_dir = os.path.join(root, 'flower_data')
+		data_dir = os.path.join(root, 'flowers102')
 		try:
 			train_dataset = ImageFolder(os.path.join(data_dir, 'train'))
 			validation_dataset = ImageFolder(os.path.join(data_dir, 'valid'))

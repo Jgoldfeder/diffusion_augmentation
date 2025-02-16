@@ -116,7 +116,7 @@ if __name__ == '__main__':
         labels = [label for _, label in dataset]
     elif dataset_name == 'flowers102':
         root = './torch'
-        data_dir = os.path.join(root, 'flower_data')
+        data_dir = os.path.join(root, 'flowers102')
         #try:
         train_dataset = ImageFolder(os.path.join(data_dir, 'train'))
         validation_dataset = ImageFolder(os.path.join(data_dir, 'valid'))
