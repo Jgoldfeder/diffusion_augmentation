@@ -122,7 +122,8 @@ class GAHelper:
 			"generation": num_generations_finished,
 			"best_fitness": best_fitness,
 			"population_fitness_mean": np.mean(ga_instance.last_generation_fitness),
-			"population_fitness_std": np.std(ga_instance.last_generation_fitness)
+			"population_fitness_std": np.std(ga_instance.last_generation_fitness),
+			"best_tree_genome": best_genome
 		})
 
 	def on_stop(self, ga_instance):
