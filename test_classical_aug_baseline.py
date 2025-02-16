@@ -1,7 +1,7 @@
 import torchvision.transforms as transforms
 import argparse
 
-from CustomDataset import FewShotDataset, ClassicalDataset
+from old.CustomDataset import FewShotDataset, ClassicalDataset
 
 from torch.utils.data import DataLoader
 from torchvision.models import resnet50, ResNet50_Weights
@@ -10,13 +10,15 @@ from torch import nn
 import torch
 import wandb
 import os
+import random
+import time
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 if __name__ == '__main__':
     # Add argument parsing
     parser = argparse.ArgumentParser(description='Few-shot learning training script')
-    parser.add_argument('--seed', type=int, default=41, help='Random seed')
+    parser.add_argument('--subset', type=int, default=41, help='Random subset')
     parser.add_argument('--shots', type=int, default=2, help='Number of shots')
     parser.add_argument('--dataset', type=str, default='caltech256', help='Dataset name')
     parser.add_argument('--ways', type=int, default=5, help='Number of ways')
@@ -25,10 +27,11 @@ if __name__ == '__main__':
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
 
+
     wandb.init(
         project="classical-augmentation-experiments",
         config={
-            "seed": args.seed,
+            "subset": args.subset,
             "shots": args.shots,
             "dataset": args.dataset,
             "ways": args.ways,
@@ -41,7 +44,9 @@ if __name__ == '__main__':
     num_iterations = 10
     final_test_accuracies = []  # Add this list to store final accuracies
     for i in range(num_iterations):
-        base_path = f'few_shot_datasets/{args.dataset}/{args.shots}_shot/seed_{args.seed}'
+        random.seed(time.time())
+
+        base_path = f'few_shot_datasets/{args.dataset}/{args.ways}_ways/{args.shots}_shot/subset_{args.subset}'
         train_dataset = FewShotDataset(base_path, dataset_type='train')
         test_dataset = FewShotDataset(base_path, dataset_type='test')
 
@@ -117,8 +122,8 @@ if __name__ == '__main__':
                 "iteration": i + 1,
                 "epoch": epoch + 1,
                 "loss": avg_loss,
-                "train_accuracy": train_accuracy,
-                "test_accuracy": test_accuracy
+                f"train_accuracy_iteration_{i+1}": train_accuracy,
+                f"test_accuracy_iteration_{i+1}": test_accuracy
             })
             
     # Calculate and log the average test accuracy
