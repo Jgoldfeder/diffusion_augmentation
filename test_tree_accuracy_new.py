@@ -1,5 +1,5 @@
 from dataset_manager import FolderDataset
-from augmentation_tree import TreeAugmentedDataset, BinaryAugmentationNode
+from augmentation_tree import TreeAugmentedDataset, BinaryAugmentationNode, AugmentationType
 
 class TreeAugmentedDatasetWithClassical(TreeAugmentedDataset):
 	def __init__(self, dataset_path: str, augmentation_tree: BinaryAugmentationNode, num_augmentations_per_image: int):
@@ -24,20 +24,25 @@ if __name__ == '__main__':
 	num_shots = 2
 	subset = 42
 
-	num_augmentations_per_image = 1
+	num_augmentations_per_image = 5
 
-	tree_genome = [1, .5]
+	'''
+	root: (Augmentation: seg, L_prob: 0.30, R_prob: 0.70)
+	32166   L: (Augmentation: canny)
+	32167   R: (Augmentation: classical) 
+	'''
+	tree_genome = [AugmentationType.SEGMENT.value, .3, AugmentationType.CANNY.value, .5, AugmentationType.CLASSICAL.value, .5]
 	node = genome_to_tree(tree_genome)
 	print(str(node))
 
 	train_path = dataset_manager.get_dataset_path(dataset, num_ways, num_shots, subset, train=True)
 	test_path = dataset_manager.get_dataset_path(dataset, num_ways, num_shots, subset, train=False)
 
-	train_dataset = TreeAugmentedDataset(train_path, node, num_augmentations_per_image)
+	train_dataset = TreeAugmentedDatasetWithClassical(train_path, node, num_augmentations_per_image)
 	test_dataset = FolderDataset(test_path)
 
 	model = network_model.get_model_for_finetune(ModelType.RESNET50, num_ways)
-	model_results = network_model.train_and_test(model, train_dataset, test_dataset, 20, 'cuda')
+	model_results = network_model.train_and_test(model, train_dataset, test_dataset, 200, 'cuda')
 	print(model_results)
 
 

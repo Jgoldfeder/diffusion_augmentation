@@ -33,7 +33,7 @@ def get_dataset_from_torch(dataset_name: str, root='./torch') -> tuple[Dataset, 
 			label_str_to_class: dict = json.load(f)
 		label_to_class = dict()
 		for label_str, class_name in label_str_to_class.items():
-			label_to_class[int(label_str)] = class_name
+			label_to_class[train_dataset.class_to_idx[label_str]] = class_name
 	elif dataset_name == 'stanford_dogs':
 		try:
 			data_dir = os.path.join(root, 'stanford_dogs', 'Images')
