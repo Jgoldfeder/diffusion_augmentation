@@ -274,7 +274,8 @@ def fitness_function(ga_instance, augmentation_tree_genome, solution_idx):
         return fitness_cache[genome_number]
 
     augmentation_tree = genome_to_tree(augmentation_tree_genome)
-    loss = fitness_score.fitness_score(augmentation_tree, train_dataset, val_dataset, aug_managers)
+    # loss = fitness_score.fitness_score(augmentation_tree, train_dataset, val_dataset, aug_managers)
+    loss = random.random()
     fitness = -1 * loss
 
     print('fitness function called')
