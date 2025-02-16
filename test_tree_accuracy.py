@@ -124,7 +124,7 @@ def print_tree(node, level=0, direction='root'):
         if direction == 'root':
             edge_info = f"(root, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
         else:
-            edge_info = f"(edge: {node.parent_edge_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
+            edge_info = f"(edge: {node.augmentation_type}, L_prob: {node.left_child_probability:.2f}, R_prob: {node.right_child_probability:.2f})"
         print('  ' * level + f"{direction}: {edge_info}")
         if node.left:
             print_tree(node.left, level + 1, 'L')
@@ -150,8 +150,8 @@ def compute_random_tree_accuracy():
 
 if __name__ == '__main__':
     my_tree = AugmentationNode.initialize_augmentation_tree(tree_depth)
+    print(tree_to_string(my_tree))
     my_tree.augmentation_type = 'color'
     my_tree.left.augmentation_type = 'none'
     my_tree.right.augmentation_type = 'none'
     print(compute_fitness_score(my_tree, 'cuda'))
-    print(tree_to_string(my_tree))
