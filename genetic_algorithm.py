@@ -4,6 +4,7 @@ import wandb
 import pygad
 import logging
 import argparse
+import torch
 import numpy as np
 
 import network_model
@@ -183,6 +184,8 @@ if __name__ == '__main__':
 	logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 	args = parse_args()
 
+	# might also need to seed numpy here too
+	torch.manual_seed(args.seed)
 	random.seed(args.seed)
 
 	ga_helper = GAHelper(
