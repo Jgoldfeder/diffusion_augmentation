@@ -171,12 +171,12 @@ class FolderDataset(Dataset):
 		return self.base_transform(self.images[index]), self.labels[index]
 
 class ClassicalDataset(FolderDataset):
-	def __init__(self, dataset_path, num_classical_augs_per_image):
+	def __init__(self, dataset_path, duplicate_factor=1):
 		super().__init__(dataset_path)
-		self.num_classical_augs_per_image = num_classical_augs_per_image
+		self.duplicate_factor = duplicate_factor
 
 	def __len__(self):
-		return len(self.images) * (self.num_classical_augs_per_image + 1)
+		return len(self.images) * (self.duplicate_factor)
 
 	def __getitem__(self, index):
 		true_index = index % len(self.images)

@@ -15,7 +15,6 @@ from image_augmentation_models.CannyAugmentation import CannyAugmentationManager
 from image_augmentation_models.NerfAugmentation import NerfAugmentationManager
 from image_augmentation_models.DepthAugmentation import DepthAugmentationManager
 
-from fitness_score import create_datasets
 import get_base_model
 from make_augmenations_from_tree import generate_augmentations_from_tree
 from torch.utils.data import DataLoader

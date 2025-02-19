@@ -2,8 +2,8 @@
 
 # Array of seeds to use
 subsets=(41 42 43 44 45 46 47 48 49 50)
-datasets=("stanford_dogs" "stanford_cars")
-shots=(2 5 10)
+datasets=("stanford_cars" "stanford_dogs")
+shots=(2)
 
 # For each seed, run the experiment once
 for subset in "${subsets[@]}"; do
