@@ -8,7 +8,7 @@ from controlnet_aux import CannyDetector
 from image_augmentation_models.ControlNetAugmentation import ControlNetAugmentationManager
 
 class CannyAugmentationManager(ControlNetAugmentationManager):
-	def __init__(self, control_net_device="cuda"):
+	def __init__(self, control_net_device="cuda:0"):
 		super().__init__("lllyasviel/sd-controlnet-canny", control_net_device)
 		self.canny = CannyDetector()
 

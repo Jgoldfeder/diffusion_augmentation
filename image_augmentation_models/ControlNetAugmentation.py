@@ -3,7 +3,7 @@ from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, UniPCM
 import numpy as np
 
 class ControlNetAugmentationManager:
-	def __init__(self, controlnet_model, control_net_device="cuda"):
+	def __init__(self, controlnet_model, control_net_device="cuda:0"):
 		self.control_net_device = control_net_device
 		self.controlnet_model = controlnet_model
 

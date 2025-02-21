@@ -26,7 +26,7 @@ from color_controlnet.infer_palette import (
 from color_controlnet.infer_palette_img2img import control_color_augment
 
 class ColorControlNetAugmentationManager:
-    def __init__(self, color_control_device: str = "cuda"):
+    def __init__(self, color_control_device: str = "cuda:0"):
         self.color_control_device = color_control_device
         self.color_control_model = self._initialize_color_controlnet_models()
 

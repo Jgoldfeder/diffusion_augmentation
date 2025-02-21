@@ -7,7 +7,7 @@ from controlnet_aux import SamDetector
 from image_augmentation_models.ControlNetAugmentation import ControlNetAugmentationManager
 
 class SegmentAugmentationManager(ControlNetAugmentationManager):
-	def __init__(self, control_net_device="cuda"):
+	def __init__(self, control_net_device="cuda:0"):
 		super().__init__("lllyasviel/sd-controlnet-seg", control_net_device)
 		self.sam = SamDetector.from_pretrained("ybelkada/segment-anything", subfolder="checkpoints")
 
