@@ -34,8 +34,10 @@ charset-normalizer==3.4.0
 click==8.1.7
 -e git+https://github.com/openai/CLIP.git@dcba3cb2e2827b402d2701e7e1c7d9fed8a20ef1#egg=clip
 contourpy==1.3.0
+controlnet-aux==0.0.9
 cycler==0.12.1
 datasets==2.4.0
+diffusers==0.14.0
 dill==0.3.5.1
 docker-pycreds==0.4.0
 einops==0.3.0
@@ -50,6 +52,7 @@ fsspec==2024.6.1
 ftfy==6.2.3
 future==1.0.0
 fvcore==0.1.5.post20221221
+gdown==5.2.0
 gitdb==4.0.11
 GitPython==3.1.43
 gradio==3.16.2
@@ -137,6 +140,7 @@ pydantic_core==2.23.4
 pydeck==0.9.1
 pyDeprecate==0.3.1
 pydub==0.25.1
+pygad==3.4.0
 Pympler==1.1
 pyparsing==3.1.4
 pyre-extensions==0.0.23

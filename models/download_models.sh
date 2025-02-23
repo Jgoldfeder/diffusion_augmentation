@@ -20,4 +20,7 @@ wget https://huggingface.co/lllyasviel/Annotators/resolve/main/sk_model2.pth -O 
 echo "Downloading Zero123 files..."
 wget https://huggingface.co/spaces/cvlab/zero123-live/resolve/d7776c37857ae042bf9e31f74d54f736a432ed8a/105000.ckpt -O 105000.ckpt
 
+# Download files for runwayml
+huggingface-cli download runwayml/stable-diffusion-v1-5 --local-dir ./runwayml-stable-diffusion-v1-5 --local-dir-use-symlinks False
+
 echo "All files downloaded successfully."
