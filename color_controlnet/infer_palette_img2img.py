@@ -52,7 +52,7 @@ def control_color_augment(pil_image, adapter, pipe, prompt, sam_annotator, num_i
     img = resize_in_buckets(pil_image)
     sketch_cond, c_palette, sketch_img, palette_img, palette_sam = preprocess_sketch_and_palette(img, sam_annotator, device)
 
-    generator = torch.Generator(device=device).manual_seed(random.randint(0, 1e6))
+    generator = torch.Generator(device=device).manual_seed(random.randint(0, 1000000))
     output = pipe(
         prompt=prompt,
         image=palette_sam,

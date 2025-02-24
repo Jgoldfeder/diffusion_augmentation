@@ -57,7 +57,7 @@ class ControlNetAugmentationManager:
 
 			prompt = [f"Extremely Realistic, Photorealistic, Clear Image, Real World, {class_prompt}"]
 			negative_prompt = ["monochrome, lowres, bad anatomy, worst quality, low quality"]
-			generator = torch.Generator(device=self.control_net_device).manual_seed(random.randint(0, 1e6))
+			generator = torch.Generator(device=self.control_net_device).manual_seed(random.randint(0, 1000000))
 
 			output = pipe(
 				prompt,
