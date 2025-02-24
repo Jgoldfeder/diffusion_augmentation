@@ -1,6 +1,6 @@
 import torch
 from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, UniPCMultistepScheduler
-import time
+import random
 
 class ControlNetAugmentationManager:
 	def __init__(self, controlnet_model, control_net_device="cuda:0"):
@@ -57,7 +57,7 @@ class ControlNetAugmentationManager:
 
 			prompt = [f"Extremely Realistic, Photorealistic, Clear Image, Real World, {class_prompt}"]
 			negative_prompt = ["monochrome, lowres, bad anatomy, worst quality, low quality"]
-			generator = torch.Generator(device=self.control_net_device).manual_seed(int(time.time()))
+			generator = torch.Generator(device=self.control_net_device).manual_seed(random.randint(0, 1e6))
 
 			output = pipe(
 				prompt,
