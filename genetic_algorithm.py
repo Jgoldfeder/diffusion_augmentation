@@ -1,5 +1,6 @@
 import random
 
+
 import wandb
 import pygad
 import logging
@@ -12,6 +13,7 @@ import dataset_manager
 from network_model import ModelResults, ModelType
 from dataset_manager import FolderDataset
 from augmentation_tree import BinaryAugmentationNode, AugmentationType, TreeAugmentedDataset, ProbabilityLimits
+
 
 def genome_to_tree(genome, curr_index=0) -> BinaryAugmentationNode:
 	if curr_index >= len(genome):
@@ -95,11 +97,20 @@ class GAHelper:
 
 		node = genome_to_tree(genome)
 		dataset = TreeAugmentedDataset(self.train_path, node, self.num_augmentations_per_image)
+
+		#fold 1
 		train_dataset, val_dataset = dataset_manager.split_train_val(dataset)
 		model = network_model.get_model_for_finetune(self.model_type, self.num_ways)
 		model_results: ModelResults = network_model.train_and_val(model, train_dataset, val_dataset, self.num_iterations_for_val, self.device)
+		loss_fold1 = model_results.losses[-1]
 
-		fitness = -1 * model_results.losses[-1]
+		#fold 2 -- swap train and val
+		train_dataset, val_dataset = val_dataset, train_dataset
+		model = network_model.get_model_for_finetune(self.model_type, self.num_ways)
+		model_results: ModelResults = network_model.train_and_val(model, train_dataset, val_dataset, self.num_iterations_for_val, self.device)
+		loss_fold2 = model_results.losses[-1]
+
+		fitness = -1 * (loss_fold1 + loss_fold2) / 2
 		self.fitness_cache[genome_number] = fitness
 		return fitness
 
