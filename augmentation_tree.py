@@ -87,24 +87,61 @@ class TreeAugmentedDataset(FolderDataset):
 				augmented_img = augmentation_tree.generate_augmentation(img, class_name)
 				self.images.append(augmented_img)
 				self.labels.append(label)
+				
+class TreeAugmentedDatasetFromDataset(FolderDataset):
+	def __init__(self, dataset, augmentation_tree: BinaryAugmentationNode, num_augmentations_per_image: int):
+		self.images = [img for img in dataset.images]
+		self.labels = [label for label in dataset.labels]
+		self.labels_to_class = dataset.labels_to_class
+		self.base_transform = dataset.base_transform
+		self.dataset_path = dataset.dataset_path
+
+		original_size = len(self.images)
+		for i in range(original_size): # get them without transforms
+			img = self.images[i]
+			label = self.labels[i]
+			for _ in range(num_augmentations_per_image):
+				class_name = self.labels_to_class[label]
+				logging.info(f'Generating augmentation for {class_name}')
+				augmented_img = augmentation_tree.generate_augmentation(img, class_name)
+				self.images.append(augmented_img)
+				self.labels.append(label)
+
 
 if __name__ == '__main__':
 	from PIL import Image
 	import time
+	import os
 
 	logging.basicConfig(level=logging.INFO)
 
 	random.seed(42)
 
+	train_path = dataset_manager.get_dataset_path('flowers102', 5, 2, 42, train=True)
+	dataset = FolderDataset(train_path)
+
 	node = BinaryAugmentationNode()
-	node.make_random_tree(3)
-	node.augmentation_type = AugmentationType.NONE
-	node.left.augmentation_type = AugmentationType.CANNY
-	node.right.augmentation_type = AugmentationType.SEGMENT
-	node.left.left.augmentation_type = AugmentationType.DEPTH
-	node.left.right.augmentation_type = AugmentationType.COLOR
-	node.right.left.augmentation_type = AugmentationType.NERF
-	node.right.right.augmentation_type = AugmentationType.CLASSICAL
+	# node.make_random_tree(3)
+	node.augmentation_type = AugmentationType.COLOR
+	# node.left.augmentation_type = AugmentationType.CANNY
+	# node.right.augmentation_type = AugmentationType.SEGMENT
+	# node.left.left.augmentation_type = AugmentationType.DEPTH
+	# node.left.right.augmentation_type = AugmentationType.COLOR
+	# node.right.left.augmentation_type = AugmentationType.NERF
+	# node.right.right.augmentation_type = AugmentationType.CLASSICAL
 	print(node)
 
-	tad = TreeAugmentedDataset(dataset_manager.get_dataset_path('flowers102', 5, 2, 42, train=True), node, 1)
+	train_dataset, val_dataset = dataset_manager.split_train_val(dataset)
+
+	os.makedirs('augmented_images/temp/train/', exist_ok=True)
+	os.makedirs('augmented_images/temp/val/', exist_ok=True)
+	os.makedirs('augmented_images/temp/treetrain/', exist_ok=True)
+	# iterate through images in train and save them out
+	for i, img in enumerate(train_dataset.images):
+		img.save('augmented_images/temp/train/' + str(time.time()) + '.png')
+	for i, img in enumerate(val_dataset.images):
+		img.save('augmented_images/temp/val/' + str(time.time()) + '.png')
+
+	tree_train = TreeAugmentedDatasetFromDataset(train_dataset, node, 2)
+	for i, img in enumerate(tree_train.images):
+		img.save('augmented_images/temp/treetrain/' + str(time.time()) + '.png')

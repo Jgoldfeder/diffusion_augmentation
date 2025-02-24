@@ -143,6 +143,7 @@ class FolderDataset(Dataset):
 		self.labels: list[int] = []
 		self.labels_to_class: dict[int, str] = dict()
 		self.base_transform = get_base_transform()
+		self.dataset_path = dataset_path
 
 		for local_class_path in os.listdir(dataset_path):
 			class_parts = local_class_path.split('_')
@@ -170,6 +171,12 @@ class FolderDataset(Dataset):
 	def __getitem__(self, index):
 		return self.base_transform(self.images[index]), self.labels[index]
 
+class SplitDataset(FolderDataset):
+	def __init__(self, dataset_path, indexes_to_keep):
+		super().__init__(dataset_path)
+		self.images = [self.images[i] for i in indexes_to_keep]
+		self.labels = [self.labels[i] for i in indexes_to_keep]
+
 class ClassicalDataset(FolderDataset):
 	def __init__(self, dataset_path, duplicate_factor=1):
 		super().__init__(dataset_path)
@@ -189,7 +196,7 @@ class ClassicalDataset(FolderDataset):
 def split_train_val(dataset: FolderDataset):
 	splitter = StratifiedShuffleSplit(n_splits=1, train_size=0.5)
 	train_indices, val_indices = next(splitter.split(dataset, dataset.labels))
-	return Subset(dataset, train_indices), Subset(dataset, val_indices)
+	return SplitDataset(dataset.dataset_path, train_indices), SplitDataset(dataset.dataset_path, val_indices)
 
 def parse_args():
 	parser = argparse.ArgumentParser()

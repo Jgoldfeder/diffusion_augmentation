@@ -12,7 +12,7 @@ import network_model
 import dataset_manager
 from network_model import ModelResults, ModelType
 from dataset_manager import FolderDataset
-from augmentation_tree import BinaryAugmentationNode, AugmentationType, TreeAugmentedDataset, ProbabilityLimits
+from augmentation_tree import BinaryAugmentationNode, AugmentationType, TreeAugmentedDataset, TreeAugmentedDatasetFromDataset, ProbabilityLimits
 
 
 def genome_to_tree(genome, curr_index=0) -> BinaryAugmentationNode:
@@ -96,18 +96,19 @@ class GAHelper:
 		self.tree_evals_per_generation[-1] += 1
 
 		node = genome_to_tree(genome)
-		dataset = TreeAugmentedDataset(self.train_path, node, self.num_augmentations_per_image)
+		dataset = FolderDataset(self.train_path)
+		train_dataset, val_dataset = dataset_manager.split_train_val(dataset)
 
 		#fold 1
-		train_dataset, val_dataset = dataset_manager.split_train_val(dataset)
+		tree_augmented_train_dataset = TreeAugmentedDatasetFromDataset(train_dataset, node, self.num_augmentations_per_image)
 		model = network_model.get_model_for_finetune(self.model_type, self.num_ways)
-		model_results: ModelResults = network_model.train_and_val(model, train_dataset, val_dataset, self.num_iterations_for_val, self.device)
+		model_results: ModelResults = network_model.train_and_val(model, tree_augmented_train_dataset, val_dataset, self.num_iterations_for_val, self.device)
 		loss_fold1 = model_results.losses[-1]
 
 		#fold 2 -- swap train and val
-		train_dataset, val_dataset = val_dataset, train_dataset
+		tree_augmented_val_dataset = TreeAugmentedDatasetFromDataset(val_dataset, node, self.num_augmentations_per_image)
 		model = network_model.get_model_for_finetune(self.model_type, self.num_ways)
-		model_results: ModelResults = network_model.train_and_val(model, train_dataset, val_dataset, self.num_iterations_for_val, self.device)
+		model_results: ModelResults = network_model.train_and_val(model, tree_augmented_val_dataset, train_dataset, self.num_iterations_for_val, self.device)
 		loss_fold2 = model_results.losses[-1]
 
 		fitness = -1 * (loss_fold1 + loss_fold2) / 2
