@@ -28,6 +28,7 @@ class BinaryAugmentationNode:
 		return 1 - self.get_left_probability()
 
 	def generate_augmentation(self, img, class_name):
+		logging.info(f'Current node: {self.augmentation_type}')
 		if self.augmentation_type == AugmentationType.NONE:
 			img = img
 		elif self.augmentation_type == AugmentationType.CLASSICAL:
