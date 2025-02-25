@@ -1,5 +1,6 @@
 import random
-
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import wandb
 import pygad
@@ -112,6 +113,7 @@ class GAHelper:
 		loss_fold2 = model_results.losses[-1]
 
 		fitness = -1 * (loss_fold1 + loss_fold2) / 2
+		logging.info(f'Fitness Score for {str(genome)}: {fitness}')
 		self.fitness_cache[genome_number] = fitness
 		return fitness
 
