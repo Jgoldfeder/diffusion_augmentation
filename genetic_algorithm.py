@@ -157,13 +157,13 @@ class GAHelper:
 
 			logging.info(f'Best tree accuracy: {best_tree_accuracy}')
 
-			for i in range(self.num_iterations_for_test):
+			for j in range(self.num_iterations_for_test):
 				wandb.log({
-					f'train_loss_{i}': model_results.train_losses[i],
-					f'train_acc_{i}': model_results.train_accs[i],
-					f'test_loss_{i}': model_results.losses[i],
-					f'test_acc_{i}': model_results.accs[i],
-					'epoch': i
+					f'train_loss_{j}': model_results.train_losses[j],
+					f'train_acc_{j}': model_results.train_accs[j],
+					f'test_loss_{j}': model_results.losses[j],
+					f'test_acc_{j}': model_results.accs[j],
+					'epoch': j
 				})
 			wandb.log({
 				"confusion_matrix": wandb.plot.confusion_matrix(
