@@ -2,8 +2,6 @@ import random
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-import wandb
-import pygad
 import logging
 import argparse
 import torch
@@ -38,20 +36,12 @@ std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
 def denormalize(tensor):
     return tensor * std + mean
 
-def main():
-
-    random.seed(time.time())
-    
-    tree = BinaryAugmentationNode()
-    tree.augmentation_type = AugmentationType.CANNY
-    # tree.make_random_tree(3)
+def test_tree(tree, subset):
     genome = tree_to_genome(tree)
     print(genome)
-
     dataset_name = "flowers102"
     num_ways = 5
     num_shots = 2
-    subset = 50
     train_path = dataset_manager.get_dataset_path(dataset_name, num_ways, num_shots, subset, train=True)
     test_path = dataset_manager.get_dataset_path(dataset_name, num_ways, num_shots, subset, train=False)
 
@@ -69,11 +59,50 @@ def main():
         # img = img.permute(1, 2, 0)  # Change from CxHxW to HxWxC format
         # img = Image.fromarray(img.cpu().numpy())
         img.save(f"augmented_images/{str(genome)}/{i}.jpg")
-    train_dataset, val_dataset = dataset_manager.split_train_val(dataset)
 
+    train_dataset = TreeAugmentedDataset(train_path, tree, num_augmentations_per_image = 5)
+    test_dataset = FolderDataset(test_path)
     model = network_model.get_model_for_finetune(ModelType.RESNET50, num_ways)
-    model_results: ModelResults = network_model.train_and_val(model, train_dataset, val_dataset, num_epochs = 10, device = "cuda")
+    model_results: ModelResults = network_model.train_and_test(model, train_dataset, test_dataset, num_epochs = 200, device = "cuda")
+    print(f"Accuracy for tree {str(genome)}, subset {subset}: {model_results.accs[-1]}")
+    return model_results.accs[-1]
 
+
+def main():
+
+    random.seed(42)
+    
+    tree = BinaryAugmentationNode()
+    tree.augmentation_type = AugmentationType.COLOR
+    tree.left_probability = 0.5
+    tree.left = BinaryAugmentationNode()
+    tree.left.augmentation_type = AugmentationType.CLASSICAL
+    tree.right = BinaryAugmentationNode()
+    tree.right.augmentation_type = AugmentationType.CLASSICAL
+    test_tree(tree, 47)
+    test_tree(tree, 48)
+    test_tree(tree, 50)
+
+    tree = BinaryAugmentationNode()
+    tree.augmentation_type = AugmentationType.COLOR
+    tree.left_probability = 0.5
+    tree.left = BinaryAugmentationNode()
+    tree.left.augmentation_type = AugmentationType.COLOR
+    tree.left.left_probability = 0.5
+    tree.left.left = BinaryAugmentationNode()
+    tree.left.left.augmentation_type = AugmentationType.CLASSICAL
+    tree.left.right = BinaryAugmentationNode()
+    tree.left.right.augmentation_type = AugmentationType.CLASSICAL
+    tree.right = BinaryAugmentationNode()
+    tree.right.augmentation_type = AugmentationType.COLOR
+    tree.right.left_probability = 0.5
+    tree.right.left = BinaryAugmentationNode()
+    tree.right.left.augmentation_type = AugmentationType.CLASSICAL
+    tree.right.right = BinaryAugmentationNode()
+    tree.right.right.augmentation_type = AugmentationType.CLASSICAL
+    test_tree(tree, 47)
+    test_tree(tree, 48)
+    test_tree(tree, 50)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
