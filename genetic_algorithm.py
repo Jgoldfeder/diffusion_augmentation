@@ -148,31 +148,34 @@ class GAHelper:
 		train_dataset = TreeAugmentedDataset(self.train_path, best_tree, self.num_augmentations_per_image)
 		test_dataset = FolderDataset(self.test_path)
 
-		model = network_model.get_model_for_finetune(self.model_type, self.num_ways)
-		model_results: ModelResults = network_model.train_and_test(model, train_dataset, test_dataset, self.num_iterations_for_test, self.device)
-		best_tree_accuracy = model_results.accs[-1]
+		for i in range(41, 43):
+			random.seed(i)
 
-		logging.info(f'Best tree accuracy: {best_tree_accuracy}')
+			model = network_model.get_model_for_finetune(self.model_type, self.num_ways)
+			model_results: ModelResults = network_model.train_and_test(model, train_dataset, test_dataset, self.num_iterations_for_test, self.device)
+			best_tree_accuracy = model_results.accs[-1]
 
-		for i in range(self.num_iterations_for_test):
+			logging.info(f'Best tree accuracy: {best_tree_accuracy}')
+
+			for i in range(self.num_iterations_for_test):
+				wandb.log({
+					f'train_loss_{i}': model_results.train_losses[i],
+					f'train_acc_{i}': model_results.train_accs[i],
+					f'test_loss_{i}': model_results.losses[i],
+					f'test_acc_{i}': model_results.accs[i],
+					'epoch': i
+				})
 			wandb.log({
-				'train_loss': model_results.train_losses[i],
-				'train_acc': model_results.train_accs[i],
-				'test_loss': model_results.losses[i],
-				'test_acc': model_results.accs[i],
-				'epoch': i
+				"confusion_matrix": wandb.plot.confusion_matrix(
+					probs=None,
+					y_true=model_results.labels,
+					preds=model_results.preds,
+					class_names=[test_dataset.labels_to_class[i] for i in range(self.num_ways)]
+				)
 			})
-		wandb.log({
-			"confusion_matrix": wandb.plot.confusion_matrix(
-				probs=None,
-				y_true=model_results.labels,
-				preds=model_results.preds,
-				class_names=[test_dataset.labels_to_class[i] for i in range(self.num_ways)]
-			)
-		})
-		wandb.log({
-			"best_tree_accuracy": best_tree_accuracy
-		})
+			wandb.log({
+				"best_tree_accuracy": best_tree_accuracy
+			})
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Run genetic algorithm for augmentation tree optimization')
