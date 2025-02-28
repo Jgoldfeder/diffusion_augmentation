@@ -41,7 +41,7 @@ def get_dataset_from_torch(dataset_name: str, root='./torch') -> tuple[Dataset, 
 			label = 0
 			dataset = ImageFolder(data_dir)
 			for class_name, label in dataset.class_to_idx.items():
-					label_to_class[label] = class_name.split('-')[1].lower()
+				label_to_class[label] = class_name.split('-')[1].lower()
 		except FileNotFoundError:
 			raise Exception('Download dataset by running wget http://vision.stanford.edu/aditya86/ImageNetDogs/images.tar')
 	elif dataset_name == 'stanford_cars':
@@ -54,6 +54,16 @@ def get_dataset_from_torch(dataset_name: str, root='./torch') -> tuple[Dataset, 
 		label_to_class = dict()
 		for i in range(len(train_dataset.classes)):
 			label_to_class[i] = train_dataset.classes[i]
+	elif dataset_name == 'food101':
+		try:
+			data_dir = os.path.join(root, 'food101', 'images')
+			dataset = ImageFolder(data_dir)
+			label_to_class = dict()
+			for class_name, label in dataset.class_to_idx.items():
+				label_to_class[label] = class_name
+			print(label_to_class)
+		except FileNotFoundError:
+			raise Exception('Download dataset from kaggle: https://www.kaggle.com/datasets/dansbecker/food-101')
 	else:
 		raise Exception(f"Dataset {dataset_name} not supported")
 	return dataset, label_to_class
