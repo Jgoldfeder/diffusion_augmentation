@@ -8,7 +8,7 @@ import argparse
 from PIL import Image
 from sklearn.model_selection import StratifiedShuffleSplit
 from torch.utils.data import Dataset, ConcatDataset, Subset
-from torchvision.datasets import Caltech256, ImageFolder, StanfordCars
+from torchvision.datasets import Caltech256, ImageFolder, StanfordCars, OxfordIIITPet
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize, RandomCrop, ColorJitter, RandomHorizontalFlip, RandomVerticalFlip, RandomRotation
 
 # we need to get the dataset, as well as the class name which corresponds to ea. label
@@ -64,6 +64,9 @@ def get_dataset_from_torch(dataset_name: str, root='./torch') -> tuple[Dataset, 
 			print(label_to_class)
 		except FileNotFoundError:
 			raise Exception('Download dataset from kaggle: https://www.kaggle.com/datasets/dansbecker/food-101')
+	elif dataset_name == 'oxford-iiit-pet':
+		dataset = OxfordIIITPet(root=root, download=True)
+		label_to_class = {label: class_name for class_name, label in dataset.class_to_idx.items()}
 	else:
 		raise Exception(f"Dataset {dataset_name} not supported")
 	return dataset, label_to_class
