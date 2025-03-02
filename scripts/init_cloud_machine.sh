@@ -6,7 +6,7 @@ wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/
 bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
 rm ~/miniconda3/miniconda.sh
 echo 'export PATH="~/miniconda3/bin:$PATH"' >> ~/.bashrc
-source .bashrc
+source ~/.bashrc
 
 git clone https://github.com/Jgoldfeder/diffusion_augmentation.git
 cd diffusion_augmentation
@@ -35,6 +35,10 @@ while true; do
 done
 cd ..
 
+# need this line so that cuda memory doesn't run out so quick
+echo 'export PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"' >> ~/.bashrc
+source ~/.bashrc
+
 # next we download the datasets
 mkdir torch
 cd torch
@@ -55,7 +59,7 @@ chmod +x ./scripts/create_fewshot_datasets.sh
 # TODO wandb login here
 
 
-# TODO For controlnet (DO we need to do this?)
+# TODO For controlnet (DO we need to do this?) I think no
 # probably use sed
 # * ~/miniconda3/envs/diffaug/lib/python3.10/site-packages/basicsr/data/degradations.py
 # * Change the import line from functional_tensor to just functional
