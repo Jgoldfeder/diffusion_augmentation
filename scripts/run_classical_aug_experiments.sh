@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Array of seeds to use
-subsets=(48 49 50)
-datasets=("caltech256" "stanford_cars")
-shots=(2)
-seeds=(41 43)
+subsets=(41 42 43 44 45 46 47 48 49 50)
+datasets=("stanford_cars" "flowers102" "caltech256" "stanford_dogs" "food101")
+shots=(1)
+seeds=(41 42 43 44 45 46 47 48 49 50)
 # For each seed, run the experiment once
 for subset in "${subsets[@]}"; do
     for dataset in "${datasets[@]}"; do
