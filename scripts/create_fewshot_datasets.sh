@@ -2,19 +2,23 @@
 # Create datasets for Caltech256
 
 for subset in {41..50}; do
-    python dataset_manager.py --dataset stanford_cars --subset $subset --num_ways 5 --num_shots 2
+    python dataset_manager.py --dataset stanford_cars --subset $subset --num_ways 5 --num_shots 1
 done
 
 for subset in {41..50}; do
-    python dataset_manager.py --dataset stanford_dogs --subset $subset --num_ways 5 --num_shots 2
+    python dataset_manager.py --dataset flowers102 --subset $subset --num_ways 5 --num_shots 1
 done
 
 for subset in {41..50}; do
-    python dataset_manager.py --dataset flowers102 --subset $subset --num_ways 5 --num_shots 2
+    python dataset_manager.py --dataset caltech256 --subset $subset --num_ways 5 --num_shots 1
 done
 
 for subset in {41..50}; do
-    python dataset_manager.py --dataset caltech256 --subset $subset --num_ways 5 --num_shots 2
+    python dataset_manager.py --dataset stanford_dogs --subset $subset --num_ways 5 --num_shots 1
+done
+
+for subset in {41..50}; do
+    python dataset_manager.py --dataset food101 --subset $subset --num_ways 5 --num_shots 1
 done
 
 # for subset in {41..50}; do
