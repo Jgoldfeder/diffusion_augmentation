@@ -1,6 +1,6 @@
 import random
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import wandb
 import pygad
@@ -89,7 +89,7 @@ class GAHelper:
 		self.tree_evals_per_generation = [0]
 		self.fitness_cache: dict[float, float] = dict()
 
-	def fitness_func(self, genome):
+	def fitness_func(self, genome, num_shots):
 		genome_number = genome_to_number(genome)
 		if genome_number in self.fitness_cache:
 			logging.info('fitness function call using cached fitness')
@@ -116,6 +116,23 @@ class GAHelper:
 		logging.info(f'Fitness Score for {str(genome)}: {fitness}')
 		self.fitness_cache[genome_number] = fitness
 		return fitness
+
+	def fitness_func_one_shot_training_loss(self, genome, num_shots):
+		genome_number = genome_to_number(genome)
+		if genome_number in self.fitness_cache:
+			logging.info('fitness function call using cached fitness')
+			return self.fitness_cache[genome_number]
+		self.tree_evals_per_generation[-1] += 1
+		
+		node = genome_to_tree(genome)
+		dataset = FolderDataset(self.train_path)
+		tree_augmented_train_dataset = TreeAugmentedDatasetFromDataset(dataset, node, self.num_augmentations_per_image)
+		model = network_model.get_model_for_finetune(self.model_type, self.num_ways)
+		model_results: ModelResults = network_model.train(model, tree_augmented_train_dataset, self.num_iterations_for_val, self.device)
+		loss = model_results.train_losses[-1]
+		logging.info(f'Fitness Score for {str(genome)}: {loss}')
+		self.fitness_cache[genome_number] = loss
+		return loss
 
 	def on_generation(self, ga_instance):
 		best_solution = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)
@@ -195,6 +212,7 @@ def parse_args():
     parser.add_argument('--num_iterations_for_val', type=int, default=20, help='Number of iterations to train each tree before getting loss from val')
     parser.add_argument('--num_iterations_for_test', type=int, default=400, help='Number of iterations to train best tree before final testing')
     parser.add_argument('--seed', type=int, required=True, help='Random seed for reproducibility')
+    parser.add_argument('--one_shot_training_loss', type=bool, default=False, help='Whether to use one shot training loss')
     return parser.parse_args()
 
 if __name__ == '__main__':
@@ -237,13 +255,14 @@ if __name__ == '__main__':
 			"num_iterations_for_val": ga_helper.num_iterations_for_val,
 			"num_iterations_for_test": ga_helper.num_iterations_for_test,
 			"seed": args.seed,
+			"one_shot_training_loss": args.one_shot_training_loss
 		}
 	)
 
 	ga_instance = pygad.GA(
 		num_generations=args.num_generations,
 		num_parents_mating=args.num_parents_mating,
-		fitness_func=lambda ga_instance, genome, solution_idx: ga_helper.fitness_func(genome),
+		fitness_func=lambda ga_instance, genome, solution_idx: ga_helper.fitness_func(genome, args.num_shots) if not args.one_shot_training_loss else ga_helper.fitness_func_one_shot_training_loss(genome, args.num_shots),
 		initial_population=initial_population(args.sol_per_pop, ga_helper.tree_depth),
 		keep_elitism=args.keep_elitism,
 		keep_parents=args.keep_parents,

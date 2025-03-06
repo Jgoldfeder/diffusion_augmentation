@@ -119,6 +119,46 @@ def train_and_val(model: Module, train_dataset, val_dataset, num_epochs, device)
 def train_and_test(model: Module, train_dataset, test_dataset, num_epochs, device):
 	return train_and_val(model, train_dataset, test_dataset, num_epochs, device)
 
+def train(model, train_dataset, num_epochs, device):
+	model.to(device)
+	optimizer = get_optimizer(model)
+	criterion = get_criterion()
+
+	train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+
+	train_losses = []
+	train_accs = []
+
+	for epoch in range(num_epochs):
+		train_losses.append(0)
+		train_accs.append(0)
+
+		model.train()
+		for images, labels in train_loader:
+			images = images.to(device)
+			labels = labels.to(device)
+			
+			optimizer.zero_grad()
+			outputs = model(images)
+			loss = criterion(outputs, labels)
+			loss.backward()
+			optimizer.step()
+			_, predicted = torch.max(outputs.data, 1)
+
+			train_losses[-1] += loss.item()
+			train_accs[-1] += (predicted == labels).sum().item()
+		train_losses[-1] /= len(train_loader)
+		train_accs[-1] /= len(train_dataset)
+		
+		epoch_info = {
+			'epoch': epoch,
+			'loss': train_losses[-1],
+			'acc': train_accs[-1]
+		}
+		logging.info(f"{epoch_info}")
+
+	return ModelResults(train_losses, train_accs, [], [], [], [])
+
 def evaluate(model, dataset):
 	pass
 
