@@ -81,15 +81,15 @@ def train_and_val(model: Module, train_dataset, val_dataset, num_epochs, device)
 			model.eval()
 			with torch.no_grad():
 				for images, labels in val_loader:
-				images = images.to(device)
-				labels = labels.to(device)
+					images = images.to(device)
+					labels = labels.to(device)
 
-				outputs = model(images)
-				loss = criterion(outputs, labels)
-				_, predicted = torch.max(outputs.data, 1)
+					outputs = model(images)
+					loss = criterion(outputs, labels)
+					_, predicted = torch.max(outputs.data, 1)
 
-				val_losses[-1] += loss.item()
-				val_accs[-1] += (predicted == labels).sum().item()
+					val_losses[-1] += loss.item()
+					val_accs[-1] += (predicted == labels).sum().item()
 			val_losses[-1] /= len(val_loader)
 			val_accs[-1] /= len(val_dataset)
 
