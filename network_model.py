@@ -77,9 +77,10 @@ def train_and_val(model: Module, train_dataset, val_dataset, num_epochs, device)
 		train_losses[-1] /= len(train_loader)
 		train_accs[-1] /= len(train_dataset)
 
-		model.eval()
-		with torch.no_grad():
-			for images, labels in val_loader:
+		if epoch % 5 == 0:
+			model.eval()
+			with torch.no_grad():
+				for images, labels in val_loader:
 				images = images.to(device)
 				labels = labels.to(device)
 
