@@ -15,6 +15,11 @@ from network_model import ModelResults, ModelType
 from dataset_manager import FolderDataset
 from augmentation_tree import BinaryAugmentationNode, AugmentationType, TreeAugmentedDataset, TreeAugmentedDatasetFromDataset, ProbabilityLimits
 
+from torch.utils.data import DataLoader
+from torch import nn
+import torchvision
+from sklearn.metrics import silhouette_score
+
 
 def genome_to_tree(genome, curr_index=0) -> BinaryAugmentationNode:
 	if curr_index >= len(genome):
@@ -148,10 +153,10 @@ class GAHelper:
 		data_loader = DataLoader(tree_augmented_train_dataset, batch_size=256, shuffle=False, num_workers=2)
 
 		model = torchvision.models.resnet50(pretrained=True)
-        model.fc = nn.Identity()
+		model.fc = nn.Identity()
 
 		embeddings = []
-    	true_labels = []
+		true_labels = []
 
 		with torch.no_grad():
 			for (images, labels) in data_loader:
@@ -164,6 +169,21 @@ class GAHelper:
 		embeddings = np.concatenate(embeddings, axis=0)
 		true_labels = np.concatenate(true_labels, axis=0)
 
+		def compute_cluster_radii(embeddings, clusters):
+			"""
+			For each cluster, compute the average distance from the cluster centroid
+			to its points as a measure of the cluster's "radius."
+			"""
+			unique_clusters = np.unique(clusters)
+			cluster_radii = {}
+			for cluster in unique_clusters:
+				indices = np.where(clusters == cluster)[0]
+				points = embeddings[indices]
+				centroid = np.mean(points, axis=0)
+				distances = np.linalg.norm(points - centroid, axis=1)
+				avg_radius = np.mean(distances)
+				cluster_radii[cluster] = avg_radius
+			return cluster_radii
 
 		clusters_true = true_labels
 		sil_true = silhouette_score(embeddings, clusters_true)
@@ -255,6 +275,7 @@ def parse_args():
     parser.add_argument('--num_iterations_for_test', type=int, default=400, help='Number of iterations to train best tree before final testing')
     parser.add_argument('--seed', type=int, required=True, help='Random seed for reproducibility')
     parser.add_argument('--one_shot_training_loss', type=bool, default=False, help='Whether to use one shot training loss')
+    parser.add_argument('--one_shot_clustering', type=bool, default=False, help='Whether to use one shot clustering')
     return parser.parse_args()
 
 if __name__ == '__main__':
