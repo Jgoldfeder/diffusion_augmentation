@@ -134,6 +134,48 @@ class GAHelper:
 		self.fitness_cache[genome_number] = loss
 		return loss
 
+	def fitness_func_one_shot_clustering(self, genome, num_shots):
+		genome_number = genome_to_number(genome)
+		if genome_number in self.fitness_cache:
+			logging.info('fitness function call using cached fitness')
+			return self.fitness_cache[genome_number]
+		self.tree_evals_per_generation[-1] += 1
+		
+		node = genome_to_tree(genome)
+		dataset = FolderDataset(self.train_path)
+		tree_augmented_train_dataset = TreeAugmentedDatasetFromDataset(dataset, node, self.num_augmentations_per_image)
+
+		data_loader = DataLoader(tree_augmented_train_dataset, batch_size=256, shuffle=False, num_workers=2)
+
+		model = torchvision.models.resnet50(pretrained=True)
+        model.fc = nn.Identity()
+
+		embeddings = []
+    	true_labels = []
+
+		with torch.no_grad():
+			for (images, labels) in data_loader:
+				images = images.to(self.device)
+				labels = labels.to(self.device)
+				features = model.encode_image(images)
+				embeddings.append(features.cpu().numpy())
+				true_labels.append(labels.cpu().numpy())
+
+		embeddings = np.concatenate(embeddings, axis=0)
+		true_labels = np.concatenate(true_labels, axis=0)
+
+
+		clusters_true = true_labels
+		sil_true = silhouette_score(embeddings, clusters_true)
+		cluster_radii_true = compute_cluster_radii(embeddings, clusters_true)
+		avg_radius_true = np.mean(list(cluster_radii_true.values()))
+
+		fitness_score = sil_true - (1.0/avg_radius_true) + 1
+
+		logging.info(f'Fitness Score for {str(genome)}: {fitness_score}')
+		self.fitness_cache[genome_number] = fitness_score
+		return fitness_score
+
 	def on_generation(self, ga_instance):
 		best_solution = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)
 		best_genome = best_solution[0]
