@@ -26,13 +26,13 @@ if __name__ == '__main__':
 
 	dataset = 'oxford-iiit-pet'
 	num_ways = 5
-	num_shots = 2
+	num_shots = 1
 	subset = 44
 
-	num_augmentations_per_image = 5
+	num_augmentations_per_image = 2
 
 	# tree_genome = [AugmentationType.get_random_augmentation().value, ProbabilityLimits.get_random_probability(), AugmentationType.get_random_augmentation().value, .5, AugmentationType.get_random_augmentation().value, .5]
-	tree_genome = [3, 0.4520504900156664, 3, .5, 1, .5]
+	tree_genome = [3,0.3,6,0.4346378180450507,6,0.6870333161209836]
 	node = genome_to_tree(tree_genome)
 	print(str(node))
 
@@ -73,7 +73,7 @@ if __name__ == '__main__':
 				f.write('without classical\n')
 			else:
 				f.write('with classical\n')
-			f.write(str(model_results.accs[-2:]) + '\n')
+			f.write(str(model_results.accs[-6:]) + '\n')
 
 		results = model_results
 		for (train_loss, train_acc, test_loss, test_acc) in zip(results.train_losses, results.train_accs, results.losses, results.accs):
