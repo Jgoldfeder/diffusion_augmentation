@@ -318,14 +318,19 @@ if __name__ == '__main__':
 			"num_iterations_for_val": ga_helper.num_iterations_for_val,
 			"num_iterations_for_test": ga_helper.num_iterations_for_test,
 			"seed": args.seed,
-			"one_shot_training_loss": args.one_shot_training_loss
+			"one_shot_training_loss": args.one_shot_training_loss,
+			"one_shot_clustering": args.one_shot_clustering
 		}
 	)
 
 	ga_instance = pygad.GA(
 		num_generations=args.num_generations,
 		num_parents_mating=args.num_parents_mating,
-		fitness_func=lambda ga_instance, genome, solution_idx: ga_helper.fitness_func(genome, args.num_shots) if not args.one_shot_training_loss else ga_helper.fitness_func_one_shot_training_loss(genome, args.num_shots),
+		fitness_func=lambda ga_instance, genome, solution_idx: (
+			ga_helper.fitness_func_one_shot_training_loss(genome, args.num_shots) if args.one_shot_training_loss
+			else ga_helper.fitness_func_one_shot_clustering(genome, args.num_shots) if args.one_shot_clustering
+			else ga_helper.fitness_func(genome, args.num_shots)
+		),
 		initial_population=initial_population(args.sol_per_pop, ga_helper.tree_depth),
 		keep_elitism=args.keep_elitism,
 		keep_parents=args.keep_parents,
