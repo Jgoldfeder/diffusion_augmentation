@@ -110,38 +110,27 @@ class TreeAugmentedDatasetFromDataset(FolderDataset):
 
 if __name__ == '__main__':
 	from PIL import Image
-	import time
 	import os
 
 	logging.basicConfig(level=logging.INFO)
 
-	random.seed(42)
+	augmentation_tree = BinaryAugmentationNode()
+	augmentation_tree.augmentation_type = AugmentationType.SEGMENT
 
-	train_path = dataset_manager.get_dataset_path('flowers102', 5, 2, 42, train=True)
-	dataset = FolderDataset(train_path)
+	input_dir = './aug_images/base_images/'
+	output_dir = './aug_images/final_images/segment/'
 
-	node = BinaryAugmentationNode()
-	# node.make_random_tree(3)
-	node.augmentation_type = AugmentationType.COLOR
-	# node.left.augmentation_type = AugmentationType.CANNY
-	# node.right.augmentation_type = AugmentationType.SEGMENT
-	# node.left.left.augmentation_type = AugmentationType.DEPTH
-	# node.left.right.augmentation_type = AugmentationType.COLOR
-	# node.right.left.augmentation_type = AugmentationType.NERF
-	# node.right.right.augmentation_type = AugmentationType.CLASSICAL
-	print(node)
+	os.makedirs(output_dir, exist_ok=True)
 
-	train_dataset, val_dataset = dataset_manager.split_train_val(dataset)
+	base_images = []
+	base_classes = []
+	# read base images from './aug_images/base_images'
+	for filename in os.listdir(input_dir):
+		if filename.endswith('.png'):
+			base_images.append(Image.open(f'{input_dir}{filename}'))
+			base_classes.append(filename.split('.')[0])
 
-	os.makedirs('augmented_images/temp/train/', exist_ok=True)
-	os.makedirs('augmented_images/temp/val/', exist_ok=True)
-	os.makedirs('augmented_images/temp/treetrain/', exist_ok=True)
-	# iterate through images in train and save them out
-	for i, img in enumerate(train_dataset.images):
-		img.save('augmented_images/temp/train/' + str(time.time()) + '.png')
-	for i, img in enumerate(val_dataset.images):
-		img.save('augmented_images/temp/val/' + str(time.time()) + '.png')
+	for img in base_images:
+		augmented_img = augmentation_tree.generate_augmentation(img, base_classes[base_images.index(img)])
+		augmented_img.save(f'{output_dir}{base_classes[base_images.index(img)]}.png')
 
-	tree_train = TreeAugmentedDatasetFromDataset(train_dataset, node, 2)
-	for i, img in enumerate(tree_train.images):
-		img.save('augmented_images/temp/treetrain/' + str(time.time()) + '.png')
