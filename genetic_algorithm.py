@@ -1,6 +1,6 @@
 import random
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import wandb
 import pygad
@@ -20,6 +20,7 @@ from torch import nn
 import torchvision
 from sklearn.metrics import silhouette_score
 
+import timm
 
 def genome_to_tree(genome, curr_index=0) -> BinaryAugmentationNode:
 	if curr_index >= len(genome):
@@ -152,8 +153,14 @@ class GAHelper:
 
 		data_loader = DataLoader(tree_augmented_train_dataset, batch_size=256, shuffle=False, num_workers=2)
 
-		model = torchvision.models.resnet50(pretrained=True)
-		model.fc = nn.Identity()
+		# model = torchvision.models.resnet50(pretrained=True)
+		# model.fc = nn.Identity()
+		
+		model = timm.create_model("vit_base_patch16_224", pretrained=True)
+		if hasattr(model, "head"):
+			model.head = nn.Identity()
+		elif hasattr(model, "classifier"):
+			model.classifier = nn.Identity()
 
 		embeddings = []
 		true_labels = []
