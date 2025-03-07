@@ -1,6 +1,6 @@
 import random
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 import wandb
 import pygad
@@ -162,7 +162,7 @@ class GAHelper:
 			for (images, labels) in data_loader:
 				images = images.to(self.device)
 				labels = labels.to(self.device)
-				features = model.encode_image(images)
+				features = model(images)
 				embeddings.append(features.cpu().numpy())
 				true_labels.append(labels.cpu().numpy())
 
