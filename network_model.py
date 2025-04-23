@@ -6,9 +6,17 @@ from torch.nn import CrossEntropyLoss, Linear, Module
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision.models import resnet50, ResNet50_Weights
+import os 
+
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 class ModelType(Enum):
 	RESNET50 = 'resnet50'
+
+def get_resnet50_scratch(num_outputs):
+	model = resnet50(weights=None)
+	model.fc = Linear(model.fc.in_features, num_outputs)
+	return model
 
 def get_resnet50_for_finetune(num_outputs):
 	model = resnet50(weights=ResNet50_Weights.DEFAULT)
@@ -22,7 +30,13 @@ def get_model_for_finetune(model_type: ModelType, num_outputs):
 		return get_resnet50_for_finetune(num_outputs)
 	else:
 		raise ValueError(f"Unsupported model: {model_type}")
-	
+
+def get_model_for_scratch(model_type: ModelType, num_outputs):
+	if model_type == ModelType.RESNET50:
+		return get_resnet50_scratch(num_outputs)
+	else:
+		raise ValueError(f"Unsupported model: {model_type}")
+
 def get_optimizer(model: Module):
 	return Adam(model.parameters(), lr=0.001)
 
@@ -171,7 +185,7 @@ if __name__ == '__main__':
 	test_dataset = FolderDataset(get_dataset_path('flowers102', 5, 2, 42, train=False))
 
 	my_model = get_model_for_finetune(ModelType.RESNET50, 5)
-	results = train_and_test(my_model, train_dataset, test_dataset, 20, 'cuda')
+	results = train_and_test(my_model, train_dataset, test_dataset, 20, 'cuda:2')
 	breakpoint()
 
 	print(results)
