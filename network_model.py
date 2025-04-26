@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torchvision.models import resnet50, ResNet50_Weights
 import os 
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 class ModelType(Enum):
 	RESNET50 = 'resnet50'
@@ -55,7 +55,7 @@ class ModelResults():
 		self.preds = preds
 		self.labels = labels
 
-def train_and_val(model: Module, train_dataset, val_dataset, num_epochs, device):
+def train_and_val(model: Module, train_dataset, val_dataset, num_epochs, device, finetune=True):
 	model.to(device)
 	optimizer = get_optimizer(model)
 	criterion = get_criterion()
@@ -107,6 +107,23 @@ def train_and_val(model: Module, train_dataset, val_dataset, num_epochs, device)
 			val_losses[-1] /= len(val_loader)
 			val_accs[-1] /= len(val_dataset)
 
+		if not finetune:
+			checkpoint = {
+				'epoch': epoch,
+				'model_state_dict': model.state_dict(),
+				'optimizer_state_dict': optimizer.state_dict(),
+				'train_loss': train_losses[-1],
+				'train_acc': train_accs[-1],
+				'val_loss': val_losses[-1],
+				'val_acc': val_accs[-1]
+			}
+			os.makedirs('checkpoints', exist_ok=True)
+			torch.save(checkpoint, f'checkpoints/epoch_{epoch}.pt')
+
+			if val_accs[-1] > best_val_acc:
+				best_val_acc = val_accs[-1]
+				torch.save(checkpoint, 'checkpoints/best_model.pt')
+
 		epoch_info = {
 			'epoch': epoch,
 			'train_loss': train_losses[-1],
@@ -131,8 +148,8 @@ def train_and_val(model: Module, train_dataset, val_dataset, num_epochs, device)
 			val_labels.extend(labels.cpu().numpy())
 	return ModelResults(train_losses, train_accs, val_losses, val_accs, val_preds, val_labels)
 
-def train_and_test(model: Module, train_dataset, test_dataset, num_epochs, device):
-	return train_and_val(model, train_dataset, test_dataset, num_epochs, device)
+def train_and_test(model: Module, train_dataset, test_dataset, num_epochs, device, finetune=True):
+	return train_and_val(model, train_dataset, test_dataset, num_epochs, device, finetune)
 
 def train(model, train_dataset, num_epochs, device):
 	model.to(device)

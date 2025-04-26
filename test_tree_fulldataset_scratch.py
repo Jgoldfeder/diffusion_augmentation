@@ -71,7 +71,7 @@ def main():
 		test_dataset = FolderDataset(test_path)
 
 		model = network_model.get_model_for_scratch(ModelType.RESNET50, num_ways)
-		model_results = network_model.train_and_test(model, train_dataset, test_dataset, 200, 'cuda:2')
+		model_results = network_model.train_and_test(model, train_dataset, test_dataset, 200, 'cuda:2', finetune=False)
 		print(model_results)
 
 		# with open('temp.txt', 'a') as f:
