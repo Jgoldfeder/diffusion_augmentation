@@ -1,6 +1,6 @@
 import random
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 import wandb
 import pygad

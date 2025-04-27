@@ -202,7 +202,7 @@ if __name__ == '__main__':
 	test_dataset = FolderDataset(get_dataset_path('flowers102', 5, 2, 42, train=False))
 
 	my_model = get_model_for_finetune(ModelType.RESNET50, 5)
-	results = train_and_test(my_model, train_dataset, test_dataset, 20, 'cuda:2')
+	results = train_and_test(my_model, train_dataset, test_dataset, 20, 'cuda:0')
 	breakpoint()
 
 	print(results)
