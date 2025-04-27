@@ -57,7 +57,10 @@ chmod +x ./scripts/create_fewshot_datasets.sh
 ./scripts/create_fewshot_datasets.sh
 
 # TODO wandb login here
-
+python
+import wandb
+wandb.login()
+# authenticate in browser
 
 # TODO For controlnet (DO we need to do this?) I think no
 # probably use sed
