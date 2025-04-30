@@ -10,9 +10,9 @@ import wandb
 from dataset_manager import get_dataset_from_torch
 
 # TODO get dataset according to passed arg
-dataset_name = 'oxford-iiit-pet'
-full_dataset, _ = get_dataset_from_torch(dataset_name)
-num_classes = len(full_dataset.classes)
+dataset_name = 'caltech256'
+full_dataset, label_to_class = get_dataset_from_torch(dataset_name)
+num_classes = len(label_to_class)
 batch_size = 32
 num_epochs = 900
 lr = 1e-2
@@ -40,6 +40,7 @@ wandb.init(
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 train_transform = transforms.Compose([
+    transforms.Lambda(lambda img: img.convert("RGB")),
     transforms.Resize(size=(256, 256)),
     transforms.RandomCrop(size=(224, 224)),
     transforms.ColorJitter(
@@ -57,6 +58,7 @@ train_transform = transforms.Compose([
 ])
 
 val_transform = transforms.Compose([
+    transforms.Lambda(lambda img: img.convert("RGB")),
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], 
