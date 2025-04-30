@@ -11,14 +11,14 @@ project = 'learned-tree-tests'
 
 # Filtering criteria
 n = 10  # number of recent runs to keep
-target_dataset = 'caltech256'
-target_without_classical = 0
+target_dataset = 'flowers102'
+target_without_classical = 1
 target_num_ways = 5
 target_num_shots = 1
 target_tree = \
-'''root (AugmentationType.NONE L_prob: 0.519, R_prob: 0.481)
-  L (AugmentationType.CLASSICAL)
-  R (AugmentationType.SEGMENT)'''
+'''root (AugmentationType.DEPTH L_prob: 0.571, R_prob: 0.429)
+  L (AugmentationType.NERF)
+  R (AugmentationType.DEPTH)'''
 
 # Descriptive name for classical
 classical_str = "without_classical" if target_without_classical else "with_classical"
