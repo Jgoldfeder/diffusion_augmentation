@@ -22,6 +22,10 @@ from sklearn.metrics import silhouette_score
 
 import timm
 
+try: import clip
+except ImportError:
+	clip = None
+
 def genome_to_tree(genome, curr_index=0) -> BinaryAugmentationNode:
 	if curr_index >= len(genome):
 		return None
@@ -123,7 +127,7 @@ class GAHelper:
 		self.fitness_cache[genome_number] = fitness
 		return fitness
 
-	def fitness_func_one_shot_training_loss(self, genome, num_shots):
+	def fitness_func_one_shot_training_loss(self, genome):
 		genome_number = genome_to_number(genome)
 		if genome_number in self.fitness_cache:
 			logging.info('fitness function call using cached fitness')
@@ -140,7 +144,7 @@ class GAHelper:
 		self.fitness_cache[genome_number] = loss
 		return loss
 
-	def fitness_func_one_shot_clustering(self, genome, num_shots):
+	def fitness_func_one_shot_clustering(self, genome, clustering_model_name):
 		genome_number = genome_to_number(genome)
 		if genome_number in self.fitness_cache:
 			logging.info('fitness function call using cached fitness')
@@ -156,11 +160,40 @@ class GAHelper:
 		# model = torchvision.models.resnet50(pretrained=True)
 		# model.fc = nn.Identity()
 		
-		model = timm.create_model("vit_base_patch16_224", pretrained=True)
-		if hasattr(model, "head"):
-			model.head = nn.Identity()
-		elif hasattr(model, "classifier"):
-			model.classifier = nn.Identity()
+		if clustering_model_name == "vit224":
+			model = timm.create_model("vit_base_patch16_224", pretrained=True)
+			if hasattr(model, "head"):
+				model.head = nn.Identity()
+			elif hasattr(model, "classifier"):
+				model.classifier = nn.Identity()
+			transform = transforms.Compose([
+				transforms.Resize(224),
+				transforms.ToTensor(),
+				transforms.Normalize(mean=[0.5, 0.5, 0.5],
+									std=[0.5, 0.5, 0.5])
+        	])
+		elif clustering_model_name == "vit":
+			model = torchvision.models.vit_b_16(pretrained=True)
+			if hasattr(model, "heads"):
+				model.heads = nn.Identity()
+			else:
+				model.fc = nn.Identity()
+			transform = transforms.Compose([
+				transforms.Resize(224),
+				transforms.ToTensor(),
+				transforms.Normalize(mean=[0.5, 0.5, 0.5],
+									std=[0.5, 0.5, 0.5])
+			])
+		elif clustering_model_name == "clip":
+			if clip is None:
+				raise ImportError("CLIP is not installed. Please install it.")
+			# Load the ViT-B/32 variant of CLIP.
+			model, clip_preprocess = clip.load("ViT-B/32", device=device)
+			transform = clip_preprocess
+		elif clustering_model_name == "resnet50":
+			model = torchvision.models.resnet50(pretrained=True)
+			model.fc = nn.Identity()
+		
 
 		embeddings = []
 		true_labels = []
@@ -283,11 +316,18 @@ def parse_args():
     parser.add_argument('--seed', type=int, required=True, help='Random seed for reproducibility')
     parser.add_argument('--one_shot_training_loss', type=bool, default=False, help='Whether to use one shot training loss')
     parser.add_argument('--one_shot_clustering', type=bool, default=False, help='Whether to use one shot clustering')
+    parser.add_argument('--clustering_model_name', type=str, default='vit224', 
+                       choices=['vit224', 'vit', 'clip', 'resnet50'],
+                       help='Which model to use for clustering. Options: vit224, vit, clip, resnet50')
     return parser.parse_args()
 
 if __name__ == '__main__':
 	logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 	args = parse_args()
+
+	# Validate one-shot methods can only be used with num_shots=1
+	if (args.one_shot_training_loss or args.one_shot_clustering) and args.num_shots != 1:
+		raise ValueError("One-shot methods (training loss or clustering) can only be used when num_shots=1")
 
 	# might also need to seed numpy here too
 	torch.manual_seed(args.seed)
@@ -326,7 +366,8 @@ if __name__ == '__main__':
 			"num_iterations_for_test": ga_helper.num_iterations_for_test,
 			"seed": args.seed,
 			"one_shot_training_loss": args.one_shot_training_loss,
-			"one_shot_clustering": args.one_shot_clustering
+			"one_shot_clustering": args.one_shot_clustering,
+			"clustering_model_name": args.clustering_model_name	
 		}
 	)
 
@@ -334,9 +375,9 @@ if __name__ == '__main__':
 		num_generations=args.num_generations,
 		num_parents_mating=args.num_parents_mating,
 		fitness_func=lambda ga_instance, genome, solution_idx: (
-			ga_helper.fitness_func_one_shot_training_loss(genome, args.num_shots) if args.one_shot_training_loss
-			else ga_helper.fitness_func_one_shot_clustering(genome, args.num_shots) if args.one_shot_clustering
-			else ga_helper.fitness_func(genome, args.num_shots)
+			(ga_helper.fitness_func_one_shot_training_loss(genome) if args.one_shot_training_loss
+			else ga_helper.fitness_func_one_shot_clustering(genome, args.clustering_model_name) if args.one_shot_clustering
+			else ga_helper.fitness_func(genome, args.num_shots))
 		),
 		initial_population=initial_population(args.sol_per_pop, ga_helper.tree_depth),
 		keep_elitism=args.keep_elitism,
