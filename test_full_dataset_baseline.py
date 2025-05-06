@@ -10,7 +10,7 @@ import wandb
 from dataset_manager import get_dataset_from_torch
 
 # TODO get dataset according to passed arg
-dataset_name = 'caltech256'
+dataset_name = 'oxford-iiit-pet'
 full_dataset, label_to_class = get_dataset_from_torch(dataset_name)
 num_classes = len(label_to_class)
 batch_size = 32
@@ -18,7 +18,7 @@ num_epochs = 900
 lr = 1e-2
 momentum = 0.9
 weight_decay = 5e-4
-t_max = 30
+t_max = 450
 eta_min = 1e-4
 
 wandb.init(
