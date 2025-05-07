@@ -17,6 +17,7 @@ import umap
 import hdbscan
 import sklearn.cluster as cluster
 from sklearn.metrics import adjusted_rand_score, adjusted_mutual_info_score
+from sklearn.manifold import TSNE
 
 import network_model
 import dataset_manager
@@ -32,6 +33,7 @@ from sklearn.metrics import silhouette_score
 from genetic_algorithm import genome_to_number, genome_to_tree, GAHelper
 
 import timm
+from transformers import AutoImageProcessor, Dinov2ForImageClassification
 
 try:
     import clip
@@ -39,7 +41,7 @@ except ImportError:
     clip = None
 
 class ClusteringVisualizer(GAHelper):
-      def visualize(self, image_encoder='vit224'):
+      def visualize(self, image_encoder='vit224', dimension_reduction='umap'):
         genome = input("Enter the genome: ")
         genome = [float(x) for x in genome.split(',')]
         genome_number = genome_to_number(genome)
@@ -64,6 +66,24 @@ class ClusteringVisualizer(GAHelper):
                 raise ImportError("CLIP is not installed. Please install it.")
             # Load the ViT-B/32 variant of CLIP.
             model, clip_preprocess = clip.load("ViT-B/32", device=self.device)
+        elif image_encoder == "resnet50":
+            model = torchvision.models.resnet50(pretrained=True)
+            model.fc = nn.Identity()
+        elif image_encoder == "vit":
+            # Use torchvision's ViT-B/16
+            model = torchvision.models.vit_b_16(pretrained=True)
+            # Replace the classification head with an identity.
+            if hasattr(model, "heads"):
+                model.heads = nn.Identity()
+            else:
+                model.fc = nn.Identity()
+        elif image_encoder == "dino":
+            # Load DINOv2 from the transformers library.
+            processor = AutoImageProcessor.from_pretrained("facebook/dinov2-base-imagenet1k-1-layer")
+            model = Dinov2ForImageClassification.from_pretrained("facebook/dinov2-base-imagenet1k-1-layer")
+            model.eval()
+        else:
+            raise ValueError(f"Unsupported image encoder: {image_encoder}")
         
         embeddings = []
         true_labels = []
@@ -79,25 +99,96 @@ class ClusteringVisualizer(GAHelper):
         embeddings = np.concatenate(embeddings, axis=0)
         true_labels = np.concatenate(true_labels, axis=0)
 
-        umap_embedding = umap.UMAP(n_components=2, random_state=42).fit_transform(embeddings)
-        plt.figure(figsize=(10, 8))
-        classes = np.unique(true_labels)
+        if dimension_reduction == "umap":
+            umap_embedding = umap.UMAP(n_components=2, random_state=42).fit_transform(embeddings)
+            plt.figure(figsize=(10, 8))
+            classes = np.unique(true_labels)
 
-        for cls in classes:
-            idx = np.where(true_labels == cls)
-            plt.scatter(
-                umap_embedding[idx, 0],
-                umap_embedding[idx, 1],
-                s=5,
-                label=str(cls)
-            )
+            for cls in classes:
+                idx = np.where(true_labels == cls)
+                plt.scatter(
+                    umap_embedding[idx, 0],
+                    umap_embedding[idx, 1],
+                    s=5,
+                    label=str(cls)
+                )
 
-        plt.legend(title="Class Label", markerscale=3, fontsize=10)
-        plt.title('UMAP projection of embeddings')
-        plt.xlabel('UMAP-1')
-        plt.ylabel('UMAP-2')
-        plt.tight_layout()
-        plt.savefig("umap.png")  # Save the plot as an image file
+            plt.legend(title="Class Label")
+            plt.title('UMAP projection')
+            plt.xlabel('UMAP-1')
+            plt.ylabel('UMAP-2')
+            plt.tight_layout()
+            plt.savefig("umap_projection.png")  # Save the plot as an image file
+        elif dimension_reduction == "tsne":
+            if len(true_labels) > 50:
+                perplexity = 50
+            else:
+                perplexity = len(true_labels) - 1
+            tsne_embedding = TSNE(n_components=2, random_state=42, perplexity=perplexity).fit_transform(embeddings)
+            plt.figure(figsize=(10, 8))
+            classes = np.unique(true_labels)
+
+            for cls in classes:
+                idx = np.where(true_labels == cls)
+                plt.scatter(tsne_embedding[idx, 0], tsne_embedding[idx, 1], s=5, label=str(cls))
+            plt.legend(title="Class Label")
+            plt.title("t-SNE projection")
+            plt.xlabel("t-SNE-1")
+            plt.ylabel("t-SNE-2")
+            plt.tight_layout()
+            plt.savefig("tsne_projection.png")
+        elif dimension_reduction == "umap3d":
+            umap_3d = umap.UMAP(n_components=3, random_state=42).fit_transform(embeddings)
+
+            fig = plt.figure(figsize=(10, 8))
+            ax = fig.add_subplot(111, projection='3d')
+
+            classes = np.unique(true_labels)
+            for cls in classes:
+                idx = np.where(true_labels == cls)
+                ax.scatter(
+                    umap_3d[idx, 0],
+                    umap_3d[idx, 1],
+                    umap_3d[idx, 2],
+                    label=str(cls),
+                    s=5
+                )
+
+            ax.set_title('3D UMAP Projection')
+            ax.set_xlabel('UMAP-1')
+            ax.set_ylabel('UMAP-2')
+            ax.set_zlabel('UMAP-3')
+            ax.legend(title="Class Label")
+            plt.tight_layout()
+            plt.savefig("umap3d_projection.png")
+        elif dimension_reduction == "tsne3d":
+            if len(true_labels) > 50:
+                perplexity = 50
+            else:
+                perplexity = len(true_labels) - 1 
+            tsne_3d = TSNE(n_components=3, random_state=42, perplexity=perplexity).fit_transform(embeddings)
+
+            fig = plt.figure(figsize=(10, 8))
+            ax = fig.add_subplot(111, projection='3d')
+
+            for cls in np.unique(true_labels):
+                idx = np.where(true_labels == cls)
+                ax.scatter(
+                    tsne_3d[idx, 0],
+                    tsne_3d[idx, 1],
+                    tsne_3d[idx, 2],
+                    label=str(cls),
+                    s=5
+                )
+
+            ax.set_title('3D t-SNE Projection')
+            ax.set_xlabel('t-SNE-1')
+            ax.set_ylabel('t-SNE-2')
+            ax.set_zlabel('t-SNE-3')
+            ax.legend(title="Class Label")
+            plt.tight_layout()
+            plt.savefig("tsne3d_projection.png")
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Run genetic algorithm for augmentation tree optimization')
@@ -119,6 +210,8 @@ def parse_args():
     parser.add_argument('--seed', type=int, required=True, help='Random seed for reproducibility')
     parser.add_argument('--one_shot_training_loss', type=bool, default=False, help='Whether to use one shot training loss')
     parser.add_argument('--one_shot_clustering', type=bool, default=False, help='Whether to use one shot clustering')
+    parser.add_argument('--image_encoder', type=str, default='vit224', help='Which image encoder to use')
+    parser.add_argument('--dimension_reduction', type=str, default='umap', help='Which dimension reduction method to use')
     return parser.parse_args()
 
 if __name__ == '__main__':
@@ -143,4 +236,4 @@ if __name__ == '__main__':
     )
 
     print('hi')	
-    clustering_visualizer.visualize()
+    clustering_visualizer.visualize(args.image_encoder, args.dimension_reduction)
