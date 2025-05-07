@@ -23,7 +23,7 @@ import network_model
 import dataset_manager
 from network_model import ModelResults, ModelType
 from dataset_manager import FolderDataset
-from augmentation_tree import BinaryAugmentationNode, AugmentationType, TreeAugmentedDataset, TreeAugmentedDatasetFromDataset, ProbabilityLimits
+from augmentation_tree import TreeAugmentedDatasetFromDataset
 
 from torch.utils.data import DataLoader
 from torch import nn
@@ -33,7 +33,7 @@ from sklearn.metrics import silhouette_score
 from genetic_algorithm import genome_to_number, genome_to_tree, GAHelper
 
 import timm
-from transformers import AutoImageProcessor, Dinov2ForImageClassification
+from transformers import AutoImageProcessor, Dinov2ForImageClassification, Dinov2Model
 
 try:
     import clip
@@ -41,9 +41,7 @@ except ImportError:
     clip = None
 
 class ClusteringVisualizer(GAHelper):
-      def visualize(self, image_encoder='vit224', dimension_reduction='umap'):
-        genome = input("Enter the genome: ")
-        genome = [float(x) for x in genome.split(',')]
+      def visualize(self, genome, image_encoder='vit224', dimension_reduction='umap'):
         genome_number = genome_to_number(genome)
         if genome_number in self.fitness_cache:
             logging.info('fitness function call using cached fitness')
@@ -77,10 +75,10 @@ class ClusteringVisualizer(GAHelper):
                 model.heads = nn.Identity()
             else:
                 model.fc = nn.Identity()
-        elif image_encoder == "dino":
+        elif image_encoder == "dinov2":
             # Load DINOv2 from the transformers library.
-            processor = AutoImageProcessor.from_pretrained("facebook/dinov2-base-imagenet1k-1-layer")
-            model = Dinov2ForImageClassification.from_pretrained("facebook/dinov2-base-imagenet1k-1-layer")
+            processor = AutoImageProcessor.from_pretrained("facebook/dinov2-base")
+            model = Dinov2Model.from_pretrained("facebook/dinov2-base")
             model.eval()
         else:
             raise ValueError(f"Unsupported image encoder: {image_encoder}")
@@ -92,7 +90,13 @@ class ClusteringVisualizer(GAHelper):
             for (images, labels) in data_loader:
                 images = images.to(self.device)
                 labels = labels.to(self.device)
-                features = model(images)
+                if image_encoder == "clip":
+                    features = model.encode_image(images)
+                elif image_encoder == "dinov2":
+                    outputs = model(images)
+                    features = outputs.last_hidden_state[:, 0]
+                else:
+                    features = model(images)
                 embeddings.append(features.cpu().numpy())
                 true_labels.append(labels.cpu().numpy())
                 
@@ -102,7 +106,7 @@ class ClusteringVisualizer(GAHelper):
         if dimension_reduction == "umap":
             umap_embedding = umap.UMAP(n_components=2, random_state=42).fit_transform(embeddings)
             plt.figure(figsize=(10, 8))
-            classes = np.unique(true_labels)
+            classes = sorted(np.unique(true_labels))
 
             for cls in classes:
                 idx = np.where(true_labels == cls)
@@ -110,84 +114,99 @@ class ClusteringVisualizer(GAHelper):
                     umap_embedding[idx, 0],
                     umap_embedding[idx, 1],
                     s=5,
-                    label=str(cls)
+                    label=tree_augmented_train_dataset.labels_to_class[cls],
                 )
 
             plt.legend(title="Class Label")
-            plt.title('UMAP projection')
+            plt.title(f'UMAP projection, {image_encoder}')
             plt.xlabel('UMAP-1')
             plt.ylabel('UMAP-2')
             plt.tight_layout()
-            plt.savefig("umap_projection.png")  # Save the plot as an image file
+            plt.savefig(f"clustering_visualizations/{self.dataset_name}_{image_encoder}_umap_projection.png")  # Save the plot as an image file
         elif dimension_reduction == "tsne":
             if len(true_labels) > 50:
                 perplexity = 50
             else:
                 perplexity = len(true_labels) - 1
+            
+            pca = PCA(n_components=50, random_state=42)
+            embeddings = pca.fit_transform(embeddings)
+
             tsne_embedding = TSNE(n_components=2, random_state=42, perplexity=perplexity).fit_transform(embeddings)
             plt.figure(figsize=(10, 8))
-            classes = np.unique(true_labels)
+            classes = sorted(np.unique(true_labels))
 
             for cls in classes:
                 idx = np.where(true_labels == cls)
-                plt.scatter(tsne_embedding[idx, 0], tsne_embedding[idx, 1], s=5, label=str(cls))
+                plt.scatter(
+                    tsne_embedding[idx, 0],
+                    tsne_embedding[idx, 1],
+                    s=5,
+                    label=tree_augmented_train_dataset.labels_to_class[cls]
+                )
+
             plt.legend(title="Class Label")
-            plt.title("t-SNE projection")
+            plt.title(f"t-SNE projection, {image_encoder}")
             plt.xlabel("t-SNE-1")
             plt.ylabel("t-SNE-2")
             plt.tight_layout()
-            plt.savefig("tsne_projection.png")
+            plt.savefig(f"clustering_visualizations/{self.dataset_name}_{image_encoder}_tsne_projection.png")
         elif dimension_reduction == "umap3d":
             umap_3d = umap.UMAP(n_components=3, random_state=42).fit_transform(embeddings)
 
             fig = plt.figure(figsize=(10, 8))
             ax = fig.add_subplot(111, projection='3d')
 
-            classes = np.unique(true_labels)
+            classes = sorted(np.unique(true_labels))
             for cls in classes:
                 idx = np.where(true_labels == cls)
                 ax.scatter(
                     umap_3d[idx, 0],
                     umap_3d[idx, 1],
                     umap_3d[idx, 2],
-                    label=str(cls),
+                    label=tree_augmented_train_dataset.labels_to_class[cls],
                     s=5
                 )
 
-            ax.set_title('3D UMAP Projection')
+            ax.set_title(f'3D UMAP Projection, {image_encoder}')
             ax.set_xlabel('UMAP-1')
             ax.set_ylabel('UMAP-2')
             ax.set_zlabel('UMAP-3')
             ax.legend(title="Class Label")
             plt.tight_layout()
-            plt.savefig("umap3d_projection.png")
+            plt.savefig(f"clustering_visualizations/{self.dataset_name}_{image_encoder}_umap3d_projection.png")
         elif dimension_reduction == "tsne3d":
             if len(true_labels) > 50:
                 perplexity = 50
             else:
                 perplexity = len(true_labels) - 1 
+            
+            pca = PCA(n_components=50, random_state=42)
+            embeddings = pca.fit_transform(embeddings)
+
             tsne_3d = TSNE(n_components=3, random_state=42, perplexity=perplexity).fit_transform(embeddings)
 
             fig = plt.figure(figsize=(10, 8))
             ax = fig.add_subplot(111, projection='3d')
 
-            for cls in np.unique(true_labels):
+            classes = sorted(np.unique(true_labels))
+            for cls in classes:
                 idx = np.where(true_labels == cls)
                 ax.scatter(
                     tsne_3d[idx, 0],
                     tsne_3d[idx, 1],
                     tsne_3d[idx, 2],
-                    label=str(cls),
+                    label=tree_augmented_train_dataset.labels_to_class[cls],
                     s=5
                 )
 
-            ax.set_title('3D t-SNE Projection')
+            ax.set_title(f"3D t-SNE Projection, {image_encoder}")
             ax.set_xlabel('t-SNE-1')
             ax.set_ylabel('t-SNE-2')
             ax.set_zlabel('t-SNE-3')
             ax.legend(title="Class Label")
             plt.tight_layout()
-            plt.savefig("tsne3d_projection.png")
+            plt.savefig(f"clustering_visualizations/{self.dataset_name}_{image_encoder}_tsne3d_projection.png")
 
 
 def parse_args():
@@ -212,6 +231,7 @@ def parse_args():
     parser.add_argument('--one_shot_clustering', type=bool, default=False, help='Whether to use one shot clustering')
     parser.add_argument('--image_encoder', type=str, default='vit224', help='Which image encoder to use')
     parser.add_argument('--dimension_reduction', type=str, default='umap', help='Which dimension reduction method to use')
+    parser.add_argument('--genome', type=str, required=True, help='Augmentation genome to visualize')
     return parser.parse_args()
 
 if __name__ == '__main__':
@@ -221,6 +241,8 @@ if __name__ == '__main__':
     # might also need to seed numpy here too
     torch.manual_seed(args.seed)
     random.seed(args.seed)
+
+    genome = [float(x) for x in args.genome.split(',')]
 
     clustering_visualizer = ClusteringVisualizer(
         dataset_name=args.dataset,
@@ -236,4 +258,4 @@ if __name__ == '__main__':
     )
 
     print('hi')	
-    clustering_visualizer.visualize(args.image_encoder, args.dimension_reduction)
+    clustering_visualizer.visualize(genome, args.image_encoder, args.dimension_reduction)
