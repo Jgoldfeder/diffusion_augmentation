@@ -47,7 +47,8 @@ val_size = len(full_dataset) - train_size
 train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
 
 print("Processing training data with augmentations...")
-for i, (image, label) in tqdm(enumerate(train_dataset), total=len(train_dataset)):
+skip_to = 296
+for i, (image, label) in tqdm(enumerate(train_dataset[skip_to:], start=skip_to), total=len(train_dataset) - skip_to):
     save_augmented_images(image, label, i, TRAIN_DIR)
 
 # Process validation data without augmentation (just original images)
