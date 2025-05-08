@@ -257,5 +257,4 @@ if __name__ == '__main__':
         device='cpu'
     )
 
-    print('hi')	
     clustering_visualizer.visualize(genome, args.image_encoder, args.dimension_reduction)

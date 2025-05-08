@@ -18,9 +18,10 @@ from augmentation_tree import BinaryAugmentationNode, AugmentationType, TreeAugm
 from torch.utils.data import DataLoader
 from torch import nn
 import torchvision
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, davies_bouldin_score
 
 import timm
+from torchvision import transforms
 
 try: import clip
 except ImportError:
@@ -188,7 +189,7 @@ class GAHelper:
 			if clip is None:
 				raise ImportError("CLIP is not installed. Please install it.")
 			# Load the ViT-B/32 variant of CLIP.
-			model, clip_preprocess = clip.load("ViT-B/32", device=device)
+			model, clip_preprocess = clip.load("ViT-B/32", device=self.device)
 			transform = clip_preprocess
 		elif clustering_model_name == "resnet50":
 			model = torchvision.models.resnet50(pretrained=True)
@@ -229,8 +230,10 @@ class GAHelper:
 		sil_true = silhouette_score(embeddings, clusters_true)
 		cluster_radii_true = compute_cluster_radii(embeddings, clusters_true)
 		avg_radius_true = np.mean(list(cluster_radii_true.values()))
+		db_true = davies_bouldin_score(embeddings, clusters_true)
 
 		fitness_score = sil_true - (1.0/avg_radius_true) + 1
+		#db_fitness_score = (1/db_true) - (1.0/avg_radius_true) + 1
 
 		logging.info(f'Fitness Score for {str(genome)}: {fitness_score}')
 		self.fitness_cache[genome_number] = fitness_score
