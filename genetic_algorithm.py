@@ -19,6 +19,7 @@ from torch.utils.data import DataLoader
 from torch import nn
 import torchvision
 from sklearn.metrics import silhouette_score, davies_bouldin_score
+from davies_bouldin_diverse import db_diverse_score
 
 import timm
 from torchvision import transforms
@@ -234,6 +235,7 @@ class GAHelper:
 
 		fitness_score = sil_true - (1.0/avg_radius_true) + 1
 		#db_fitness_score = (1/db_true) - (1.0/avg_radius_true) + 1
+		#diverse_db_fitness_score = db_diverse_score(embeddings, clusters_true)
 
 		logging.info(f'Fitness Score for {str(genome)}: {fitness_score}')
 		self.fitness_cache[genome_number] = fitness_score
