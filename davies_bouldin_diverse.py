@@ -80,15 +80,8 @@ def db_diverse_score(X, labels, alpha=10.0):
     valid_centroid_distances = centroid_distances[mask]
     valid_intra_dists = combined_intra_dists[mask]
 
-    # Normalize both terms to [0, 1]
-    M_min, M_max = valid_centroid_distances.min(), valid_centroid_distances.max()
-    S_min, S_max = valid_intra_dists.min(), valid_intra_dists.max()
-
-    M_norm = (valid_centroid_distances - M_min) / (M_max - M_min + 1e-8)
-    S_norm = (valid_intra_dists - S_min) / (S_max - S_min + 1e-8)
-
     # Apply log scaling
-    raw_scores = M_norm * S_norm
+    raw_scores = valid_centroid_distances * valid_intra_dists
     log_scores = np.log1p(alpha * raw_scores)
 
     return np.mean(log_scores)
