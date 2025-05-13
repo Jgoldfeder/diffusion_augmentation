@@ -237,7 +237,7 @@ class GAHelper:
 
 		# fitness_score = sil_true - (1.0/avg_radius_true) + 1
 
-		fitness_score = db_true
+		fitness_score = 1/db_true
 
 		#db_fitness_score = (1/db_true) - (1.0/avg_radius_true) + 1
 		#diverse_db_fitness_score = db_diverse_score(embeddings, clusters_true)
