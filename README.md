@@ -72,3 +72,11 @@ $ nohup python clustering_visualization.py --dataset caltech256 --num_ways 5 --n
 ```
 
 Note: The visualization script will save the plots in the `clustering_visualizations` directory with filenames following the pattern: `{dataset_name}_{image_encoder}_{dimension_reduction}_projection.png`
+
+### How to Replicate Experiments
+You can view the spreadsheet of all results and which subsets they were ran on can be found [here](https://docs.google.com/spreadsheets/d/17kz35sNkv3Tmv37GMa536A67m0ksgJCVSKknbhRWmfo/edit?usp=sharing). 
+
+For any experiment:
+- We create the subset mentioned in the spreadsheet by modifying the `scripts/create_fewshot_datasets.sh` script.
+- We run a genetic algorithm with the appropriate parameters which logs the best tree and fitness to wandb. Note all experiments were done using an RTX 4090
+- We execute `test_tree_accuracy_new.py` with the corresponding genome and experiment params (5 way, 1 shot, dataset) which will log final results to wandb. We take the highest validation accuracy and average across all trials.s
