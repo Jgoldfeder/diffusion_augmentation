@@ -195,7 +195,9 @@ class GAHelper:
 		elif clustering_model_name == "resnet50":
 			model = torchvision.models.resnet50(pretrained=True)
 			model.fc = nn.Identity()
-		
+		elif clustering_model_name == "vgg16":
+			model = torchvision.models.vgg16(pretrained=True)
+			model.classifier = nn.Identity()
 
 		embeddings = []
 		true_labels = []
@@ -233,7 +235,10 @@ class GAHelper:
 		avg_radius_true = np.mean(list(cluster_radii_true.values()))
 		db_true = davies_bouldin_score(embeddings, clusters_true)
 
-		fitness_score = sil_true - (1.0/avg_radius_true) + 1
+		# fitness_score = sil_true - (1.0/avg_radius_true) + 1
+
+		fitness_score = 1/db_true
+
 		#db_fitness_score = (1/db_true) - (1.0/avg_radius_true) + 1
 		#diverse_db_fitness_score = db_diverse_score(embeddings, clusters_true)
 
@@ -322,8 +327,8 @@ def parse_args():
     parser.add_argument('--one_shot_training_loss', type=bool, default=False, help='Whether to use one shot training loss')
     parser.add_argument('--one_shot_clustering', type=bool, default=False, help='Whether to use one shot clustering')
     parser.add_argument('--clustering_model_name', type=str, default='vit224', 
-                       choices=['vit224', 'vit', 'clip', 'resnet50'],
-                       help='Which model to use for clustering. Options: vit224, vit, clip, resnet50')
+                       choices=['vit224', 'vit', 'clip', 'resnet50', 'vgg16'],
+                       help='Which model to use for clustering. Options: vit224, vit, resnet50, vgg16')
     return parser.parse_args()
 
 if __name__ == '__main__':
