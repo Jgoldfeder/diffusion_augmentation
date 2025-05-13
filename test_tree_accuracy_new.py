@@ -23,8 +23,8 @@ def parse_args():
 					  help='Model type to use (resnet50: standard CNN, vit224: Vision Transformer, mobilenetv2: lightweight CNN, vits: small Vision Transformer)')
 	parser.add_argument('--subset', type=int, default=44, help='Subset of classes to use')
 	parser.add_argument('--num_augmentations', type=int, default=2, help='Number of augmentations per image')
-	parser.add_argument('--num_runs', type=int, default=20, help='Number of runs to perform')
-	parser.add_argument('--num_epochs', type=int, default=200, help='Number of training epochs')
+	parser.add_argument('--num_runs', type=int, default=6, help='Number of runs to perform')
+	parser.add_argument('--num_epochs', type=int, default=100, help='Number of training epochs')
 	parser.add_argument('--seed_start', type=int, default=41, help='Starting seed for random number generation')
 	parser.add_argument('--genome', type=str, required=True, 
 					  help='Augmentation tree genome as 6 comma-separated numbers (e.g., "3,0.3,6,0.4,6,0.6")')
