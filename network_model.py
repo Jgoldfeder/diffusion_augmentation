@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torchvision.models import resnet50, ResNet50_Weights
 import os 
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 class ModelType(Enum):
 	RESNET50 = 'resnet50'

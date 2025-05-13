@@ -1,6 +1,7 @@
 import random
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+
 
 import wandb
 import pygad
@@ -8,13 +9,15 @@ import logging
 import argparse
 import torch
 import numpy as np
+print("Devices: ", torch.cuda.device_count())
+
 
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
 # Dimension reduction and clustering libraries
 import umap
-import hdbscan
+# import hdbscan
 import sklearn.cluster as cluster
 from sklearn.metrics import adjusted_rand_score, adjusted_mutual_info_score
 from sklearn.manifold import TSNE
@@ -33,7 +36,7 @@ from sklearn.metrics import silhouette_score
 from genetic_algorithm import genome_to_number, genome_to_tree, GAHelper
 
 import timm
-from transformers import AutoImageProcessor, Dinov2ForImageClassification, Dinov2Model
+from transformers import AutoImageProcessor
 
 try:
     import clip
