@@ -42,6 +42,10 @@ source ~/.bashrc
 # next we download the datasets
 mkdir torch
 cd torch
+wget https://data.caltech.edu/records/nyy15-4j048/files/256_ObjectCategories.tar?download=1
+tar -xvf '256_ObjectCategories.tar?download=1' 
+mkdir caltech256
+mv 256_ObjectCategories caltech256
 wget https://www.kaggle.com/api/v1/datasets/download/rickyyyyyyy/torchvision-stanford-cars
 unzip torchvision-stanford-cars
 wget http://vision.stanford.edu/aditya86/ImageNetDogs/images.tar
