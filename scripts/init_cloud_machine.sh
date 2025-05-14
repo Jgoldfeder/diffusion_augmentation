@@ -55,6 +55,8 @@ mv Images stanford_dogs/Images
 wget https://www.kaggle.com/api/v1/datasets/download/waseemalastal/the-oxford-flowers-102-dataset
 unzip the-oxford-flowers-102-dataset
 mv flower_data flowers102
+curl -L -o ./food-101.zip  https://www.kaggle.com/api/v1/datasets/download/dansbecker/food-101
+unzip ./food-101.zip -d ./food-101
 cd ..
 
 chmod +x ./scripts/create_fewshot_datasets.sh
