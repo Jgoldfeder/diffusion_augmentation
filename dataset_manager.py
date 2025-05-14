@@ -14,7 +14,10 @@ from torchvision.transforms import Compose, ToTensor, Normalize, Resize, RandomC
 # we need to get the dataset, as well as the class name which corresponds to ea. label
 def get_dataset_from_torch(dataset_name: str, root='./torch') -> tuple[Dataset, dict[int, str]]:
 	if dataset_name == 'caltech256':
-		dataset = Caltech256(root=root, download=True)
+		try:
+			dataset = Caltech256(root=root, download=False)
+		except FileNotFoundError:
+			raise Exception('Download dataset using commands in init_cloud_machine.sh in scripts folder.')
 		label_to_class = dict()
 		for category in dataset.categories:
 			parts = category.split('.')
