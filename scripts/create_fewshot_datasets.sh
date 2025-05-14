@@ -9,7 +9,7 @@ python dataset_manager.py --dataset caltech256 --subset 42 --num_ways 5 --num_sh
 python dataset_manager.py --dataset caltech256 --subset 42 --num_ways 10 --num_shots 2
 python dataset_manager.py --dataset caltech256 --subset 42 --num_ways 10 --num_shots 2
 
-
+python dataset_manager.py --dataset flowers102 --subset 50 --num_ways 5 --num_shots 1
 python dataset_manager.py --dataset flowers102 --subset 50 --num_ways 5 --num_shots 2
 python dataset_manager.py --dataset flowers102 --subset 50 --num_ways 5 --num_shots 5
 python dataset_manager.py --dataset flowers102 --subset 50 --num_ways 10 --num_shots 2
