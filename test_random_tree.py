@@ -60,7 +60,7 @@ if __name__ == '__main__':
     train_path = dataset_manager.get_dataset_path(args.dataset, args.num_ways, args.num_shots, args.subset, train=True)
     test_path = dataset_manager.get_dataset_path(args.dataset, args.num_ways, args.num_shots, args.subset, train=False)
 
-    for i in range(args.num_runs):
+    for i in range(0, args.num_runs, 2):  # Increment by 2
         seed = args.seed_start + i
         wandb.init(
             project="random-tree-tests",
@@ -71,16 +71,13 @@ if __name__ == '__main__':
                 "num_ways": args.num_ways,
                 "model_type": args.model_type,
                 "seed": seed,
-                "without_classical": i % 2,
+                "with_classical": True,  # Always true now
                 "genome": tree_genome
             }
         )
         random.seed(seed)
 
-        if i % 2:
-            train_dataset = TreeAugmentedDataset(train_path, node, args.num_augmentations)
-        else:
-            train_dataset = TreeAugmentedDatasetWithClassical(train_path, node, args.num_augmentations)
+        train_dataset = TreeAugmentedDatasetWithClassical(train_path, node, args.num_augmentations)
         test_dataset = FolderDataset(test_path)
 
         model = network_model.get_model_for_finetune(ModelType(args.model_type), args.num_ways)
@@ -89,7 +86,7 @@ if __name__ == '__main__':
         print(model_results)
 
         with open('temp.txt', 'a') as f:
-            f.write(f"Run {i+1} - {'without' if i % 2 else 'with'} classical augmentation\n")
+            f.write(f"Run {i+1} - with classical augmentation\n")
             f.write(f"Model: {args.model_type}, Dataset: {args.dataset}, Ways: {args.num_ways}, Shots: {args.num_shots}\n")
             f.write(f"Genome: {tree_genome}\n")
             f.write(str(model_results.accs[-6:]) + '\n')
