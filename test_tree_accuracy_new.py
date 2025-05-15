@@ -3,10 +3,20 @@ import argparse
 from dataset_manager import FolderDataset
 from augmentation_tree import TreeAugmentedDataset, BinaryAugmentationNode, AugmentationType, ProbabilityLimits
 from network_model import ModelType
+import os
+import logging
+import dataset_manager
+import network_model
+from genetic_algorithm import genome_to_tree
+import torch
+import random
+import time
+from transformers import AutoImageProcessor
+from torchvision import transforms
 
 class TreeAugmentedDatasetWithClassical(TreeAugmentedDataset):
-	def __init__(self, dataset_path: str, augmentation_tree: BinaryAugmentationNode, num_augmentations_per_image: int):
-		super().__init__(dataset_path, augmentation_tree, num_augmentations_per_image)
+	def __init__(self, dataset_path: str, augmentation_tree: BinaryAugmentationNode, num_augmentations_per_image: int, image_processor=None):
+		super().__init__(dataset_path, augmentation_tree, num_augmentations_per_image, image_processor)
 
 	def __getitem__(self, index):
 		img = self.images[index]
@@ -24,21 +34,13 @@ def parse_args():
 	parser.add_argument('--subset', type=int, default=44, help='Subset of classes to use')
 	parser.add_argument('--num_augmentations', type=int, default=2, help='Number of augmentations per image')
 	parser.add_argument('--num_runs', type=int, default=6, help='Number of runs to perform')
-	parser.add_argument('--num_epochs', type=int, default=100, help='Number of training epochs')
+	parser.add_argument('--num_epochs', type=int, default=200, help='Number of training epochs')
 	parser.add_argument('--seed_start', type=int, default=41, help='Starting seed for random number generation')
 	parser.add_argument('--genome', type=str, required=True, 
 					  help='Augmentation tree genome as 6 comma-separated numbers (e.g., "3,0.3,6,0.4,6,0.6")')
 	return parser.parse_args()
 
 if __name__ == '__main__':
-	import logging
-	import dataset_manager
-	import network_model
-	from genetic_algorithm import genome_to_tree
-	import torch
-	import random
-	import time
-
 	args = parse_args()
 	logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 
@@ -58,6 +60,11 @@ if __name__ == '__main__':
 	train_path = dataset_manager.get_dataset_path(args.dataset, args.num_ways, args.num_shots, args.subset, train=True)
 	test_path = dataset_manager.get_dataset_path(args.dataset, args.num_ways, args.num_shots, args.subset, train=False)
 
+	# Initialize image processor for ViT-Small if needed
+	image_processor = None
+	if args.model_type == 'vits':
+		image_processor = AutoImageProcessor.from_pretrained("WinKawaks/vit-small-patch16-224")
+
 	for i in range(args.num_runs):
 		seed = args.seed_start + i
 		wandb.init(
@@ -75,10 +82,10 @@ if __name__ == '__main__':
 		random.seed(seed)
 
 		if i % 2:
-			train_dataset = TreeAugmentedDataset(train_path, node, args.num_augmentations)
+			train_dataset = TreeAugmentedDataset(train_path, node, args.num_augmentations, image_processor=image_processor)
 		else:
-			train_dataset = TreeAugmentedDatasetWithClassical(train_path, node, args.num_augmentations)
-		test_dataset = FolderDataset(test_path)
+			train_dataset = TreeAugmentedDatasetWithClassical(train_path, node, args.num_augmentations, image_processor=image_processor)
+		test_dataset = FolderDataset(test_path, image_processor=image_processor)
 
 		model = network_model.get_model_for_finetune(ModelType(args.model_type), args.num_ways)
 		model_results = network_model.train_and_test(model, train_dataset, test_dataset, args.num_epochs, 'cuda')
@@ -100,7 +107,8 @@ if __name__ == '__main__':
 			})
 		wandb.log({
 			'tree': str(node),
-			'model_type': args.model_type
+			'model_type': args.model_type,
+			'best_test_accuracy': max(results.accs)
 		})
 		wandb.finish()
 

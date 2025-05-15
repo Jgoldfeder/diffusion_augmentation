@@ -1,109 +1,117 @@
-import random
-import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-
-import logging
+import wandb
 import argparse
-import torch
-from torchvision import transforms
-import numpy as np
-from PIL import Image
-import network_model
-import dataset_manager
-from network_model import ModelResults, ModelType
 from dataset_manager import FolderDataset
-from augmentation_tree import BinaryAugmentationNode, AugmentationType, TreeAugmentedDataset, ProbabilityLimits
+from augmentation_tree import TreeAugmentedDataset, BinaryAugmentationNode, AugmentationType, ProbabilityLimits
+from network_model import ModelType
+import os
+import logging
+import dataset_manager
+import network_model
+from genetic_algorithm import genome_to_tree
+import torch
+import random
 import time
+from transformers import AutoImageProcessor
+from torchvision import transforms
 
-def tree_to_genome(tree):
+class TreeAugmentedDatasetWithClassical(TreeAugmentedDataset):
+    def __init__(self, dataset_path: str, augmentation_tree: BinaryAugmentationNode, num_augmentations_per_image: int, image_processor=None):
+        super().__init__(dataset_path, augmentation_tree, num_augmentations_per_image, image_processor)
+
+    def __getitem__(self, index):
+        img = self.images[index]
+        label = self.labels[index]
+        return dataset_manager.get_base_transform()(dataset_manager.get_classical_transform()(img)), label
+
+def generate_random_genome():
     genome = []
-    q = []
-    q.append(tree)
-    while len(q) > 0:
-        node = q.pop(0)
-        genome.append(node.augmentation_type.value)
-        genome.append(round(node.left_probability, 2))
-        if node.left:
-            q.append(node.left)
-        if node.right:
-            q.append(node.right)
+    for i in range(3):  # We need 3 pairs of numbers
+        # First number (0-7)
+        genome.append(random.randint(0, 7))
+        # Second number (0.3-0.7)
+        genome.append(round(random.uniform(0.3, 0.7), 2))
     return genome
 
-# Define the mean and std used in normalization
-mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)  # Reshape for broadcasting
-std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
+def parse_args():
+    parser = argparse.ArgumentParser(description='Test random tree accuracy with different models and datasets')
+    parser.add_argument('--dataset', type=str, required=True, help='Dataset to use (e.g., oxford-iiit-pet, caltech256)')
+    parser.add_argument('--num_ways', type=int, required=True, help='Number of ways (classes)')
+    parser.add_argument('--num_shots', type=int, required=True, help='Number of shots (examples per class)')
+    parser.add_argument('--model_type', type=str, required=True, 
+                      choices=['resnet50', 'vit224', 'mobilenetv2', 'vits'], 
+                      help='Model type to use (resnet50: standard CNN, vit224: Vision Transformer, mobilenetv2: lightweight CNN, vits: small Vision Transformer)')
+    parser.add_argument('--subset', type=int, default=44, help='Subset of classes to use')
+    parser.add_argument('--num_augmentations', type=int, default=2, help='Number of augmentations per image')
+    parser.add_argument('--num_runs', type=int, default=6, help='Number of runs to perform')
+    parser.add_argument('--num_epochs', type=int, default=200, help='Number of training epochs')
+    parser.add_argument('--seed_start', type=int, default=41, help='Starting seed for random number generation')
+    return parser.parse_args()
 
-def denormalize(tensor):
-    return tensor * std + mean
+if __name__ == '__main__':
+    args = parse_args()
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 
-def test_tree(tree, subset):
-    genome = tree_to_genome(tree)
-    print(genome)
-    dataset_name = "flowers102"
-    num_ways = 5
-    num_shots = 2
-    train_path = dataset_manager.get_dataset_path(dataset_name, num_ways, num_shots, subset, train=True)
-    test_path = dataset_manager.get_dataset_path(dataset_name, num_ways, num_shots, subset, train=False)
+    # Generate random genome
+    tree_genome = generate_random_genome()
+    print(f"Generated random genome: {tree_genome}")
 
-    dataset = TreeAugmentedDataset(train_path, tree, num_augmentations_per_image = 5)
-    #save all the images in the dataset to a folder
-    os.makedirs("augmented_images", exist_ok=True)
-    os.makedirs(f"augmented_images/{str(genome)}", exist_ok=True)
-    for i, (img, label) in enumerate(dataset):
-        #convert the tensor to a PIL Image
-        img = denormalize(img)
-        img = torch.clamp(img, 0, 1)  # Ensure values are in [0,1] range
-        to_pil = transforms.ToPILImage()
-        img = to_pil(img)
-        # img = (img * 255).byte()  # Scale to [0,255] and convert to bytes
-        # img = img.permute(1, 2, 0)  # Change from CxHxW to HxWxC format
-        # img = Image.fromarray(img.cpu().numpy())
-        img.save(f"augmented_images/{str(genome)}/{i}.jpg")
+    node = genome_to_tree(tree_genome)
+    print(f"Using augmentation tree: {str(node)}")
 
-    train_dataset = TreeAugmentedDataset(train_path, tree, num_augmentations_per_image = 5)
-    test_dataset = FolderDataset(test_path)
-    model = network_model.get_model_for_finetune(ModelType.RESNET50, num_ways)
-    model_results: ModelResults = network_model.train_and_test(model, train_dataset, test_dataset, num_epochs = 200, device = "cuda")
-    print(f"Accuracy for tree {str(genome)}, subset {subset}: {model_results.accs[-1]}")
-    return model_results.accs[-1]
+    train_path = dataset_manager.get_dataset_path(args.dataset, args.num_ways, args.num_shots, args.subset, train=True)
+    test_path = dataset_manager.get_dataset_path(args.dataset, args.num_ways, args.num_shots, args.subset, train=False)
 
+    # Initialize image processor for ViT-Small if needed
+    image_processor = None
+    if args.model_type == 'vits':
+        image_processor = AutoImageProcessor.from_pretrained("WinKawaks/vit-small-patch16-224")
 
-def main():
+    for i in range(args.num_runs):
+        seed = args.seed_start + i
+        wandb.init(
+            project="random-tree-tests",
+            config={
+                "subset": args.subset,
+                "num_shots": args.num_shots,
+                "dataset": args.dataset,
+                "num_ways": args.num_ways,
+                "model_type": args.model_type,
+                "seed": seed,
+                "without_classical": i % 2,
+                "genome": tree_genome
+            }
+        )
+        random.seed(seed)
 
-    random.seed(42)
-    
-    tree = BinaryAugmentationNode()
-    tree.augmentation_type = AugmentationType.COLOR
-    tree.left_probability = 0.5
-    tree.left = BinaryAugmentationNode()
-    tree.left.augmentation_type = AugmentationType.CLASSICAL
-    tree.right = BinaryAugmentationNode()
-    tree.right.augmentation_type = AugmentationType.CLASSICAL
-    test_tree(tree, 47)
-    test_tree(tree, 48)
-    test_tree(tree, 50)
+        if i % 2:
+            train_dataset = TreeAugmentedDataset(train_path, node, args.num_augmentations, image_processor=image_processor)
+        else:
+            train_dataset = TreeAugmentedDatasetWithClassical(train_path, node, args.num_augmentations, image_processor=image_processor)
+        test_dataset = FolderDataset(test_path, image_processor=image_processor)
 
-    tree = BinaryAugmentationNode()
-    tree.augmentation_type = AugmentationType.COLOR
-    tree.left_probability = 0.5
-    tree.left = BinaryAugmentationNode()
-    tree.left.augmentation_type = AugmentationType.COLOR
-    tree.left.left_probability = 0.5
-    tree.left.left = BinaryAugmentationNode()
-    tree.left.left.augmentation_type = AugmentationType.CLASSICAL
-    tree.left.right = BinaryAugmentationNode()
-    tree.left.right.augmentation_type = AugmentationType.CLASSICAL
-    tree.right = BinaryAugmentationNode()
-    tree.right.augmentation_type = AugmentationType.COLOR
-    tree.right.left_probability = 0.5
-    tree.right.left = BinaryAugmentationNode()
-    tree.right.left.augmentation_type = AugmentationType.CLASSICAL
-    tree.right.right = BinaryAugmentationNode()
-    tree.right.right.augmentation_type = AugmentationType.CLASSICAL
-    test_tree(tree, 47)
-    test_tree(tree, 48)
-    test_tree(tree, 50)
+        model = network_model.get_model_for_finetune(ModelType(args.model_type), args.num_ways)
+        model_results = network_model.train_and_test(model, train_dataset, test_dataset, args.num_epochs, 'cuda')
+        print(f"Run {i+1}/{args.num_runs} Results:")
+        print(model_results)
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    main()
+        with open('temp.txt', 'a') as f:
+            f.write(f"Run {i+1} - {'without' if i % 2 else 'with'} classical augmentation\n")
+            f.write(f"Model: {args.model_type}, Dataset: {args.dataset}, Ways: {args.num_ways}, Shots: {args.num_shots}\n")
+            f.write(f"Genome: {tree_genome}\n")
+            f.write(str(model_results.accs[-6:]) + '\n')
+
+        results = model_results
+        for (train_loss, train_acc, test_loss, test_acc) in zip(results.train_losses, results.train_accs, results.losses, results.accs):
+            wandb.log({
+                "train_loss": train_loss,
+                "train_accuracy": train_acc,
+                "test_loss": test_loss,
+                "test_accuracy": test_acc
+            })
+        wandb.log({
+            'tree': str(node),
+            'model_type': args.model_type,
+            'genome': tree_genome,
+            'best_test_accuracy': max(results.accs)
+        })
+        wandb.finish()

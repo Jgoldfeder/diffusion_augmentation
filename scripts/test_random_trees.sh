@@ -1,29 +1,29 @@
 #!/bin/bash
 
-# Datasets to test
+# Flowers102 Experiments
+python test_random_tree.py --dataset flowers102 --num_ways 5 --num_shots 1 --model_type resnet50 --subset 50
+python test_random_tree.py --dataset flowers102 --num_ways 5 --num_shots 2 --model_type resnet50 --subset 50
+python test_random_tree.py --dataset flowers102 --num_ways 5 --num_shots 5 --model_type resnet50 --subset 50
+python test_random_tree.py --dataset flowers102 --num_ways 10 --num_shots 2 --model_type resnet50 --subset 48
+python test_random_tree.py --dataset flowers102 --num_ways 10 --num_shots 5 --model_type resnet50 --subset 48
 
-# Number of shots to test
-shots=(2)
+# Stanford Dogs Experiments
+python test_random_tree.py --dataset stanford_dogs --num_ways 5 --num_shots 1 --model_type resnet50 --subset 46
+python test_random_tree.py --dataset stanford_dogs --num_ways 5 --num_shots 2 --model_type resnet50 --subset 47
+python test_random_tree.py --dataset stanford_dogs --num_ways 5 --num_shots 5 --model_type resnet50 --subset 47
+python test_random_tree.py --dataset stanford_dogs --num_ways 10 --num_shots 2 --model_type resnet50 --subset 45
+python test_random_tree.py --dataset stanford_dogs --num_ways 10 --num_shots 5 --model_type resnet50 --subset 45
 
-flowers102_subsets=(47 48 50)
-caltech_subsets=(42 43 48)
+# Stanford Cars Experiments
+python test_random_tree.py --dataset stanford_cars --num_ways 5 --num_shots 1 --model_type resnet50 --subset 44
+python test_random_tree.py --dataset stanford_cars --num_ways 5 --num_shots 2 --model_type resnet50 --subset 44
+python test_random_tree.py --dataset stanford_cars --num_ways 5 --num_shots 5 --model_type resnet50 --subset 44
+python test_random_tree.py --dataset stanford_cars --num_ways 10 --num_shots 2 --model_type resnet50 --subset 48
+python test_random_tree.py --dataset stanford_cars --num_ways 10 --num_shots 5 --model_type resnet50 --subset 48
 
-for shot in "${shots[@]}"; do
-    for subset in "${caltech_subsets[@]}"; do
-        for run in {1..3}; do
-            echo "Running test for caltech256, ${shot}-shot, subset $subset, run $run"
-            python test_random_tree.py --dataset caltech256 --subset $subset --num_ways 5 --num_shots $shot
-        done
-    done
-done
-
-# for shot in "${shots[@]}"; do
-#     for subset in "${flowers102_subsets[@]}"; do
-#         for run in {1..3}; do
-#             echo "Running test for flowers102, ${shot}-shot, subset $subset, run $run"
-#             python test_random_tree.py --dataset flowers102 --subset $subset --num_ways 5 --num_shots $shot
-#         done
-#     done
-# done
-
-echo "All tests completed!"
+# Oxford-IIIT-Pet Experiments
+python test_random_tree.py --dataset oxford-iiit-pet --num_ways 5 --num_shots 1 --model_type resnet50 --subset 44
+python test_random_tree.py --dataset oxford-iiit-pet --num_ways 5 --num_shots 2 --model_type resnet50 --subset 44
+python test_random_tree.py --dataset oxford-iiit-pet --num_ways 5 --num_shots 5 --model_type resnet50 --subset 41
+python test_random_tree.py --dataset oxford-iiit-pet --num_ways 10 --num_shots 2 --model_type resnet50 --subset 45
+python test_random_tree.py --dataset oxford-iiit-pet --num_ways 10 --num_shots 5 --model_type resnet50 --subset 45
