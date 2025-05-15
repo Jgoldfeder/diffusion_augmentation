@@ -133,4 +133,3 @@ if __name__ == '__main__':
 	for img in base_images:
 		augmented_img = augmentation_tree.generate_augmentation(img, base_classes[base_images.index(img)])
 		augmented_img.save(f'{output_dir}{base_classes[base_images.index(img)]}.png')
-
