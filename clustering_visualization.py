@@ -3,7 +3,6 @@ import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 import wandb
-import pygad
 import logging
 import argparse
 import torch
@@ -118,7 +117,7 @@ class ClusteringVisualizer(GAHelper):
                 )
 
             plt.legend(title="Class Label")
-            plt.title(f'UMAP projection, {image_encoder}')
+            plt.title(f'UMAP projection, handcrafted, {self.dataset_name}')
             plt.xlabel('UMAP-1')
             plt.ylabel('UMAP-2')
             plt.tight_layout()
