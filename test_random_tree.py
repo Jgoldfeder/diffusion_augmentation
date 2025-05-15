@@ -50,18 +50,26 @@ if __name__ == '__main__':
     args = parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 
-    # Generate random genome
-    tree_genome = generate_random_genome()
-    print(f"Generated random genome: {tree_genome}")
-
-    node = genome_to_tree(tree_genome)
-    print(f"Using augmentation tree: {str(node)}")
-
     train_path = dataset_manager.get_dataset_path(args.dataset, args.num_ways, args.num_shots, args.subset, train=True)
     test_path = dataset_manager.get_dataset_path(args.dataset, args.num_ways, args.num_shots, args.subset, train=False)
 
     for i in range(0, args.num_runs, 2):  # Increment by 2
+        # Set seeds at the start of each run
         seed = args.seed_start + i
+        random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
+        # Generate random genome for this run
+        tree_genome = generate_random_genome()
+        print(f"Run {i+1}/{args.num_runs} - Generated random genome: {tree_genome}")
+
+        node = genome_to_tree(tree_genome)
+        print(f"Using augmentation tree: {str(node)}")
+
         wandb.init(
             project="random-tree-tests",
             config={
@@ -75,7 +83,6 @@ if __name__ == '__main__':
                 "genome": tree_genome
             }
         )
-        random.seed(seed)
 
         train_dataset = TreeAugmentedDatasetWithClassical(train_path, node, args.num_augmentations)
         test_dataset = FolderDataset(test_path)
