@@ -62,12 +62,20 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str, default='caltech256', help='Dataset name')
     parser.add_argument('--ways', type=int, default=5, help='Number of ways')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
-    parser.add_argument('--N', type=int, default=2, help='Number of operations for RandAugment')
-    parser.add_argument('--M', type=int, default=10, help='Magnitude for RandAugment')
+    parser.add_argument('--model', type=str, default='resnet', choices=['resnet', 'mobilenet', 'vit'], 
+                       help='Model architecture to use')
     args = parser.parse_args()
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
+
+    # Map model argument to ModelType
+    model_mapping = {
+        'resnet': ModelType.RESNET50,
+        'mobilenet': ModelType.MOBILENETV2,
+        'vit': ModelType.VIT224
+    }
+    model_type = model_mapping[args.model]
 
     # Grid search parameters
     N_values = [1, 2, 3]
@@ -88,13 +96,13 @@ if __name__ == '__main__':
                     "ways": args.ways,
                     "learning_rate": 0.001, 
                     "batch_size": 32,
-                    "model": "resnet50",
+                    "model": args.model,
                     "seed": args.seed,
                     "N": N,
                     "M": M,
                     "augmentation": "randaugment"
                 },
-                name=f"randaugment_N{N}_M{M}_subset{args.subset}"
+                name=f"randaugment_{args.model}_N{N}_M{M}_subset{args.subset}"
             )
             
             random.seed(args.seed)
@@ -106,7 +114,7 @@ if __name__ == '__main__':
             train_dataset = RandAugmentDataset(train_path, N=N, M=M, duplicate_factor=6)
             test_dataset = FolderDataset(test_path)
 
-            model = get_model_for_finetune(ModelType.RESNET50, args.ways)
+            model = get_model_for_finetune(model_type, args.ways)
             results = train_and_test(model, train_dataset, test_dataset, num_epochs=200, device=device)
 
             for (train_loss, train_acc, test_loss, test_acc) in zip(results.train_losses, results.train_accs, results.losses, results.accs):
