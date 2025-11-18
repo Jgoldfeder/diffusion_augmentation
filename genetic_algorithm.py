@@ -76,7 +76,8 @@ class GAHelper:
 	def __init__(
 		self, dataset_name: str, num_ways: int, num_shots: int, subset: int,
 		model_type: ModelType, tree_depth: int, num_augmentations_per_image: int,
-		num_iterations_for_val: int, num_iterations_for_test: int, device
+		num_iterations_for_val: int, num_iterations_for_test: int, clustering_alpha: float,
+		device
 	):
 		self.dataset_name = dataset_name
 		self.num_ways = num_ways
@@ -87,6 +88,7 @@ class GAHelper:
 		self.num_augmentations_per_image = num_augmentations_per_image
 		self.num_iterations_for_val = num_iterations_for_val
 		self.num_iterations_for_test = num_iterations_for_test
+		self.clustering_alpha = clustering_alpha
 		self.device = device
 
 		self.train_path = dataset_manager.get_dataset_path(self.dataset_name, self.num_ways, self.num_shots, self.subset, train=True)
@@ -196,8 +198,9 @@ class GAHelper:
 		sil_true = silhouette_score(embeddings, clusters_true)
 		cluster_radii_true = compute_cluster_radii(embeddings, clusters_true)
 		avg_radius_true = np.mean(list(cluster_radii_true.values()))
+		alpha = self.clustering_alpha
 
-		fitness_score = sil_true - (1.0/avg_radius_true) + 1
+		fitness_score = alpha * sil_true - (1 - alpha) * (1 / (avg_radius_true + 1)) + 2
 
 		logging.info(f'Fitness Score for {str(genome)}: {fitness_score}')
 		self.fitness_cache[genome_number] = fitness_score
@@ -245,10 +248,10 @@ class GAHelper:
 
 			for j in range(self.num_iterations_for_test):
 				wandb.log({
-					f'train_loss_{j}': model_results.train_losses[j],
-					f'train_acc_{j}': model_results.train_accs[j],
-					f'test_loss_{j}': model_results.losses[j],
-					f'test_acc_{j}': model_results.accs[j],
+					f'train_loss': model_results.train_losses[j],
+					f'train_acc': model_results.train_accs[j],
+					f'test_loss': model_results.losses[j],
+					f'test_acc': model_results.accs[j],
 					'epoch': j
 				})
 			wandb.log({
@@ -283,6 +286,7 @@ def parse_args():
     parser.add_argument('--seed', type=int, required=True, help='Random seed for reproducibility')
     parser.add_argument('--one_shot_training_loss', type=bool, default=False, help='Whether to use one shot training loss')
     parser.add_argument('--one_shot_clustering', type=bool, default=False, help='Whether to use one shot clustering')
+    parser.add_argument('--clustering_alpha', type=float, default=0.5, help='Alpha parameter for clustering fitness')
     return parser.parse_args()
 
 if __name__ == '__main__':
@@ -303,6 +307,7 @@ if __name__ == '__main__':
 		num_augmentations_per_image=args.num_augmentations_per_image,
 		num_iterations_for_val=args.num_iterations_for_val,
 		num_iterations_for_test=args.num_iterations_for_test,
+		clustering_alpha=args.clustering_alpha,
 		device='cpu'
 	)
     
@@ -326,7 +331,8 @@ if __name__ == '__main__':
 			"num_iterations_for_test": ga_helper.num_iterations_for_test,
 			"seed": args.seed,
 			"one_shot_training_loss": args.one_shot_training_loss,
-			"one_shot_clustering": args.one_shot_clustering
+			"one_shot_clustering": args.one_shot_clustering,
+			"clustering_alpha": args.clustering_alpha
 		}
 	)
 
