@@ -21,19 +21,20 @@ class TreeAugmentedDatasetWithClassical(TreeAugmentedDataset):
 		label = self.labels[index]
 		return dataset_manager.get_base_transform()(dataset_manager.get_classical_transform()(img)), label
 
-def run_test(dataset, num_ways, num_shots, subset, tree_genome, seed, without_classical):
+def run_test(dataset, num_ways, num_shots, subset, tree_genome, seed, without_classical, model_type: ModelType):
 	train_path = dataset_manager.get_dataset_path(dataset, num_ways, num_shots, subset, train=True)
 	test_path = dataset_manager.get_dataset_path(dataset, num_ways, num_shots, subset, train=False)
 
 	wandb.init(
-		project="no-generative-ablations",
+		project="iclr_best_genomes",
 		config={
 			"subset": subset,
 			"num_shots": num_shots,
 			"dataset": dataset,
 			"num_ways": num_ways,
 			"seed": seed,
-			"without_classical": without_classical
+			"without_classical": without_classical,
+			"model_type": model_type.value
 		}
 	)
 	random.seed(seed)
@@ -47,7 +48,7 @@ def run_test(dataset, num_ways, num_shots, subset, tree_genome, seed, without_cl
 		train_dataset = TreeAugmentedDatasetWithClassical(train_path, node, num_augmentations_per_image)
 	test_dataset = FolderDataset(test_path)
 
-	model = network_model.get_model_for_finetune(ModelType.RESNET50, num_ways)
+	model = network_model.get_model_for_finetune(model_type, num_ways)
 	model_results = network_model.train_and_test(model, train_dataset, test_dataset, 600, 'cuda')
 	print(model_results)
 
@@ -74,6 +75,7 @@ def run_test(dataset, num_ways, num_shots, subset, tree_genome, seed, without_cl
 if __name__ == '__main__':
 	logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 
+	model_type = ModelType.VITS
 	num_ways = 5
 	num_shots = 1
 	num_augmentations_per_image = 2
@@ -90,10 +92,10 @@ if __name__ == '__main__':
 		# 	'dataset': 'stanford_dogs',
 		# 	'subset': 46,
 		# },
-		{
-			'dataset': 'stanford_cars',
-			'subset': 44,
-		},
+		# {
+		# 	'dataset': 'stanford_cars',
+		# 	'subset': 44,
+		# },
 		# {
 		# 	'dataset': 'oxford-iiit-pet',
 		# 	'subset': 44,
@@ -112,9 +114,9 @@ if __name__ == '__main__':
 			# random_prob = ProbabilityLimits.get_random_probability()
 			# random_nodes = [random.choice([5, 6]) for _ in range(3)]
 			# tree_genome = [random_nodes[0], random_prob, random_nodes[1], .5, random_nodes[2], .5]
-			tree_genome = [3, 0.3861255, 6, 0.43463782, 6, 0.64035153]
-			run_test(dataset, num_ways, num_shots, subset, tree_genome, seed, 0)
-			run_test(dataset, num_ways, num_shots, subset, tree_genome, seed, 1)
+			tree_genome = [6, 0.3861255, 6, 0.43463782, 6, 0.64035153]
+			run_test(dataset, num_ways, num_shots, subset, tree_genome, seed, 0, model_type)
+			run_test(dataset, num_ways, num_shots, subset, tree_genome, seed, 1, model_type)
 		
 
 
