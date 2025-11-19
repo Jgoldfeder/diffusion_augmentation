@@ -2,16 +2,41 @@ from enum import Enum
 
 import logging
 import torch
-from torch.nn import CrossEntropyLoss, Linear, Module
+from torch.nn import CrossEntropyLoss, Linear, Module, Identity
 from torch.optim import Adam
 from torch.utils.data import DataLoader
-from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import resnet50, ResNet50_Weights, mobilenet_v2, MobileNet_V2_Weights
+import timm
 import os 
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 class ModelType(Enum):
 	RESNET50 = 'resnet50'
+	VIT224 = 'vit224'
+	MOBILENETV2 = 'mobilenetv2'
+	VITS = 'vits'  # ViT-Small
+
+def get_vit224_scratch(num_outputs):
+	model = timm.create_model("vit_base_patch16_224", pretrained=False)
+	if hasattr(model, "head"):
+		model.head = Linear(model.head.in_features, num_outputs)
+	elif hasattr(model, "classifier"):
+		model.classifier = Linear(model.classifier.in_features, num_outputs)
+	return model
+
+def get_vit224_for_finetune(num_outputs):
+	model = timm.create_model("vit_base_patch16_224", pretrained=True)
+	# Freeze all parameters except the head
+	for param in model.parameters():
+		param.requires_grad = False
+	if hasattr(model, "head"):
+		model.head = Linear(model.head.in_features, num_outputs)
+		model.head.requires_grad = True
+	elif hasattr(model, "classifier"):
+		model.classifier = Linear(model.classifier.in_features, num_outputs)
+		model.classifier.requires_grad = True
+	return model
 
 def get_resnet50_scratch(num_outputs):
 	model = resnet50(weights=None)
@@ -25,15 +50,62 @@ def get_resnet50_for_finetune(num_outputs):
 	model.fc = Linear(model.fc.in_features, num_outputs)
 	return model
 
+def get_mobilenetv2_scratch(num_outputs):
+	model = mobilenet_v2(weights=None)
+	model.classifier[1] = Linear(model.classifier[1].in_features, num_outputs)
+	return model
+
+def get_mobilenetv2_for_finetune(num_outputs):
+	model = mobilenet_v2(weights=MobileNet_V2_Weights.DEFAULT)
+	# Freeze all parameters except the classifier
+	for param in model.parameters():
+		param.requires_grad = False
+	model.classifier[1] = Linear(model.classifier[1].in_features, num_outputs)
+	model.classifier[1].requires_grad = True
+	return model
+
+def get_vits_scratch(num_outputs):
+	model = timm.create_model("vit_small_patch16_224", pretrained=False)
+	if hasattr(model, "head"):
+		model.head = Linear(model.head.in_features, num_outputs)
+	elif hasattr(model, "classifier"):
+		model.classifier = Linear(model.classifier.in_features, num_outputs)
+	return model
+
+def get_vits_for_finetune(num_outputs):
+	model = timm.create_model("vit_small_patch16_224", pretrained=True)
+	# Freeze all parameters except the head
+	for param in model.parameters():
+		param.requires_grad = False
+	if hasattr(model, "head"):
+		model.head = Linear(model.head.in_features, num_outputs)
+		model.head.requires_grad = True
+	elif hasattr(model, "classifier"):
+		model.classifier = Linear(model.classifier.in_features, num_outputs)
+		model.classifier.requires_grad = True
+	return model
+
 def get_model_for_finetune(model_type: ModelType, num_outputs):
 	if model_type == ModelType.RESNET50:
 		return get_resnet50_for_finetune(num_outputs)
+	elif model_type == ModelType.VIT224:
+		return get_vit224_for_finetune(num_outputs)
+	elif model_type == ModelType.MOBILENETV2:
+		return get_mobilenetv2_for_finetune(num_outputs)
+	elif model_type == ModelType.VITS:
+		return get_vits_for_finetune(num_outputs)
 	else:
 		raise ValueError(f"Unsupported model: {model_type}")
 
 def get_model_for_scratch(model_type: ModelType, num_outputs):
 	if model_type == ModelType.RESNET50:
 		return get_resnet50_scratch(num_outputs)
+	elif model_type == ModelType.VIT224:
+		return get_vit224_scratch(num_outputs)
+	elif model_type == ModelType.MOBILENETV2:
+		return get_mobilenetv2_scratch(num_outputs)
+	elif model_type == ModelType.VITS:
+		return get_vits_scratch(num_outputs)
 	else:
 		raise ValueError(f"Unsupported model: {model_type}")
 
@@ -201,8 +273,9 @@ if __name__ == '__main__':
 	train_dataset = FolderDataset(get_dataset_path('flowers102', 5, 2, 42, train=True))
 	test_dataset = FolderDataset(get_dataset_path('flowers102', 5, 2, 42, train=False))
 
-	my_model = get_model_for_finetune(ModelType.RESNET50, 5)
-	results = train_and_test(my_model, train_dataset, test_dataset, 20, 'cuda:0')
-	breakpoint()
-
-	print(results)
+	# Test all models
+	for model_type in [ModelType.RESNET50, ModelType.VIT224, ModelType.MOBILENETV2, ModelType.VITS]:
+		logging.info(f"Testing {model_type.value}")
+		my_model = get_model_for_finetune(model_type, 5)
+		results = train_and_test(my_model, train_dataset, test_dataset, 20, 'cuda:0')
+		logging.info(f"Results for {model_type.value}: {results}")
