@@ -9,6 +9,10 @@ sample_tree_augmentations/
 torch/
 augmented_images/
 wandb_scrape/*.csv
+data/*
+outputs_voc/*
+output_pascalvoc/*
+output_*/*
 
 __pycache__/*
 annotator/__pycache__/*
